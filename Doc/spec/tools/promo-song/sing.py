@@ -172,7 +172,7 @@ def transpose(tk, semis):
 TALK_STYLES = set()   # 歌唱モデルがなく話し声モデルで歌わせるスタイル（style_names で判定）
 
 
-def talk_sing(tk, speaker, detune=0.0):
+def talk_sing(tk, speaker, **shape):
     """話し声モデルで歌わせる: 各モーラの音高を音符の音程に、子音は拍の前・母音は拍頭に置いて長さを合わせる"""
     notes = tk['notes']
     t, ev = 0.0, []                              # (開始秒, 終了秒, 音符)
@@ -222,7 +222,7 @@ def talk_sing(tk, speaker, detune=0.0):
                 m['consonant_length'] = cons[k]
             m['vowel'] = m['vowel'].lower() if m['vowel'] not in ('cl', 'N') else m['vowel']   # 無声化させない
             m['vowel_length'] = max(0.02, end - s)
-            m['pitch'] = 0.0 if m['vowel'] == 'cl' else math.log(C.midi(n['key'])) + detune
+            m['pitch'] = 0.0 if m['vowel'] == 'cl' else math.log(C.midi(n['key']))
             k += 1
         if ap.get('pause_mora'):
             s_prev_end = ev[k - 1][1]
@@ -263,9 +263,10 @@ def talk_sing(tk, speaker, detune=0.0):
         end = nxt[0] - cons[k + 1] if nxt is not None and abs(nxt[0] - e) < 1e-6 else e
         regions.append((s, end, C.midi(n['key'])))
     score = {'notes': tk['notes']}
-    tq = shape_f0(tk, api(f'/sing_frame_audio_query?speaker={TEACHER}', score))
-    f0_ref = np.array(tq['f0']) * math.exp(detune)
-    x = vocode(x, 24000, regions, f0_ref)
+    # ダブルは他の声と同じく手本の f0 にゆっくり揺れるずれを付ける（一定のずれだと本体と周期的に唸る）
+    tq = shape_f0(tk, api(f'/sing_frame_audio_query?speaker={TEACHER}', score), **shape)
+    f0_ref = np.array(tq['f0'])
+    x = vocode(x, 24000, regions, f0_ref, seed=shape.get('detune_seed') or 3)
     # 歌詞のない区間（フレーズ間の休符）は無音にする（話し声モデルの息・雑音を残さない）
     keep = np.zeros(len(x), np.float32)
     for k, (s, e, n) in enumerate(ev):
@@ -308,7 +309,7 @@ def f0_track(x, sr, target, hop=None, spread=1.26):
     return np.array(out)
 
 
-def vocode(x, sr, regions, f0_ref, top=9000, air=7000):
+def vocode(x, sr, regions, f0_ref, top=9000, air=7000, seed=3):
     """母音区間を倍音の和で作り直す。各フレームで元の声の倍音振幅から声色（包絡）を測り、
     手本の f0（93.75fps のフレーム列）の倍音へ当てはめる。区間の端は元の音へ 10ms でつなぐ"""
     n, hop = 1024, 64
@@ -316,7 +317,9 @@ def vocode(x, sr, regions, f0_ref, top=9000, air=7000):
     mag = np.abs(Z)
     binhz = sr / n
     y = x.copy()
-    rng = np.random.default_rng(3)
+    rng = np.random.default_rng(seed)
+    # C.highpass は 48kHz 用。24kHz のまま使うと遮断が半分（3.5kHz）になり、話し声の息の雑音まで混ざる
+    air_hp = sig.butter(2, air / (sr / 2), 'high')
     for s, e, ft in regions:
         a, b = int(s * sr), int(e * sr)
         if b - a < int(0.03 * sr):
@@ -334,16 +337,23 @@ def vocode(x, sr, regions, f0_ref, top=9000, air=7000):
         f_ref_c = np.interp(ts[cols], fr_t, np.where(f0_ref > 0, f0_ref, np.nan))
         f_ref_c = np.where(np.isfinite(f_ref_c), f_ref_c, ft)
         K = int(top / (f_ref_c.min() * 0.95))
-        # フレームごとの包絡（倍音振幅の対数を周波数で補間）
-        amps = np.zeros((K, len(cols)))
+        # フレームごとの包絡（倍音振幅の対数を周波数で補間）。振幅は倍音の前後 ±0.3 f0 の最大を取る
+        # （推定 f0 のわずかなずれで山の裾を拾うと、振幅がフレームごとに跳ねてざらつき・揺れになる）
+        logA = np.full((K, len(cols)), -14.0)
         for j, c in enumerate(cols):
             kk = np.arange(1, int(top / f_own[j]) + 1)
             hz_ = kk * f_own[j]
-            A = 2 * np.interp(hz_ / binhz, np.arange(mag.shape[0]), mag[:, c])
+            w = max(1, int(0.3 * f_own[j] / binhz))
+            A = np.array([2 * mag[max(0, q - w):q + w + 1, c].max() for q in np.round(hz_ / binhz).astype(int)])
             env = np.log(np.maximum(A, 1e-6))
             hk = np.arange(1, K + 1) * f_ref_c[j]
-            amps[:, j] = np.where(hk < top, np.exp(np.interp(hk, hz_, env)), 0)
-        amps = uniform_filter1d(amps, 3, axis=1)                       # 時間方向に軽く平滑（揺れ・ちらつき防止）
+            logA[:, j] = np.where(hk < top, np.interp(hk, hz_, env), -14.0)
+        # 音量と声色に分けて時間方向に平滑する（話し声の細かな音量の揺れを歌へ持ち込まない）。
+        # 声色は 40ms、音量は 120ms
+        tot = 0.5 * np.log(np.sum(np.exp(2 * logA), 0) + 1e-12)
+        logA = (uniform_filter1d(logA - tot, max(1, int(0.04 * sr / hop)), axis=1, mode='nearest')
+                + uniform_filter1d(tot, max(1, int(0.12 * sr / hop)), mode='nearest'))
+        amps = np.where(logA > -13.5, np.exp(logA), 0)
         tt = np.arange(a, b) / sr
         f_s = np.interp(tt, fr_t, np.where(f0_ref > 0, f0_ref, ft))
         harm = np.zeros(b - a)
@@ -351,7 +361,7 @@ def vocode(x, sr, regions, f0_ref, top=9000, air=7000):
         for h in range(K):
             ah = np.interp(tt, ts[cols], amps[h])
             harm += ah * np.sin((h + 1) * ph + rng.uniform(0, 2 * np.pi))
-        harm += C.highpass(x[a:b].astype(np.float64), air, 2) * 0.35        # 息の高域だけ少し残す
+        harm += sig.lfilter(*air_hp, x[a:b].astype(np.float64)) * 0.15     # 息の高域だけ少し残す
         L = b - a
         f10 = min(int(0.01 * sr), L // 4)
         fade = np.ones(L)
@@ -386,7 +396,7 @@ def est_f0(x, sr):
 
 def synth(tk, singer, **kw):
     if singer in TALK_STYLES:
-        return talk_sing(tk, singer, detune=0.004 if kw.get('detune_seed') else 0.0)
+        return talk_sing(tk, singer, **kw)
     score = {'notes': tk['notes']}
     q = api(f'/sing_frame_audio_query?speaker={TEACHER}', score)
     q = shape_f0(tk, q, **kw)
