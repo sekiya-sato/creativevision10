@@ -1,9 +1,9 @@
 # 作品1 v2「明日へ飛べ」ショートバージョン（主題歌 v2 の1番＋エンディングの一撃、約68秒）
 # 歌詞 v2 は1番が「技術と歩み（現在から未来へ）」。v1 の2番の歌詞（opfull.py の Aメロ2・Bメロ2 のショット）が1番に来るため、
 # そのショットを時刻をずらして使い、主人公は背景なしの素材で合成する。顔の寄りは onlyperson の6表情のリグ（rig_p.Character）、
-# 全身の動きはシーン別の連続コマ（Doc/promo/assets4anime/op2-scene-v3: 0.1 秒刻み、rig_p.Flipbook）で動かす。
-# コマは素材の秒数をショットの長さに合わせず、動きが自然に見える速さ（FB_RATE）で送る。
-# 動画生成AIは使わない。
+# 全身の動きはシーン別の連続コマ（Doc/promo/assets4anime/op2-scene-v4: 16fps、rig_p.Flipbook）で動かす。
+# コマは素材の秒数をショットの長さに合わせず、動きが自然に見える速さ（FB_PLAY）で送る。
+# 基本は動画生成AIを使わない。人物の全身の動作（連続コマ v4）だけ、基本絵から動画生成AI（Wan 2.2 画像→動画）で作る。
 #
 # 秒割り（音源の時刻。0.2秒の無音の後、150BPM・1小節1.6秒）
 #    0.0- 3.4  夜明け前の空                                       イントロ（op と同じ）
@@ -70,8 +70,8 @@ CREDITS = [
     (13.4, 15.9, ['主題歌', '「Creative Vision 10！ ～明日へ飛べ～」（v2）'], 'lt'),
     (16.6, 19.0, ['歌', F.VX(F.MAIN)], 'lt'),
     (19.8, 22.2, ['コーラス', '　'.join(F.VX(n) for n in F.CHORUS)], 'lt'),
-    (23.0, 25.4, ['作画・撮影・編集', 'Python + GLSL（すべてコードで描画・動画生成AI不使用）'], 'lt'),
-    (32.6, 35.0, ['キャラクター・背景原画', '静止画の生成画像（表情差分・立ち絵・四季の里）、ミニキャラは Codex のペット'], 'lt'),
+    (23.0, 25.4, ['作画・撮影・編集', 'Python + GLSL（基本は動画生成AI不使用、人物動作のみ使用）'], 'lt'),
+    (32.6, 35.0, ['キャラクター・背景原画', '静止画の生成画像（表情差分・口・立ち絵・四季の里）、人物動作は Wan 2.2、ミニキャラは Codex のペット'], 'lt'),
 ]
 
 
@@ -85,7 +85,7 @@ def setup(gl):
     C.ch = RP.Character(gl)               # 背景なしの主人公（6表情）
     C.ch.plate = C.ch0.plate
     C.work = RP.Standee(gl, 'fullbody-smile')
-    # シーン別の連続コマ（Doc/promo/assets4anime/op2-scene-v3: 0.1 秒刻み）
+    # シーン別の連続コマ（Doc/promo/assets4anime/op2-scene-v4: 動画生成AIの人物動作、16fps）
     C.fb = {k: RP.Flipbook(gl, k, prep_person.SCENE_VER) for k in prep_person.SCENES}
     C.vocal = SS.Vocal(SINGER, remap=lambda tt: remap(tt - CUR_SHIFT))
     C.lyrics = SS.lines({s['name'] for s in SS.timeline()})
@@ -169,9 +169,9 @@ def speed_trail(x, y, n=40, col=(1, 0.85, 0.95), length=600, t=0.0):
 
 
 # 連続コマの再生の速さ（素材の秒数に対する倍率）と、尺が余ったときに折り返すか。
-# 再描画したコマはコマ間で細部が揺れるため、風・飛ぶ・飛び込むは少し遅く送って落ち着かせる（10fps → 8fps 前後）。
-# 歩く・手を伸ばすは前へ進む動きなので折り返さない（歩くは回廊の進みに合わせた速さ）
-FB_PLAY = dict(wind=(0.8, True), flight=(0.8, True), walk=(0.94, False), dive=(0.85, True), gate=(1.0, False))
+# v4（動画生成AIの人物動作、16fps）は生成した速さのまま送る。手を伸ばすは「はじめの1秒で伸ばし切る」演出に合わせ、
+# 素材の約1.5秒で伸ばし切る動きを少し速める。歩く・手を伸ばすは前へ進む動きなので折り返さない
+FB_PLAY = dict(wind=(1.0, True), flight=(1.0, True), walk=(1.0, False), dive=(1.0, True), gate=(1.25, False))
 
 
 def fb_at(name, ts):
@@ -387,7 +387,8 @@ def s_ending2(t, lt, d):
     credit_footer(590, 875, 1150, 900, 170, alpha=prog(lt2, 0.0, 0.25))
     tex = gl.text(O.VOICES, 22, fam='noto', weight='Medium', color=(1, 1, 1), stroke=2, stroke_color=(0.2, 0.1, 0.3))
     gl.sprite(tex, 960, 1045, alpha=0.9)
-    return dict(bloomAmt=0.6, vign=0.25, flash=pulse(t, hit_t, 0.01, 0.4), fade=prog(t, DURATION - 0.9, DURATION - 0.05))
+    # 最後は黒へ落とさず、エンディングの画面のまま終える
+    return dict(bloomAmt=0.6, vign=0.25, flash=pulse(t, hit_t, 0.01, 0.4))
 
 
 def shifted(fn):

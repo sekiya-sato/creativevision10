@@ -397,12 +397,29 @@ def build_stands():
 # ---------------------------------------------------------------- シーン別の連続コマ（op2-scene-v1 / v2 / v3）
 # v1: 1秒刻みのキー姿勢（motion/<名前>/<名前>-NN.png）。v2: v1 のキーを 0.1 秒刻みに補間したもの（<名前>/<名前>_NNNN.png、10fps）
 # v3: v2 の各コマを再描画して脚・髪・袖の残像を直したもの（v2 と同じ並び）
+# v4: v1 の基本絵から動画生成AI（Wan 2.2 画像→動画）で作った人物の動作（16fps）。動画なのでコマ間の位置は
+#     もともと連続しており、位置合わせはしない（歩く頭の上下や、飛び込んで奥へ小さくなる動きを残す）
 SCENE_SETS = {
     'v1': dict(dir=os.path.join(SRC, 'op2-scene-v1', 'motion'), pat='{n}/{n}-??.png', fps=1.0),
     'v2': dict(dir=os.path.join(SRC, 'op2-scene-v2'), pat='{n}/{n}_????.png', fps=10.0),
     'v3': dict(dir=os.path.join(SRC, 'op2-scene-v3'), pat='{n}/{n}_????.png', fps=10.0),
+    'v4': dict(dir=os.path.join(SRC, 'op2-scene-v4'), pat='{n}/{n}_????.png', fps=16.0, align=False, harden=(210, 210, 210)),
 }
-SCENE_VER = 'v3'                # 台本が使う版
+
+
+def harden_alpha(rgb, al, bg):
+    """背景抜き（BiRefNet）で服の内側に残った半透明・穴を不透明に戻す。生成時の背景色 bg（BGR）に近い画素は
+    脚の間などの本物のすき間なので残す。輪郭から 4px 以内は縁のなめらかさを保つため触らない"""
+    m = (al > 128).astype(np.uint8) * 255
+    cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    fill = np.zeros_like(m)
+    cv2.drawContours(fill, cnts, -1, 255, -1)
+    deep = cv2.distanceTransform(fill, cv2.DIST_L2, 3) > 4
+    far = np.linalg.norm(rgb.astype(np.float32) - np.float32(bg), axis=-1) > 70
+    out = al.copy()
+    out[deep & far] = 255
+    return out
+SCENE_VER = 'v4'                # 台本が使う版
 OUT_SC = os.path.join(E.WORK, 'scene')
 # 名前 → (位置合わせに使う動かない部分（コマ0の外接矩形に対する比 x0,y0,x1,y1）, 基準点)
 SCENES = {
@@ -440,9 +457,10 @@ def build_scenes(version='v2'):
             return sift.detectAndCompute(gray(img), m * r)
         kb, db = feats(b)
         params = []          # (tx, ty, 角度, 拡縮) か None
+        align = st_.get('align', True)
         for i, f in enumerate(frames):
-            prm = (0.0, 0.0, 0.0, 1.0) if i == 0 else None
-            if i:
+            prm = (0.0, 0.0, 0.0, 1.0) if i == 0 or not align else None
+            if i and align:
                 kx, dx = feats(f)
                 mm = cv2.BFMatcher().knnMatch(dx, db, k=2) if dx is not None else []
                 g = [a for a, c in mm if a.distance < 0.75 * c.distance]
@@ -459,7 +477,7 @@ def build_scenes(version='v2'):
         for c in range(4):
             ok = ~np.isnan(P[:, c])
             P[:, c] = np.interp(idx, idx[ok], P[ok, c])
-        if len(P) > 4:
+        if len(P) > 4 and align:
             k = np.exp(-0.5 * (np.arange(-3, 4) / 1.5) ** 2); k /= k.sum()
             Ps = np.stack([np.convolve(np.pad(P[:, c], 3, mode='edge'), k, mode='valid') for c in range(4)], -1)
             P = Ps - Ps[0]               # コマ0の補正を 0（拡縮は 1）にそろえる
@@ -468,7 +486,10 @@ def build_scenes(version='v2'):
         for i, f in enumerate(frames):
             tx, ty, an, sc = P[i]
             M = np.float32([[sc * np.cos(an), -sc * np.sin(an), tx], [sc * np.sin(an), sc * np.cos(an), ty]])
-            out.append(warp_rgba(f, M, (W, H)))
+            rgb, al = warp_rgba(f, M, (W, H))
+            if st_.get('harden'):
+                al = harden_alpha(rgb, al, st_['harden'])
+            out.append((rgb, al))
         print('scene', version, name, len(frames), 'frames, max shift', np.round(np.abs(P[:, :2]).max(0), 1).tolist())
         al_all = np.max([a for _, a in out], 0)
         ys, xs = np.where(al_all > 8)
@@ -490,8 +511,83 @@ def build_scenes(version='v2'):
     return out_dir
 
 
+# ---------------------------------------------------------------- 口パクの口（mouth-v1）
+# mouth_sheet.py が描いた閉じ口の顔（input_<表情>.png、680px）を、ComfyUI の FLUX.2 Klein（mouth_gen.py）で
+# 母音ごとの口へ描き直した顔（<表情>_<母音>.png、1024px）から口だけを取り出し、旧リグ座標の小片を並べた図集にする
+MOUTH_SRC = os.path.join(SRC, 'mouth-v1')
+MOUTH_EXPRS = ['N', 'HP', 'ST', 'CE', 'WR']      # 図集の行
+MOUTH_VOWELS = ['a', 'i', 'u', 'e', 'o']         # 図集の列
+MOUTH_BOX = (930, 990, 280, 220)                 # 口の小片（旧リグ座標の x0, y0, 幅, 高さ。顎の線は含めない）
+MOUTH_FACE, MOUTH_ZOOM, MOUTH_CROP = (1040, 980), 1.05, 680   # mouth_sheet.py の顔の寄りと同じ
+MOUTH_GAP = 8                                    # 図集の小片の間の余白（隣の小片がにじまない）
+
+
+def build_mouth():
+    os.makedirs(OUT, exist_ok=True)
+    if done(OUT, ['mouth_atlas.png', 'mouth.json']):
+        return OUT
+    x0, y0, bw, bh = MOUTH_BOX
+    # 旧リグ座標 → 顔の寄りの画素
+    to_crop = np.float64([[MOUTH_ZOOM, 0, MOUTH_CROP / 2 - MOUTH_ZOOM * MOUTH_FACE[0]],
+                          [0, MOUTH_ZOOM, MOUTH_CROP / 2 - MOUTH_ZOOM * MOUTH_FACE[1]], [0, 0, 1]])
+    # 小片の画素 → 顔の寄りの画素
+    patch_to_crop = to_crop @ np.float64([[1, 0, x0], [0, 1, y0], [0, 0, 1]])
+    cw, ch = bw + MOUTH_GAP, bh + MOUTH_GAP
+    atlas = np.zeros((ch * len(MOUTH_EXPRS), cw * len(MOUTH_VOWELS), 4), np.uint8)
+    info = {}
+    for r, e in enumerate(MOUTH_EXPRS):
+        ref = cv2.imread(os.path.join(MOUTH_SRC, f'input_{e}.png'))
+        # 位置合わせは口のまわりを除いた顔（目・鼻・輪郭・髪）で行う
+        em = np.full(ref.shape[:2], 255, np.uint8)
+        mx0, my0 = (to_crop @ [x0, y0, 1])[:2]; mx1, my1 = (to_crop @ [x0 + bw, y0 + bh, 1])[:2]
+        em[int(my0):int(my1), int(mx0):int(mx1)] = 0
+        for c, v in enumerate(MOUTH_VOWELS):
+            g = cv2.resize(cv2.imread(os.path.join(MOUTH_SRC, f'{e}_{v}.png')), (MOUTH_CROP, MOUTH_CROP), interpolation=cv2.INTER_AREA)
+            wm = np.eye(2, 3, dtype=np.float32)
+            try:
+                _, wm = cv2.findTransformECC(gray(ref).astype(np.float32), gray(g).astype(np.float32), wm, cv2.MOTION_AFFINE,
+                                             (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 200, 1e-6), em, 5)
+            except cv2.error:
+                print('mouth', e, v, 'ECC failed, no alignment')
+            # 小片の画素 → 生成画像の画素（ECC の wm は ref の画素 → g の画素）
+            M = (np.vstack([wm, [0, 0, 1]]).astype(np.float64) @ patch_to_crop)[:2]
+            patch = cv2.warpAffine(g, M, (bw, bh), flags=cv2.INTER_CUBIC | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
+            # 口: 肌の色（小片の外周の中央値）から離れた画素のうち、中央付近の最大のかたまり（穴は埋める）
+            ring = np.concatenate([patch[:6].reshape(-1, 3), patch[-6:].reshape(-1, 3), patch[:, :6].reshape(-1, 3), patch[:, -6:].reshape(-1, 3)])
+            skin = np.median(ring, 0)
+            dist = np.linalg.norm(patch.astype(np.float32) - skin, axis=-1)
+            m = (dist > 38).astype(np.uint8) * 255
+            m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7)))
+            n, lab, st, cen = cv2.connectedComponentsWithStats(m)
+            if n < 2:
+                raise RuntimeError(f'mouth {e} {v}: no mouth found')
+            # 中心に近く、ある程度大きいかたまり。外枠に触れるもの（顎・髪・頬の赤みの端）は選ばない
+            def edge(i):
+                x, y, w_, h_ = st[i, :4]
+                return x <= 1 or y <= 1 or x + w_ >= bw - 1 or y + h_ >= bh - 1
+            score = [0.0 if edge(i) else st[i, cv2.CC_STAT_AREA] / (1 + np.hypot(*(cen[i] - (bw / 2, bh / 2))) / 20)
+                     for i in range(1, n)]
+            keep = 1 + int(np.argmax(score))
+            m = np.where(lab == keep, 255, 0).astype(np.uint8)
+            cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            cv2.drawContours(m, cnts, -1, 255, -1)
+            m = cv2.dilate(m, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
+            a = cv2.GaussianBlur(m, (0, 0), 1.0)
+            ys, xs = np.where(m > 128)
+            info[f'{e}_{v}'] = dict(top=float(ys.min() + y0), bottom=float(ys.max() + y0), cx=float(xs.mean() + x0),
+                                    ecc=np.round(wm, 4).tolist())
+            atlas[r * ch:r * ch + bh, c * cw:c * cw + bw] = np.dstack([patch, a])
+    cv2.imwrite(os.path.join(OUT, 'mouth_atlas.png'), atlas)
+    json.dump(dict(box=MOUTH_BOX, gap=MOUTH_GAP, exprs=MOUTH_EXPRS, vowels=MOUTH_VOWELS, size=[atlas.shape[1], atlas.shape[0]],
+                   patches=info), open(os.path.join(OUT, 'mouth.json'), 'w'), indent=1)
+    vis = atlas[..., :3].astype(np.float32) * (atlas[..., 3:] / 255) + np.array([120, 70, 40], np.float32) * (1 - atlas[..., 3:] / 255)
+    cv2.imwrite(os.path.join(OUT, 'check_mouth.jpg'), vis.astype(np.uint8))
+    print('mouth atlas', atlas.shape)
+    return OUT
+
+
 def build():
-    return build_rig(), build_stands(), build_scenes(SCENE_VER)
+    return build_rig(), build_mouth(), build_stands(), build_scenes(SCENE_VER)
 
 
 if __name__ == '__main__':

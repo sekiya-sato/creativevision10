@@ -14,7 +14,7 @@ STAND = os.path.join(E.WORK, 'stand')
 CHAR_FS = E.HEADER + r'''
 uniform sampler2D tN, tHP, tST, tHT, tCE, tWR, tNm, tSTm, tWRm, tCEm, tHPm, tNe, tHPe, tSTe, tWRe, m1, m2, m3, m4;
 uniform vec4 exprFull, exprFace; uniform vec2 exprFull2, exprFace2;
-uniform vec2 org; uniform float SZ, eyeSplit, breathY; uniform vec2 MC0; uniform float MK0;
+uniform vec2 org; uniform float SZ, eyeSplit, breathY;
 uniform float headRot; uniform vec2 headPivot; uniform vec2 headShift;
 uniform float hatRot; uniform vec2 hatPivot;
 uniform float bowRot; uniform vec2 bowPivot;
@@ -23,7 +23,10 @@ uniform float earRot; uniform vec2 earPivot;
 uniform float breath; uniform vec2 bodyShift;
 uniform vec2 handL, handR;
 uniform float blinkL, blinkR;
-uniform float mouthOpen, mouthWide; uniform vec2 mouthC;
+uniform float mouthOpen;
+// 開いた口: 母音（列）× 表情（行）の口の図集（prep_person.build_mouth）。縦の開きは上唇を基準に縮める
+uniform sampler2D tMouth; uniform vec4 mouthBox; uniform vec4 mouthCell; uniform float mouthV, mouthRow, mouthSY, mouthTop;
+uniform vec2 mouthC; uniform float mouthK;     // 口の中心と、そこを基準にした大きさ
 uniform float outlineW; uniform vec3 outlineCol; uniform float outlineA;
 uniform vec3 rimCol; uniform vec2 rimDir; uniform float rimW;
 uniform vec3 tintMul; uniform vec3 tintAdd; uniform float silhouette; uniform vec3 silCol;
@@ -62,6 +65,13 @@ vec2 blinkMap(vec2 s, float bl, out float skinK){
     if(s.y < top + d + Tc) return vec2(s.x, top + (s.y - top - d)*T_/Tc);
     skinK = smoothstep(0.55, 0.95, bl)*smoothstep(top + d + Tc, top + d + Tc + 2.0, s.y);
     return s;
+}
+
+// 口の図集の行 row（表情）の、旧リグ座標 p の画素（小片の外は透明）
+vec4 MP(float row, vec2 p){
+    vec2 q = (p - mouthBox.xy)/mouthBox.zw;
+    if(q.x < 0.0 || q.y < 0.0 || q.x > 1.0 || q.y > 1.0) return vec4(0);
+    return texture(tMouth, (vec2(mouthV, row)*mouthCell.xy + q*mouthBox.zw)/mouthCell.zw);
 }
 
 // 口なしの顔（基本）
@@ -112,13 +122,13 @@ vec4 shade(vec2 p){
             fc = mix(fc, cm, mm.r*closedK*min(wsum, 1.0));
         }
         if(openK > 0.0 && noHT > 0.0){
-            vec2 sc = vec2(mix(0.55, 1.0, mouthWide), max(open, 0.05));
-            float kd = MK0*mix(0.15, 0.7, clamp(open, 0.0, 1.0));
-            float sx = MC0.x + (s.x - mouthC.x)/sc.x;
-            float ld = mouthC.y + kd*(s.x - mouthC.x);
-            vec2 sm = vec2(sx, MC0.y + MK0*(sx - MC0.x) + (s.y - ld)/sc.y);
-            float ma = T(m4, sm).g*noHT*openK;
-            fc = mix(fc, T(tHPm, sm).rgb, ma);
+            // 開いた口: 重みがいちばん大きい表情で描いた母音の口（ハイテンションは口を動かさない）。
+            // 表情の切り替わりで2つの口を重ねると、位置の違う口が二重に見えるので混ぜない
+            vec2 sm = mouthC + (s - mouthC)/mouthK;
+            sm.y = mouthTop + (sm.y - mouthTop)/mouthSY;
+            vec4 mp = MP(mouthRow, sm);
+            float wsum = exprFace.x + exprFace.y + exprFace.z + exprFace2.x + exprFace2.y;
+            fc = mix(fc, mp.rgb, mp.a*noHT*openK*min(wsum, 1.0));
         }
         col = mix(col, fc, fm);
     }
@@ -153,6 +163,9 @@ void main(){
 '''
 
 
+MOUTH_SCALE = 0.9      # 母音別の口の大きさ（生成した口の、口の中心を基準にした倍率）
+
+
 def pad6(e):
     e = tuple(float(x) for x in e)
     return e + (0.0,) * (6 - len(e))
@@ -178,6 +191,26 @@ class Character:
             m = cv2.imread(os.path.join(RIG, k + '.png'), cv2.IMREAD_UNCHANGED)[..., [2, 1, 0, 3]].astype(np.float32) / 65535
             self.t[k] = gl.texture(m, key=('rig_p', k), mipmap=True, premul=False)
         self.black = gl.texture(np.zeros((2, 2, 4), np.float32), key=('black',), mipmap=False)
+        # 口の図集（ストレートα。小片の外も生成画像の肌の色なので前乗算しない）
+        self.mcfg = json.load(open(os.path.join(RIG, 'mouth.json')))
+        ma = cv2.imread(os.path.join(RIG, 'mouth_atlas.png'), cv2.IMREAD_UNCHANGED)[..., [2, 1, 0, 3]]
+        self.t['tMouth'] = gl.texture(ma, key=('rig_p', 'mouth'), mipmap=True, premul=False)
+
+    def mouth_shape(self, pose):
+        """口の (開き, 母音の列, 表情の行, 縦の倍率, 上唇の y, 口の中心)。母音は口の幅（songsync.SHAPES の幅）がいちばん近いもの、
+        表情は顔の重みがいちばん大きいもの。
+        母音の開きの 3 割に届かない開き（「ん」・子音の頭・小さな声）は閉じ口にする"""
+        import songsync as SS
+        vs = self.mcfg['vowels']
+        v = min(vs, key=lambda k: abs(SS.SHAPES[k][1] - pose.wide))
+        rel = pose.mouth / SS.SHAPES[v][0]
+        opn = pose.mouth if rel >= 0.3 else 0.0
+        sy = float(np.clip(0.3 + 0.75 * rel, 0.45, 1.0))
+        fa = pad6(pose.expr_face) if pose.expr_face is not None else pad6(pose.expr_full)
+        w = dict(zip(self.mcfg['exprs'], (fa[0], fa[1], fa[2], fa[4], fa[5])))
+        row = max(w, key=w.get)
+        pt = self.mcfg['patches'][f'{row}_{v}']
+        return opn, vs.index(v), self.mcfg['exprs'].index(row), sy, pt['top'], (pt['cx'], (pt['top'] + pt['bottom']) / 2)
 
     def H(self, Hm):
         """旧リグの uv（0..1 が 2048px）→ このキャンバスの uv"""
@@ -187,12 +220,13 @@ class Character:
         c = self.cfg
         ef = pad6(pose.expr_full)
         fa = pad6(pose.expr_face) if pose.expr_face is not None else ef
-        happy = (fa[1] + fa[4]) / max(sum(fa), 1e-6)
-        mc = np.array(c['mcN']) * (1 - happy) + np.array(c['mc0']) * happy
         bl = pose.blink
+        mopen, mv, mrow, msy, mtop, mc = self.mouth_shape(pose)
+        mb = self.mcfg['box']; g = self.mcfg['gap']
         return dict(
             exprFull=ef[:4], exprFull2=ef[4:], exprFace=fa[:4], exprFace2=fa[4:],
-            org=self.org, SZ=self.SZ, eyeSplit=c['eye_split'], breathY=c['breath_y'], MC0=tuple(c['mc0']), MK0=c['mk0'],
+            org=self.org, SZ=self.SZ, eyeSplit=c['eye_split'], breathY=c['breath_y'],
+            mouthBox=tuple(mb), mouthCell=(mb[2] + g, mb[3] + g, *self.mcfg['size']), mouthV=mv, mouthRow=mrow, mouthSY=msy, mouthTop=mtop, mouthC=mc, mouthK=MOUTH_SCALE,
             headRot=math.radians(sim['head']), headPivot=tuple(c['head_pivot']), headShift=sim['head_shift'],
             hatRot=math.radians(sim['hat']), hatPivot=tuple(c['hat_pivot']),
             bowRot=math.radians(sim['bow']), bowPivot=tuple(c['bow_pivot']),
@@ -201,7 +235,7 @@ class Character:
             breath=pose.breath, bodyShift=pose.body,
             handL=pose.handL, handR=pose.handR,
             blinkL=bl if pose.blinkL is None else pose.blinkL, blinkR=bl if pose.blinkR is None else pose.blinkR,
-            mouthOpen=pose.mouth, mouthWide=pose.wide, mouthC=tuple(mc),
+            mouthOpen=mopen,
         )
 
     def draw(self, Hm, uniforms, look=None):
@@ -296,13 +330,13 @@ class Standee:
         self.gl.draw(STAND_FS, Hm, u, dict(tex=self.tex, wt=self.wt))
 
 
-# ---------------------------------------------------------------- 連続コマ（op2-scene-v1〜v3）
+# ---------------------------------------------------------------- 連続コマ（op2-scene-v1〜v4）
 SCENE = os.path.join(E.WORK, 'scene')
 
 
 class Flipbook:
     """シーン別の連続コマ（prep_person.build_scenes がコマ0に合わせて重ねたもの）を描く。
-    コマは描き分けた絵なので変形はせず、呼吸・揺れ・光だけを付ける。version は op2-scene-v1 / v2 / v3"""
+    コマは描き分けた絵なので変形はせず、呼吸・揺れ・光だけを付ける。version は op2-scene-v1〜v4"""
     def __init__(self, gl, name, version='v2'):
         self.gl = gl
         d = os.path.join(SCENE, version)
