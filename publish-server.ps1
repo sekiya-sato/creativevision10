@@ -33,8 +33,8 @@ try {
     try {
         foreach ($rid in $runtimes) {
             $publishDir = Join-Path $workDir $rid
-            # AssemblyVersion を変更しない。反射・JSONを使用するためtrim/single-fileも無効とする。
-            & dotnet publish (Join-Path $root 'CvServer\CvServer.csproj') -c Release -r $rid --self-contained true -o $publishDir "-p:FileVersion=$Version" "-p:InformationalVersion=$Version" -p:PublishTrimmed=false -p:PublishSingleFile=false -p:PrintEnable=false
+            # AssemblyVersionは維持し、反射・JSONを保つためtrimは無効。ランタイム・ネイティブDLLも単一実行ファイルへ含める。
+            & dotnet publish (Join-Path $root 'CvServer\CvServer.csproj') -c Release -r $rid --self-contained true -o $publishDir "-p:FileVersion=$Version" "-p:InformationalVersion=$Version" -p:PublishTrimmed=false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:PrintEnable=false
             if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed: $rid" }
 
             # ローカルの認証情報を配布しない。設定は公開用雛形のみを同梱する。

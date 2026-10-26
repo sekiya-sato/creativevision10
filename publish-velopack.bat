@@ -83,7 +83,10 @@ rem Do not use the /p:Version option. It modifies the AssemblyVersion, which tri
 rem Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()
 rem dotnet publish "%PROJECT_DIR%CvWpfclient.csproj" -c Release -r win-x64 --self-contained true -o "%PUBLISH_DIR%" /p:FileVersion=%APP_VERSION% /p:InformationalVersion=%APP_VERSION%
 REM AssemblyVersion は変更せず、FileVersion / InformationalVersion だけ配布版数へ合わせる。
-dotnet publish "%PROJECT_DIR%CvWpfclient.csproj" -c Release -r win-x64 --self-contained true -o "%PUBLISH_DIR%" /p:FileVersion=%APP_VERSION% /p:InformationalVersion=%APP_VERSION%
+REM 明示版数の公開時は単一実行ファイルとし、ランタイム・ネイティブDLLを同梱する。trimは無効、印刷無効。
+set "RELEASE_PUBLISH_OPTIONS="
+if not "%RELEASE_VERSION%"=="" set "RELEASE_PUBLISH_OPTIONS=/p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:PublishTrimmed=false /p:DebugType=None /p:DebugSymbols=false /p:PrintEnable=false"
+dotnet publish "%PROJECT_DIR%CvWpfclient.csproj" -c Release -r win-x64 --self-contained true -o "%PUBLISH_DIR%" /p:FileVersion=%APP_VERSION% /p:InformationalVersion=%APP_VERSION% %RELEASE_PUBLISH_OPTIONS%
 if errorlevel 1 exit /b 1
 
 REM GitHub向けの明示版数ではローカル環境設定を除外する。
