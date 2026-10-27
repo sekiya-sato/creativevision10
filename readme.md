@@ -22,6 +22,7 @@
 2026年10月の時点で全てのメニューは完成しテストフェーズに入っています。 .NET 11 ではasync/await の改善等が行われているため、正式リリース後も継続的に機能改善を行う予定です。
 
 **2026/10/08 バージョン 0.9.0 リリースしました。**
+**2026/10/27 バージョン 0.9.1 リリースしました。**
 
 AIが普及する中、既存のWebシステムはOSやミドルウェア脆弱性により、セキュリティリスクが高まっています。Creative Vision 10 は、オープンソースでありながら、HTTP2、ｇRPCといった高パフォーマンスとセキュリティを重視した設計を行い、将来的な保守性と拡張性を確保しています。この最新3Tierアーキテクチャは、今後より普及していくことでしょう。
 
@@ -46,18 +47,20 @@ AIが普及する中、既存のWebシステムはOSやミドルウェア脆弱�
 
 # 目次
 
+- [プロジェクトの目的](#プロジェクトの目的)
+- [目次](#目次)
 - [ソリューション概要](#ソリューション概要)
-- [特徴・メリット](#特徴メリット-creative-vision-10-の十のメリット)
+- [特徴・メリット (Creative Vision 10 の十のメリット)](#特徴メリット-creative-vision-10-の十のメリット)
 - [プロジェクト別概要](#プロジェクト別概要)
-  - [CodeShare](#codeshare)
-  - [CvAsset](#cvasset)
-  - [CvBase](#cvbase)
-  - [CvBase-DB](#cvbase-db)
-  - [CvDomainLogic](#cvdomainlogic)
-  - [CvPrints](#cvprints)
-  - [CvServer](#cvserver)
-  - [CvWpfclient](#cvwpfclient)
-  - [Tests.*](#tests)
+  - [CodeShare (Layer 0)](#codeshare-layer-0)
+  - [CvAsset (Layer 0)](#cvasset-layer-0)
+  - [CvBase (Layer 1)](#cvbase-layer-1)
+  - [CvBase-DB (Layer 1.2)](#cvbase-db-layer-12)
+  - [CvDomainLogic (Layer 1.5)](#cvdomainlogic-layer-15)
+  - [CvPrints (Layer 1.4)](#cvprints-layer-14)
+  - [CvServer (Layer 2)](#cvserver-layer-2)
+  - [CvWpfclient (Layer 2)](#cvwpfclient-layer-2)
+  - [Tests.\* (Layer 3)](#tests-layer-3)
 
 # ソリューション概要
 
@@ -109,11 +112,10 @@ HTTP/2 + gRPC への移行により、従来より高速で効率のよい通信
 
 オープン技術を採用することで、特定製品の終了リスクを下げ、より広く、より長く使える基幹システムとして育てやすくなります。
 
-拾. **SaaS 展開との相性がよい**
+拾. **AIネイティブな開発およびAI連携の実装**
 
-オープンで保守しやすい構成にすることで、協力会社を含めた SaaS 型提供や月額課金モデルにも展開しやすくなります。
+開発の途中からAIとのバイブコーディングを実施、また「AI照会」などAI連携が可能な構成になっていることで、容易にカスタマイズが行なえ、また優れたUXを構築することが可能となっています。
 
-たとえば、サーバインフラ費、サーバ保守費、ソフトウェア保守費、サポート保守費などを含む月額課金体系とも親和性があります。
 
 # プロジェクト別概要
 
