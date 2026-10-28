@@ -126,6 +126,18 @@ C:\gitroot\UT\vscmd.bat dotnet build CvServer\CvServer.csproj
 C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj
 ```
 
+### 8.1 エージェント作業の失敗を減らす手順
+
+> 2026-10-28 の実行履歴分析（`Doc/spec/2026-09-28_設計判断記録.md` §5.12）で繰り返し発生した失敗の再発防止。
+
+- Edit は直前に Read した文字列（タブ・全角・BOM を含む）をそのまま `old_string` にする。既存ファイルへの Write も事前に Read する。パスは推測せず Glob / `git ls-files` で確認する。
+- DB MCP（cv-oracle / cv-sqlite）は `list_tables` / `describe_table` で表名・列名を確認してから `query` する。列名を推測しない。
+- build 前に、自分が起動した CvServer / CvWpfclient / UatVm を停止する（出力DLLのロックで MSB3027 / MSB3021 になる）。他の利用者のプロセスは止めない。
+- `Tests/TestServer` は `OutputType=Exe` で `dotnet test --filter` が0件になる。`Tests/TestServer/bin/Debug/net10.0/TestServer.exe` を直接実行する。
+- 600秒を超え得る処理（UatVm の build→実行、全件再集計、生成処理）は build と実行を分け、`run_in_background` で実行して完了通知を待つ。`sleep` や `until` の待機ループは書かない。
+- `.agents/skills/<name>` が Skill ツールで Unknown skill になる場合は、`SKILL.md` を直接読んで従う。
+- 1セッションで複数領域を続けない。メッセージが約300件・compaction が2回を超えそうなら、`AGETS-HANDOFF.md` の返却形式で要点を残して区切る。
+
 ## 9. 記録と完了報告
 
 - `Doc/aicoding_log.md` は作成・追記しない。関連skill等に残る同ファイルへの記録指示も適用しない。
