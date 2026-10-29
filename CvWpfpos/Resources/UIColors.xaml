@@ -1,0 +1,83 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<!--  CvWpfclient/Resources/UIColors.xaml と同一のパレット（POS で未使用の定義も配色統一のため保持）  -->
+
+	<!--  Window Border Colors  -->
+	<Color x:Key="winBorderColor1">#6D2FFF</Color>
+	<Color x:Key="winBorderColor2">#FB539B</Color>
+	<Color x:Key="winBorderColor3">#836EFB</Color>
+	<Color x:Key="OuterWindowBackgroundStartColor">#40000000</Color>
+	<Color x:Key="OuterWindowBackgroundEndColor">#15000000</Color>
+	<Color x:Key="CvnetMainBackgroundStartColor">#FF003366</Color>
+	<Color x:Key="CvnetMainBackgroundMiddleColor">#2C62A0</Color>
+	<Color x:Key="CvnetMainBackgroundEndColor">#FF0074D9</Color>
+
+	<!--  Color Palette  -->
+	<SolidColorBrush x:Key="PalettePink1"
+		Color="#E285DE" />
+	<SolidColorBrush x:Key="CaretColor"
+		Color="#784DFD" />
+	<SolidColorBrush x:Key="PaletteCyan"
+		Color="#4ADAEC" />
+	<SolidColorBrush x:Key="PalettePink2"
+		Color="#FB539B" />
+	<SolidColorBrush x:Key="PalettePurple1"
+		Color="#7E82FC" />
+	<SolidColorBrush x:Key="StatusTitleColor"
+		Color="#FFC047" />
+	<SolidColorBrush x:Key="PalettePink3"
+		Color="#EF6C96" />
+	<SolidColorBrush x:Key="PaletteBlue1"
+		Color="#78A3FC" />
+	<SolidColorBrush x:Key="MenuTitleColor"
+		Color="#07F3C0" />
+	<SolidColorBrush x:Key="PaletteSalmon"
+		Color="#FBA1AA" />
+	<SolidColorBrush x:Key="PaletteGreen"
+		Color="#4CD038" />
+	<SolidColorBrush x:Key="PaletteBlue2"
+		Color="#0077B6" />
+	<SolidColorBrush x:Key="PaletteNavy"
+		Color="#023E8A" />
+
+	<!--  Font Colors  -->
+	<SolidColorBrush x:Key="TitleColor"
+		Color="White" />
+	<SolidColorBrush x:Key="SubTitleColor"
+		Color="White" />
+	<SolidColorBrush x:Key="plainTextColor0"
+		Color="White" />
+	<SolidColorBrush x:Key="NegativeForegroundBrush"
+		Color="#D32F2F" />
+	<SolidColorBrush x:Key="ZeroForegroundBrush"
+		Color="#9E9E9E" />
+
+	<!--  Panel Colors  -->
+	<SolidColorBrush x:Key="panelColor"
+		Color="#7E82FC" />
+	<SolidColorBrush x:Key="panelOverColor"
+		Color="#7E82FC" />
+	<SolidColorBrush x:Key="panelActiveColor"
+		Color="#6D2FFF" />
+	<SolidColorBrush x:Key="StatusChipBorderBrush"
+		Color="#40FFFFFF" />
+	<SolidColorBrush x:Key="DataGridAlternatingRowBackgroundBrush"
+		Color="Beige" />
+
+	<!--  Common Background  -->
+	<SolidColorBrush x:Key="AppCommonBackgroundBrush"
+		Color="#FAEBD7" />
+
+	<!--  Button Colors  -->
+	<SolidColorBrush x:Key="PrimaryButtonColor"
+		Color="#6D2FFF" />
+
+	<!--  POS 固有: 会計パネル / 合計表示  -->
+	<SolidColorBrush x:Key="PosTotalPanelBackgroundBrush"
+		Color="#FF1E293B" />
+	<SolidColorBrush x:Key="PosTotalPanelForegroundBrush"
+		Color="White" />
+	<SolidColorBrush x:Key="PosCheckoutOverlayBrush"
+		Color="#AA0F172A" />
+	<SolidColorBrush x:Key="PosCheckoutAccentBrush"
+		Color="#FF16A34A" />
+</ResourceDictionary>

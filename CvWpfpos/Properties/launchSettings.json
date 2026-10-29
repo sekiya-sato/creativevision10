@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "cvpos10": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

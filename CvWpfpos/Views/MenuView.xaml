@@ -1,0 +1,78 @@
+<helpers:BaseWindow x:Class="CvWpfpos.Views.MenuView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:helpers="clr-namespace:CvWpfpos.Helpers"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="clr-namespace:CvWpfpos.ViewModels"
+	Title="CV POS メニュー"
+	Width="800" Height="600"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	ResizeMode="CanResize"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:MenuViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<!--  ヘッダー  -->
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="16,12"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<StackPanel Orientation="Horizontal">
+				<materialDesign:PackIcon Width="32" Height="32"
+					VerticalAlignment="Center" Kind="PointOfSale" />
+				<TextBlock Margin="12,0,0,0" VerticalAlignment="Center"
+					FontSize="22" FontWeight="SemiBold" Text="CV POS" />
+			</StackPanel>
+		</materialDesign:ColorZone>
+
+		<!--  メニューボタン  -->
+		<UniformGrid Grid.Row="1" Margin="24"
+			Columns="2" Rows="3">
+			<Button Margin="12"
+				Command="{Binding OpenSalesCommand}"
+				Content="売上入力"
+				Style="{StaticResource PosMenuButton}" />
+			<Button Margin="12"
+				Command="{Binding OpenSeisanCommand}"
+				Content="精算入力"
+				Style="{StaticResource PosMenuButton}" />
+			<Button Margin="12"
+				Command="{Binding OpenReportsCommand}"
+				Content="各種レポート"
+				Style="{StaticResource PosMenuButton}" />
+			<Button Margin="12"
+				Command="{Binding OpenJournalCommand}"
+				Content="レシート一覧"
+				Style="{StaticResource PosMenuButton}" />
+			<Button Margin="12"
+				Command="{Binding ReLoginCommand}"
+				Content="再ログイン"
+				Style="{StaticResource PosMenuButton}" />
+			<Button Margin="12"
+				Command="{Binding ExitCommand}"
+				Content="終了"
+				Style="{StaticResource PosMenuButton}" />
+		</UniformGrid>
+
+		<!--  フッター  -->
+		<materialDesign:ColorZone Grid.Row="2"
+			Padding="12,8"
+			Mode="PrimaryDark">
+			<Grid>
+				<TextBlock HorizontalAlignment="Left"
+					Text="{Binding StatusText}" />
+				<TextBlock HorizontalAlignment="Right"
+					Text="{Binding CurrentDateText}" />
+			</Grid>
+		</materialDesign:ColorZone>
+	</Grid>
+</helpers:BaseWindow>

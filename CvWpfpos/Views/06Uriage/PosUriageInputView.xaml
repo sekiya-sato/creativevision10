@@ -1,0 +1,405 @@
+<helpers:BaseWindow x:Class="CvWpfpos.Views._06Uriage.PosUriageInputView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfpos.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfpos.ViewModels._06Uriage"
+	Title="売上入力"
+	Width="1280" Height="820" MinWidth="1024" MinHeight="700"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FocusManager.FocusedElement="{Binding ElementName=BarcodeTextBox}"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:PosUriageInputViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<helpers:BaseWindow.InputBindings>
+		<KeyBinding Command="{Binding StartCheckoutCommand}"
+			Gesture="F12" />
+	</helpers:BaseWindow.InputBindings>
+
+	<materialDesign:DialogHost CloseOnClickAway="False"
+		DialogTheme="Inherit"
+		IsOpen="{Binding IsCheckoutMode, Mode=TwoWay}"
+		OverlayBackground="{DynamicResource PosCheckoutOverlayBrush}">
+
+		<!--  ===== 会計ダイアログ =====  -->
+		<materialDesign:DialogHost.DialogContent>
+			<Grid Width="560"
+				Margin="24,20">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+
+				<StackPanel Grid.Row="0"
+					Margin="0,0,0,4"
+					Orientation="Horizontal">
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="CashRegister" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+						Text="会計" />
+				</StackPanel>
+
+				<StackPanel Grid.Row="1"
+					Margin="0,4,0,16">
+					<TextBlock Style="{StaticResource StatusTextBlockStyle}"
+						Text="{Binding SubTotal, StringFormat=税抜小計 {0:N0}円}" />
+					<TextBlock Style="{StaticResource StatusTextBlockStyle}"
+						Text="{Binding TaxAmount, StringFormat=消費税 {0:N0}円}" />
+					<TextBlock Margin="0,4,0,0"
+						FontSize="22" FontWeight="Bold"
+						Text="{Binding TotalAmount, StringFormat=ご請求額 {0:N0}円}" />
+				</StackPanel>
+
+				<Grid Grid.Row="2">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+					</Grid.RowDefinitions>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="130" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+
+					<TextBlock Grid.Row="0" Grid.Column="0"
+						Style="{StaticResource PosPaymentLabel}"
+						Text="現金" />
+					<TextBox Grid.Row="0" Grid.Column="1"
+						helpers:FocusHelper.IsEnterToNext="True"
+						materialDesign:HintAssist.Hint="現金"
+						Style="{StaticResource PosAmountTextBox}"
+						Text="{Binding CashAmount, UpdateSourceTrigger=PropertyChanged}" />
+
+					<TextBlock Grid.Row="1" Grid.Column="0"
+						Style="{StaticResource PosPaymentLabel}"
+						Text="カード" />
+					<TextBox Grid.Row="1" Grid.Column="1"
+						helpers:FocusHelper.IsEnterToNext="True"
+						materialDesign:HintAssist.Hint="カード"
+						Style="{StaticResource PosAmountTextBox}"
+						Text="{Binding CardAmount, UpdateSourceTrigger=PropertyChanged}" />
+
+					<TextBlock Grid.Row="2" Grid.Column="0"
+						Style="{StaticResource PosPaymentLabel}"
+						Text="その他金種" />
+					<TextBox Grid.Row="2" Grid.Column="1"
+						helpers:FocusHelper.IsEnterToNext="True"
+						materialDesign:HintAssist.Hint="その他金種"
+						Style="{StaticResource PosAmountTextBox}"
+						Text="{Binding OtherAmount, UpdateSourceTrigger=PropertyChanged}" />
+				</Grid>
+
+				<Separator Grid.Row="3"
+					Margin="0,18"
+					Style="{StaticResource MaterialDesignSeparator}" />
+
+				<DockPanel Grid.Row="4">
+					<StackPanel HorizontalAlignment="Right"
+						DockPanel.Dock="Right" Orientation="Horizontal">
+						<Button Margin="0,0,10,0"
+							Command="{Binding CancelCheckoutCommand}"
+							Content="戻る (ESC)"
+							Style="{StaticResource MaterialDesignOutlinedButton}" />
+						<Button Command="{Binding CompleteCheckoutCommand}"
+							Content="売上確定・印字"
+							Style="{StaticResource PosCheckoutButton}" />
+					</StackPanel>
+					<TextBlock VerticalAlignment="Center"
+						FontSize="20" FontWeight="Bold"
+						Text="{Binding ChangeAmount, StringFormat=お釣り {0:N0}円}" />
+				</DockPanel>
+			</Grid>
+		</materialDesign:DialogHost.DialogContent>
+
+		<Grid>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
+
+			<!--  ===== ヘッダー: ColorZone ツールバー =====  -->
+			<materialDesign:ColorZone Grid.Row="0"
+				Padding="12,8"
+				materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+				<DockPanel>
+					<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+						<materialDesign:PackIcon Margin="0,0,4,0" VerticalAlignment="Center"
+							Kind="AccountCircle" />
+						<TextBlock Margin="0,0,16,0" VerticalAlignment="Center"
+							FontSize="13"
+							Text="{Binding LoginId}" />
+						<Button Command="{Binding PrintTaxInvoiceCommand}"
+							Style="{StaticResource PosSecondaryButton}"
+							ToolTip="直近に確定した売上の領収書を印字する（必要なときのみ）">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="ReceiptText" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="領収書" />
+							</StackPanel>
+						</Button>
+						<Separator Margin="8,4"
+							Style="{StaticResource MaterialDesignSeparator}">
+							<Separator.LayoutTransform>
+								<RotateTransform Angle="90" />
+							</Separator.LayoutTransform>
+						</Separator>
+						<Button Command="{Binding ConnectDisplayCommand}"
+							Style="{StaticResource PosSecondaryButton}"
+							ToolTip="客用ディスプレイ DM-D30 に接続する">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="Monitor" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="DM-D30" />
+							</StackPanel>
+						</Button>
+						<Button Command="{Binding ConnectPrinterCommand}"
+							Style="{StaticResource PosSecondaryButton}"
+							ToolTip="レシートプリンタ TM-m30II に接続する">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="Printer" />
+								<TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+									Text="TM-m30II" />
+							</StackPanel>
+						</Button>
+					</StackPanel>
+					<StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+						<Button Margin="0,0,8,0"
+							Command="{Binding ExitCommand}"
+							Style="{StaticResource ToolCommandButton}"
+							ToolTip="閉じる (Esc)">
+							<materialDesign:PackIcon Kind="ArrowLeft" />
+						</Button>
+						<materialDesign:PackIcon Width="28" Height="28"
+							VerticalAlignment="Center"
+							Kind="PointOfSale" />
+						<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+							FontSize="20" FontWeight="SemiBold" Text="売上入力" />
+						<TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+							FontSize="13" Opacity="0.85"
+							Text="{Binding StoreName}" />
+					</StackPanel>
+				</DockPanel>
+			</materialDesign:ColorZone>
+
+			<!--  返品モードバナー  -->
+			<Border Grid.Row="1"
+				Margin="12,8,12,0" Padding="12,6"
+				Background="{DynamicResource MaterialDesignValidationErrorBrush}"
+				CornerRadius="4"
+				Visibility="{Binding IsReturnMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+				<TextBlock HorizontalAlignment="Center"
+					FontSize="16" FontWeight="Bold" Foreground="White"
+					Text="返品モード" />
+			</Border>
+
+			<!--  ===== バーコード読取 =====  -->
+			<materialDesign:Card Grid.Row="2"
+				Margin="12,12,12,0" Padding="16,12"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="Auto" />
+					</Grid.ColumnDefinitions>
+					<materialDesign:PackIcon Grid.Column="0"
+						Width="32" Height="32"
+						Margin="0,0,12,0" VerticalAlignment="Center"
+						Kind="BarcodeScan" />
+					<TextBox x:Name="BarcodeTextBox"
+						Grid.Column="1"
+						materialDesign:HintAssist.Hint="バーコード" materialDesign:TextFieldAssist.HasClearButton="True"
+						CaretBrush="{DynamicResource CaretColor}"
+						Style="{StaticResource PosBarcodeTextBox}"
+						Text="{Binding BarcodeText, UpdateSourceTrigger=PropertyChanged}">
+						<TextBox.InputBindings>
+							<KeyBinding Command="{Binding ScanBarcodeCommand}"
+								Key="Enter" />
+						</TextBox.InputBindings>
+					</TextBox>
+					<Button Grid.Column="2"
+						Margin="16,0,0,0"
+						Command="{Binding ScanBarcodeCommand}"
+						Style="{StaticResource PosPrimaryButton}"
+						ToolTip="バーコードを読み取って明細に追加する">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="Barcode" />
+							<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+								Text="読取" />
+						</StackPanel>
+					</Button>
+				</Grid>
+			</materialDesign:Card>
+
+			<!--  ===== ツールバー =====  -->
+			<StackPanel Grid.Row="3"
+				Margin="12,8,12,0" Orientation="Horizontal">
+				<Button Command="{Binding DeleteLineCommand}"
+					Content="行削除"
+					Style="{StaticResource PosSecondaryButton}" />
+				<Button Command="{Binding IncreaseQuantityCommand}"
+					Content="数量+"
+					Style="{StaticResource PosSecondaryButton}" />
+				<Button Command="{Binding DecreaseQuantityCommand}"
+					Content="数量-"
+					Style="{StaticResource PosSecondaryButton}" />
+				<Button Command="{Binding ToggleLinePSCommand}"
+					Content="P/S"
+					Style="{StaticResource PosSecondaryButton}" />
+				<Button Command="{Binding AssignLineStaffCommand}"
+					Content="担当"
+					Style="{StaticResource PosSecondaryButton}" />
+				<Button Command="{Binding SearchProductCommand}"
+					Content="商品検索"
+					Style="{StaticResource PosSecondaryButton}" />
+				<Button Command="{Binding HoldSaleCommand}"
+					Content="保留"
+					Style="{StaticResource PosSecondaryButton}" />
+				<Button Command="{Binding ToggleReturnModeCommand}"
+					Content="返品"
+					Style="{StaticResource PosSecondaryButton}" />
+			</StackPanel>
+
+			<!--  ===== 明細 =====  -->
+			<materialDesign:Card Grid.Row="4"
+				Margin="12" Padding="0"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+
+					<!--  カードヘッダー: 件数（メッセージはフッターに集約する）  -->
+					<Border Grid.Row="0"
+						Padding="12,8"
+						Background="{DynamicResource MaterialDesignToolBarBackground}"
+						CornerRadius="8,8,0,0">
+						<DockPanel>
+							<TextBlock Margin="0,0,12,0" VerticalAlignment="Center"
+								DockPanel.Dock="Right"
+								Style="{StaticResource StatusTextBlockStyle}"
+								Text="{Binding CartLines.Count, StringFormat={}明細: {0:N0}件}" />
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+									Kind="FormatListBulleted" />
+								<TextBlock VerticalAlignment="Center"
+									FontWeight="SemiBold" Text="明細" />
+							</StackPanel>
+						</DockPanel>
+					</Border>
+
+					<DataGrid Grid.Row="1"
+						materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+						AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+						ColumnHeaderStyle="{StaticResource MenteDataGridColumnHeader}"
+						EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+						HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+						IsReadOnly="True" IsSynchronizedWithCurrentItem="True"
+						ItemsSource="{Binding CartLines}"
+						SelectedItem="{Binding SelectedLine, Mode=TwoWay}"
+						Style="{StaticResource MaterialDesignDataGrid}"
+						VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="70"
+								Binding="{Binding LineNo}"
+								Header="No." />
+							<DataGridTextColumn Width="170"
+								Binding="{Binding Barcode}"
+								Header="バーコード" />
+							<DataGridTextColumn Width="*"
+								Binding="{Binding Name}"
+								Header="商品名" />
+							<DataGridTextColumn Width="120"
+								Binding="{Binding ColorName}"
+								Header="カラー" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding SizeName}"
+								Header="サイズ" />
+							<DataGridTextColumn Width="40"
+								Binding="{Binding Kubun, Converter={StaticResource KubunToPsConverter}}"
+								Header="P/S" />
+							<DataGridTextColumn Width="100"
+								Binding="{Binding StaffName}"
+								Header="担当" />
+							<DataGridTextColumn Width="110"
+								Binding="{Binding UnitPrice, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="単価" />
+							<DataGridTextColumn Width="90"
+								Binding="{Binding Quantity, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="点数" />
+							<DataGridTextColumn Width="140"
+								Binding="{Binding Amount, StringFormat={}{0:N0}}"
+								ElementStyle="{StaticResource DataGridRightTextBlock}"
+								Header="明細金額" />
+						</DataGrid.Columns>
+					</DataGrid>
+				</Grid>
+			</materialDesign:Card>
+
+			<!--  ===== フッター: 進捗 + 合計パネル =====  -->
+			<Grid Grid.Row="5"
+				Margin="12,0,12,12">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="380" />
+				</Grid.ColumnDefinitions>
+
+				<StackPanel VerticalAlignment="Bottom">
+					<ProgressBar Margin="0,0,16,10"
+						IsIndeterminate="True"
+						Style="{StaticResource MaterialDesignLinearProgressBar}"
+						Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+					<TextBlock Margin="0,0,16,0"
+						Style="{StaticResource StatusTextBlockStyle}"
+						Text="{Binding StatusMessage}"
+						TextWrapping="Wrap" />
+				</StackPanel>
+
+				<materialDesign:Card Grid.Column="1"
+					Style="{StaticResource PosTotalPanelCard}">
+					<StackPanel>
+						<TextBlock Style="{StaticResource PosTotalCaptionText}"
+							Text="合計" />
+						<TextBlock Style="{StaticResource PosTotalQuantityText}"
+							Text="{Binding TotalQuantity, StringFormat=合計点数 {0:N0}点}" />
+						<TextBlock Style="{StaticResource PosTotalSubText}"
+							Text="{Binding SubTotal, StringFormat=税抜小計 {0:N0}円}" />
+						<TextBlock Style="{StaticResource PosTotalSubText}"
+							Text="{Binding TaxAmount, StringFormat=消費税 {0:N0}円}" />
+						<TextBlock Style="{StaticResource PosTotalAmountText}"
+							Text="{Binding TotalAmount, StringFormat=合計金額 {0:N0}円}" />
+						<Button Margin="0,12,0,0"
+							Command="{Binding StartCheckoutCommand}"
+							Style="{StaticResource PosCheckoutButton}"
+							ToolTip="会計に進む (F12)">
+							<StackPanel Orientation="Horizontal">
+								<materialDesign:PackIcon VerticalAlignment="Center"
+									Kind="CashMultiple" />
+								<TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+									Text="会計 (F12)" />
+							</StackPanel>
+						</Button>
+					</StackPanel>
+				</materialDesign:Card>
+			</Grid>
+		</Grid>
+	</materialDesign:DialogHost>
+</helpers:BaseWindow>

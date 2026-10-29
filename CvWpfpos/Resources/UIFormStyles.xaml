@@ -1,0 +1,130 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+	<!--
+		CvWpfclient/Resources/UIFormStyles.xaml と同じキー・同じ見た目のフォーム系スタイル。
+		検索テキストボックス系（MenteSearchTextBox）は POS では使わないため除外している。
+		個別 View で挙動を変えたい場合のみ、同名キーをローカルで再定義してシャドウする。
+	-->
+
+	<!--  DataGrid ヘッダースタイル（テーマカラーベース）  -->
+	<Style x:Key="MenteDataGridColumnHeader"
+		BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+		TargetType="DataGridColumnHeader">
+		<Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Primary.Light}" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary.Foreground}" />
+		<Setter Property="Padding" Value="12,8" />
+		<Setter Property="FontWeight" Value="SemiBold" />
+	</Style>
+
+	<!--  編集フォームのラベルスタイル  -->
+	<Style x:Key="FormLabel"
+		TargetType="TextBlock">
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="FontWeight" Value="Medium" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+		<Setter Property="Margin" Value="4,0,8,0" />
+	</Style>
+
+	<!--  編集フォームの TextBox スタイル  -->
+	<Style x:Key="FormTextBox"
+		BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"
+		TargetType="TextBox">
+		<Setter Property="Margin" Value="0,4" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+		<Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.7" />
+		<!--  スクリーンリーダー用の名前を浮動ラベル(Hint)から供給（NumericFormTextBox も継承）  -->
+		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=(materialDesign:HintAssist.Hint)}" />
+	</Style>
+
+	<!--  数値入力用 TextBox スタイル  -->
+	<Style x:Key="NumericFormTextBox"
+		BasedOn="{StaticResource FormTextBox}"
+		TargetType="TextBox">
+		<Setter Property="HorizontalContentAlignment" Value="Right" />
+	</Style>
+
+	<!--  設定/変換画面のラベル  -->
+	<Style x:Key="SettingLabel"
+		TargetType="TextBlock">
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="FontWeight" Value="Medium" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+		<Setter Property="Margin" Value="0,0,16,0" />
+	</Style>
+
+	<!--  ステータス表示テキスト  -->
+	<Style x:Key="StatusTextBlockStyle"
+		TargetType="TextBlock">
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+	</Style>
+
+	<!--  明細の読み取り専用テキスト  -->
+	<Style x:Key="MeisaiReadOnlyTextBlock"
+		TargetType="TextBlock">
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
+		<Setter Property="Padding" Value="6,0" />
+		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+	</Style>
+
+	<!--  明細の右寄せ読み取り専用テキスト（MeisaiReadOnlyTextBlock を継承）  -->
+	<Style x:Key="MeisaiRightReadOnlyTextBlock"
+		BasedOn="{StaticResource MeisaiReadOnlyTextBlock}"
+		TargetType="TextBlock">
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="TextAlignment" Value="Right" />
+		<Setter Property="Padding" Value="0,0,18,0" />
+	</Style>
+
+	<!--  DataGrid セル内の右寄せテキスト  -->
+	<Style x:Key="DataGridRightTextBlock"
+		TargetType="TextBlock">
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="TextAlignment" Value="Right" />
+		<Setter Property="Padding" Value="0,0,0,0" />
+	</Style>
+
+	<!--  DataGrid セル内の右寄せ TextBox  -->
+	<Style x:Key="DataGridRightTextBox"
+		TargetType="TextBox">
+		<Setter Property="HorizontalContentAlignment" Value="Right" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="Padding" Value="0,0,0,0" />
+	</Style>
+
+	<!--
+		ツールバー系コマンドボタン。MaterialDesignToolForegroundButton と同一の見た目・挙動に、
+		ToolTip 由来のスクリーンリーダー名を付与するだけ（ToolTip 未設定なら Name は空でコンテンツ名にフォールバック）。
+	-->
+	<Style x:Key="ToolCommandButton"
+		BasedOn="{StaticResource MaterialDesignToolForegroundButton}"
+		TargetType="Button">
+		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=ToolTip}" />
+	</Style>
+
+	<!--
+		入力コントロールの浮動ラベル(HintAssist.Hint)をスクリーンリーダー名として公開するスタイル群。
+		見た目は BasedOn 元と同一で、AutomationProperties.Name を Hint にバインドするだけ（Hint 未設定なら空）。
+	-->
+	<Style x:Key="FormComboBox"
+		BasedOn="{StaticResource MaterialDesignOutlinedComboBox}"
+		TargetType="ComboBox">
+		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=(materialDesign:HintAssist.Hint)}" />
+	</Style>
+
+	<Style x:Key="FormDatePicker"
+		BasedOn="{StaticResource MaterialDesignFloatingHintDatePicker}"
+		TargetType="DatePicker">
+		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=(materialDesign:HintAssist.Hint)}" />
+	</Style>
+
+	<!--  パスワード入力：Hint（ラベル）を名前に供給。値は公開しない  -->
+	<Style x:Key="FormPasswordBox"
+		BasedOn="{StaticResource MaterialDesignFloatingHintPasswordBox}"
+		TargetType="PasswordBox">
+		<Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=(materialDesign:HintAssist.Hint)}" />
+	</Style>
+</ResourceDictionary>

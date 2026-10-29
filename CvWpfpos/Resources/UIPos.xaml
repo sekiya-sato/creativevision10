@@ -1,0 +1,111 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+	<!--
+		POS 固有のスタイル。UIFormStyles.xaml（CvWpfclient 共通）を土台に、
+		店頭オペレーション向けのタッチしやすいサイズ・視認性を上乗せする。
+	-->
+
+	<!--  バーコード入力欄（大きめ・等幅寄り）  -->
+	<Style x:Key="PosBarcodeTextBox"
+		BasedOn="{StaticResource FormTextBox}"
+		TargetType="TextBox">
+		<Setter Property="FontSize" Value="24" />
+		<Setter Property="MinHeight" Value="52" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+	</Style>
+
+	<!--  金額入力欄（右寄せ・大きめ）  -->
+	<Style x:Key="PosAmountTextBox"
+		BasedOn="{StaticResource NumericFormTextBox}"
+		TargetType="TextBox">
+		<Setter Property="FontSize" Value="20" />
+		<Setter Property="MinHeight" Value="46" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+	</Style>
+
+	<!--  会計ダイアログのラベル  -->
+	<Style x:Key="PosPaymentLabel"
+		BasedOn="{StaticResource FormLabel}"
+		TargetType="TextBlock">
+		<Setter Property="FontSize" Value="16" />
+	</Style>
+
+	<!--  合計パネル（右下のダークカード）内のテキスト  -->
+	<Style x:Key="PosTotalCaptionText"
+		TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{DynamicResource PosTotalPanelForegroundBrush}" />
+		<Setter Property="FontSize" Value="18" />
+		<Setter Property="FontWeight" Value="SemiBold" />
+	</Style>
+
+	<Style x:Key="PosTotalQuantityText"
+		TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{DynamicResource PosTotalPanelForegroundBrush}" />
+		<Setter Property="FontSize" Value="22" />
+		<Setter Property="Margin" Value="0,4,0,0" />
+	</Style>
+
+	<!--  合計パネル内の内訳（税抜小計・消費税）  -->
+	<Style x:Key="PosTotalSubText"
+		TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{DynamicResource PosTotalPanelForegroundBrush}" />
+		<Setter Property="FontSize" Value="14" />
+		<Setter Property="Opacity" Value="0.85" />
+	</Style>
+
+	<Style x:Key="PosTotalAmountText"
+		TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{DynamicResource PosTotalPanelForegroundBrush}" />
+		<Setter Property="FontSize" Value="32" />
+		<Setter Property="FontWeight" Value="Bold" />
+	</Style>
+
+	<!--  主要操作ボタン（読取・会計・売上確定）  -->
+	<Style x:Key="PosPrimaryButton"
+		BasedOn="{StaticResource MaterialDesignRaisedButton}"
+		TargetType="Button">
+		<Setter Property="MinHeight" Value="52" />
+		<Setter Property="MinWidth" Value="132" />
+		<Setter Property="FontSize" Value="16" />
+		<Setter Property="FontWeight" Value="SemiBold" />
+	</Style>
+
+	<!--  会計確定ボタン（アクセントカラー）  -->
+	<Style x:Key="PosCheckoutButton"
+		BasedOn="{StaticResource PosPrimaryButton}"
+		TargetType="Button">
+		<Setter Property="Background" Value="{DynamicResource PosCheckoutAccentBrush}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource PosCheckoutAccentBrush}" />
+		<Setter Property="Foreground" Value="White" />
+	</Style>
+
+	<!--
+		ヘッダー(ColorZone PrimaryMid)上に置く副次操作ボタン。
+		MaterialDesignOutlinedButton は前景色がプライマリ色に固定されるため、
+		同色の ColorZone 上では見えなくなる。継承した前景色を使う ToolCommandButton を土台にする。
+	-->
+	<Style x:Key="PosSecondaryButton"
+		BasedOn="{StaticResource ToolCommandButton}"
+		TargetType="Button">
+		<Setter Property="Height" Value="36" />
+		<Setter Property="Margin" Value="4,0" />
+		<Setter Property="Padding" Value="12,0" />
+	</Style>
+
+	<!--  合計パネル  -->
+	<Style x:Key="PosTotalPanelCard"
+		TargetType="materialDesign:Card">
+		<Setter Property="Padding" Value="16" />
+		<Setter Property="UniformCornerRadius" Value="8" />
+		<Setter Property="Background" Value="{DynamicResource PosTotalPanelBackgroundBrush}" />
+		<Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp4" />
+	</Style>
+	<!--  メニュー画面の大きめボタン  -->
+	<Style x:Key="PosMenuButton"
+		BasedOn="{StaticResource MaterialDesignRaisedButton}"
+		TargetType="Button">
+		<Setter Property="FontSize" Value="20" />
+		<Setter Property="FontWeight" Value="SemiBold" />
+		<Setter Property="MinHeight" Value="72" />
+	</Style>
+</ResourceDictionary>

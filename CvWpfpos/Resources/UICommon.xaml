@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+	<sys:Double x:Key="StandardWindowWidth">1244</sys:Double>
+	<sys:Double x:Key="StandardWindowHeight">900</sys:Double>
+
+	<Style TargetType="{x:Type DataGridColumnHeader}">
+		<Setter Property="BorderBrush">
+			<Setter.Value>
+				<Binding FallbackValue="Transparent" Path="HorizontalGridLinesBrush"
+					RelativeSource="{RelativeSource AncestorType={x:Type DataGrid}}" />
+			</Setter.Value>
+		</Setter>
+		<Setter Property="BorderThickness">
+			<Setter.Value>
+				<Binding FallbackValue="0,0,1,0" Path="GridLinesVisibility"
+					RelativeSource="{RelativeSource AncestorType={x:Type DataGrid}}" />
+			</Setter.Value>
+		</Setter>
+	</Style>
+</ResourceDictionary>

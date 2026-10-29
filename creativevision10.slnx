@@ -19,6 +19,7 @@
   <Project Path="CvPrints/CvPrints.csproj" />
   <Project Path="CvServer/CvServer.csproj" />
   <Project Path="CvWpfclient/CvWpfclient.csproj" />
-  <Project Path="McpSql/McpSql.csproj" Id="977b54c9-67b8-4d96-ad79-cfaf735fd763" />
+  <Project Path="CvWpfpos/CvWpfpos.csproj" />
   <Project Path="McpOracle/McpOracle.csproj" />
+  <Project Path="McpSql/McpSql.csproj" Id="977b54c9-67b8-4d96-ad79-cfaf735fd763" />
 </Solution>

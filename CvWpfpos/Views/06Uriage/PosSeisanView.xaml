@@ -1,0 +1,306 @@
+<helpers:BaseWindow x:Class="CvWpfpos.Views._06Uriage.PosSeisanView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfpos.Helpers" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:vm="clr-namespace:CvWpfpos.ViewModels._06Uriage"
+	Title="日次精算"
+	Width="1000" Height="800" MinWidth="800" MinHeight="600"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:PosSeisanViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<!--  ===== ヘッダー =====  -->
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="Calculator" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold" Text="日次精算" />
+				</StackPanel>
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="Close" />
+					</Button>
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<!--  ===== 日付選択 + 集計ボタン =====  -->
+		<StackPanel Grid.Row="1"
+			Margin="16,12,16,0" Orientation="Horizontal">
+			<DatePicker SelectedDate="{Binding SettlementDate}" />
+			<Button Margin="12,0,0,0"
+				Command="{Binding LoadCommand}"
+				Content="集計"
+				Style="{StaticResource PosPrimaryButton}" />
+		</StackPanel>
+
+		<!--  ===== 売上サマリー =====  -->
+		<materialDesign:Card Grid.Row="2"
+			Margin="16,12,16,0" Padding="16,12"
+			materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+
+				<TextBlock Grid.Row="0" Grid.Column="0"
+					Style="{StaticResource StatusTextBlockStyle}"
+					Text="{Binding TransactionCount, StringFormat=売上件数 {0:N0}件}" />
+				<TextBlock Grid.Row="0" Grid.Column="1"
+					Style="{StaticResource StatusTextBlockStyle}"
+					Text="{Binding ReturnCount, StringFormat=返品件数 {0:N0}件}" />
+				<TextBlock Grid.Row="0" Grid.Column="2"
+					Style="{StaticResource StatusTextBlockStyle}"
+					Text="{Binding TotalQuantity, StringFormat=合計点数 {0:N0}点}" />
+				<TextBlock Grid.Row="0" Grid.Column="3"
+					Style="{StaticResource StatusTextBlockStyle}"
+					Text="{Binding TotalAmount, StringFormat=売上合計 {0:N0}円}" />
+
+				<TextBlock Grid.Row="1" Grid.Column="0"
+					Style="{StaticResource StatusTextBlockStyle}"
+					Text="{Binding CashSalesTotal, StringFormat=現金売上 {0:N0}円}" />
+				<TextBlock Grid.Row="1" Grid.Column="1"
+					Style="{StaticResource StatusTextBlockStyle}"
+					Text="{Binding CardSalesTotal, StringFormat=カード売上 {0:N0}円}" />
+				<TextBlock Grid.Row="1" Grid.Column="2"
+					Style="{StaticResource StatusTextBlockStyle}"
+					Text="{Binding OtherSalesTotal, StringFormat=その他売上 {0:N0}円}" />
+			</Grid>
+		</materialDesign:Card>
+
+		<!--  ===== 金種枚数 + 差異計算 =====  -->
+		<Grid Grid.Row="3"
+			Margin="16,12,16,0">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+
+			<!-- 金種枚数 -->
+			<materialDesign:Card Grid.Column="0"
+				Margin="0,0,8,0" Padding="16,12"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<StackPanel>
+					<TextBlock Margin="0,0,0,8"
+						FontWeight="SemiBold" Text="金種枚数" />
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+						</Grid.RowDefinitions>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="*" />
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="*" />
+						</Grid.ColumnDefinitions>
+
+						<TextBlock Grid.Row="0" Grid.Column="0"
+							VerticalAlignment="Center" Text="1万円" />
+						<TextBox Grid.Row="0" Grid.Column="1"
+							Text="{Binding Mai10000, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+						<TextBlock Grid.Row="0" Grid.Column="2"
+							VerticalAlignment="Center" Text="5千円" />
+						<TextBox Grid.Row="0" Grid.Column="3"
+							Text="{Binding Mai5000, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+
+						<TextBlock Grid.Row="1" Grid.Column="0"
+							VerticalAlignment="Center" Text="2千円" />
+						<TextBox Grid.Row="1" Grid.Column="1"
+							Text="{Binding Mai2000, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+						<TextBlock Grid.Row="1" Grid.Column="2"
+							VerticalAlignment="Center" Text="1千円" />
+						<TextBox Grid.Row="1" Grid.Column="3"
+							Text="{Binding Mai1000, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+
+						<TextBlock Grid.Row="2" Grid.Column="0"
+							VerticalAlignment="Center" Text="500円" />
+						<TextBox Grid.Row="2" Grid.Column="1"
+							Text="{Binding Mai500, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+						<TextBlock Grid.Row="2" Grid.Column="2"
+							VerticalAlignment="Center" Text="100円" />
+						<TextBox Grid.Row="2" Grid.Column="3"
+							Text="{Binding Mai100, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+
+						<TextBlock Grid.Row="3" Grid.Column="0"
+							VerticalAlignment="Center" Text="50円" />
+						<TextBox Grid.Row="3" Grid.Column="1"
+							Text="{Binding Mai50, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+						<TextBlock Grid.Row="3" Grid.Column="2"
+							VerticalAlignment="Center" Text="10円" />
+						<TextBox Grid.Row="3" Grid.Column="3"
+							Text="{Binding Mai10, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+
+						<TextBlock Grid.Row="4" Grid.Column="0"
+							VerticalAlignment="Center" Text="5円" />
+						<TextBox Grid.Row="4" Grid.Column="1"
+							Text="{Binding Mai5, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+						<TextBlock Grid.Row="4" Grid.Column="2"
+							VerticalAlignment="Center" Text="1円" />
+						<TextBox Grid.Row="4" Grid.Column="3"
+							Text="{Binding Mai1, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+					</Grid>
+
+					<StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+						<TextBlock Margin="0,0,12,0"
+							VerticalAlignment="Center" Text="釣銭準備金" />
+						<TextBox Width="140"
+							Text="{Binding JunbiAmount, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+					</StackPanel>
+					<StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+						<TextBlock Margin="0,0,12,0"
+							VerticalAlignment="Center" Text="来店客数" />
+						<TextBox Width="140"
+							Text="{Binding KyakuSu, UpdateSourceTrigger=PropertyChanged}"
+							Style="{StaticResource PosAmountTextBox}" />
+					</StackPanel>
+				</StackPanel>
+			</materialDesign:Card>
+
+			<!-- 差異計算 -->
+			<materialDesign:Card Grid.Column="1"
+				Margin="8,0,0,0" Padding="16,12"
+				materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+				<StackPanel>
+					<TextBlock Margin="0,0,0,8"
+						FontWeight="SemiBold" Text="差異計算" />
+					<TextBlock Style="{StaticResource StatusTextBlockStyle}"
+						Text="{Binding RealAmount, StringFormat=現金残 {0:N0}円}" />
+					<TextBlock Style="{StaticResource StatusTextBlockStyle}"
+						Text="{Binding CalcAmount, StringFormat=計算残 {0:N0}円}" />
+					<TextBlock Margin="0,12,0,0"
+						FontSize="22" FontWeight="Bold"
+						Foreground="{Binding AmountDiff, Converter={StaticResource AmountDiffToBrushConverter}}"
+						Text="{Binding AmountDiff, StringFormat=差異 {0:N0}円}" />
+				</StackPanel>
+			</materialDesign:Card>
+		</Grid>
+
+		<!--  ===== 精算履歴 =====  -->
+		<materialDesign:Card Grid.Row="4"
+			Margin="16,12,16,0" Padding="0"
+			materialDesign:ElevationAssist.Elevation="Dp2" UniformCornerRadius="8">
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
+				<Border Grid.Row="0"
+					Padding="12,8"
+					Background="{DynamicResource MaterialDesignToolBarBackground}"
+					CornerRadius="8,8,0,0">
+					<TextBlock FontWeight="SemiBold" Text="精算履歴" />
+				</Border>
+				<DataGrid Grid.Row="1"
+					materialDesign:DataGridAssist.CellPadding="12,6" materialDesign:DataGridAssist.ColumnHeaderPadding="12,8"
+					AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+					ColumnHeaderStyle="{StaticResource MenteDataGridColumnHeader}"
+					EnableRowVirtualization="True" GridLinesVisibility="Horizontal"
+					HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+					IsReadOnly="True"
+					ItemsSource="{Binding PreviousSettlements}"
+					Style="{StaticResource MaterialDesignDataGrid}"
+					VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+					<DataGrid.Columns>
+						<DataGridTextColumn Width="120"
+							Binding="{Binding DenDay}"
+							Header="営業日" />
+						<DataGridTextColumn Width="80"
+							Binding="{Binding SeisanCnt}"
+							Header="回数" />
+						<DataGridTextColumn Width="100"
+							Binding="{Binding KyakuSu}"
+							Header="客数" />
+						<DataGridTextColumn Width="120"
+							Binding="{Binding RealAmount, StringFormat={}{0:N0}}"
+							ElementStyle="{StaticResource DataGridRightTextBlock}"
+							Header="現金残" />
+						<DataGridTextColumn Width="120"
+							Binding="{Binding CalcAmount, StringFormat={}{0:N0}}"
+							ElementStyle="{StaticResource DataGridRightTextBlock}"
+							Header="計算残" />
+						<DataGridTextColumn Width="120"
+							Binding="{Binding AmountDiff, StringFormat={}{0:N0}}"
+							ElementStyle="{StaticResource DataGridRightTextBlock}"
+							Header="差異" />
+						<DataGridTextColumn Width="120"
+							Binding="{Binding Jsummary.TotalAmount, StringFormat={}{0:N0}}"
+							ElementStyle="{StaticResource DataGridRightTextBlock}"
+							Header="売上合計" />
+						<DataGridTextColumn Width="120"
+							Binding="{Binding Jsummary.CashAmount, StringFormat={}{0:N0}}"
+							ElementStyle="{StaticResource DataGridRightTextBlock}"
+							Header="現金売上" />
+						<DataGridTextColumn Width="120"
+							Binding="{Binding Jsummary.CardAmount, StringFormat={}{0:N0}}"
+							ElementStyle="{StaticResource DataGridRightTextBlock}"
+							Header="カード売上" />
+					</DataGrid.Columns>
+				</DataGrid>
+			</Grid>
+		</materialDesign:Card>
+
+		<!--  ===== フッター =====  -->
+		<Grid Grid.Row="5"
+			Margin="16,12,16,16">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
+			<StackPanel Grid.Column="0" VerticalAlignment="Center">
+				<ProgressBar Margin="0,0,0,4"
+					IsIndeterminate="True"
+					Style="{StaticResource MaterialDesignLinearProgressBar}"
+					Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+				<TextBlock Style="{StaticResource StatusTextBlockStyle}"
+					Text="{Binding StatusMessage}" />
+			</StackPanel>
+			<StackPanel Grid.Column="1" Orientation="Horizontal">
+				<Button Command="{Binding SaveSeisanCommand}"
+					Content="精算確定"
+					Style="{StaticResource PosCheckoutButton}" />
+			</StackPanel>
+		</Grid>
+	</Grid>
+</helpers:BaseWindow>
