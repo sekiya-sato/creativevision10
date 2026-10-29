@@ -55,8 +55,8 @@ AI が普及する中、既存の Web システムは OS やミドルウェア�
   - [CvAsset (Layer 0)](#cvasset-layer-0)
   - [CvBase (Layer 1)](#cvbase-layer-1)
   - [CvBase-DB (Layer 1.2)](#cvbase-db-layer-12)
-  - [CvDomainLogic (Layer 1.5)](#cvdomainlogic-layer-15)
   - [CvPrints (Layer 1.4)](#cvprints-layer-14)
+  - [CvDomainLogic (Layer 1.5)](#cvdomainlogic-layer-15)
   - [CvServer (Layer 2)](#cvserver-layer-2)
   - [CvWpfclient (Layer 2)](#cvwpfclient-layer-2)
   - [Tests.\* (Layer 3)](#tests-layer-3)
@@ -83,7 +83,7 @@ Oracle、Windows Server、Biz/Browser などの商用基盤への依存を減ら
 
 参. **将来にわたり保守しやすい**
 
-特定ベンダーや旧来技術への依存を減らすことで、今後の技術更新や人材確保、保守継続がしやすくなります。
+.NET / C# など利用者の多い標準技術で構成しているため、技術者を確保しやすく、今後の技術更新や保守も続けやすくなります。
 
 肆. **通信性能の向上**
 
@@ -109,7 +109,7 @@ HTTP/2 + gRPC への移行により、従来より高速で効率のよい通信
 
 玖. **長く使える基幹システムを目指せる**
 
-オープン技術を採用することで、特定製品の終了リスクを下げ、より広く、より長く使える基幹システムとして育てやすくなります。
+SQLite・MariaDB・PostgreSQL など複数のデータベースに対応しており、企業の規模や運用方針に合わせて基盤を選べます。特定製品の提供終了に左右されず、より広く、より長く使える基幹システムとして育てやすくなります。
 
 拾. **AIネイティブな開発およびAI連携の実装**
 
@@ -137,15 +137,15 @@ HTTP/2 + gRPC への移行により、従来より高速で効率のよい通信
 - データベースを共通的に扱うための汎用 DB I/F を提供します。
 - `CvBaseSqlite`（SQLite 用）、`CvBaseMariadb`（MariaDB 用）、`CvBaseOracle`（Oracle 用）、`CvBasePostgre`（PostgreSQL 用）で構成されています。
 
-## CvDomainLogic (Layer 1.5)
-
-- `ExDatabase`（汎用 DB I/F）とドメインロジック、変換バッチなどを提供します。
-- ビジネスロジックの実装をこの層に集約しています。
-
 ## CvPrints (Layer 1.4)
 
 - 印刷関連のロジックやテンプレートを提供するプロジェクトです。
 - プロジェクトファイルの `PrintEnable` が `true` の場合は印刷機能が有効になり、`false` の場合は無効になります。
+
+## CvDomainLogic (Layer 1.5)
+
+- `ExDatabase`（汎用 DB I/F）とドメインロジック、変換バッチなどを提供します。
+- ビジネスロジックの実装をこの層に集約しています。
 
 ## CvServer (Layer 2)
 
