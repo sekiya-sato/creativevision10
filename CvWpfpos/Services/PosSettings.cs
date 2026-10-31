@@ -22,8 +22,8 @@ public sealed class PosSettings
     /// <summary>レシートに印字する販売員コード。未設定なら StaffId を 6 桁ゼロ埋めして使う。</summary>
     public string StaffCode { get; init; } = string.Empty;
 
-    /// <summary>消費税率(%)。上代を税抜として扱う外税方式で計算する。</summary>
-    public int TaxRatePercent { get; init; } = 10;
+    /// <summary>レジ番号。日次精算は営業日×店舗×レジ番号ごとに連番を振る。</summary>
+    public string RegisterNo { get; init; } = "01";
 
     public string DisplayPortName { get; init; } = "COM1";
     public string PrinterPortName { get; init; } = "COM6";

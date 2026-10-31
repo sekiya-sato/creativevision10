@@ -264,26 +264,6 @@ public enum CvFlag {
 	[EnumMember]
 	Msg067_PointExpire = 67,
 	/// <summary>
-	/// POS: バーコードから商品を検索する
-	/// </summary>
-	[EnumMember]
-	Msg070_PosLookupProduct = 70,
-	/// <summary>
-	/// POS: 売上または返品を確定する
-	/// </summary>
-	[EnumMember]
-	Msg071_PosCheckout = 71,
-	/// <summary>
-	/// POS: 売上を取り消す
-	/// </summary>
-	[EnumMember]
-	Msg072_PosCancelSale = 72,
-	/// <summary>
-	/// POS: 日次精算を保存する
-	/// </summary>
-	[EnumMember]
-	Msg073_PosSaveSeisan = 73,
-	/// <summary>
 	/// 原価4処理の月次状態照会（消化仕入・原価更新の2区分をまとめて返す。参照専用）
 	/// </summary>
 	[EnumMember]

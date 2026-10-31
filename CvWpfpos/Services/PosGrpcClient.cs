@@ -10,6 +10,10 @@ using System.Net.Http;
 
 namespace CvWpfpos.Services;
 
+/// <summary>
+/// POS端末のサーバ通信。照会は Msg101_Op_Query、伝票の登録は Msg201_Op_Execute の汎用追加（InsertParam）を使う。
+/// 単価・税・合計・精算の採番はサーバが確定させ、保存結果の伝票を返す（設計判断記録 §2.18）。
+/// </summary>
 public sealed class PosGrpcClient : IDisposable {
 	private readonly GrpcChannel channel;
 	private readonly ILoginService loginService;
@@ -24,27 +28,32 @@ public sealed class PosGrpcClient : IDisposable {
 		coreService = channel.CreateGrpcService<ICoreService>();
 	}
 
-	public async Task<PosProduct?> LookupProductAsync(string barcode, CancellationToken cancellationToken) {
-		return await QueryPosAsync<PosBarcodeLookupRequest, PosProduct>(
-			CvFlag.Msg070_PosLookupProduct,
-			new PosBarcodeLookupRequest { Barcode = barcode },
-			cancellationToken,
-			allowNotFound: true);
+	/// <summary>バーコード（JAN1〜3）で1SKUを引く。単価は店舗上代。</summary>
+	public Task<PosProduct?> LookupProductAsync(string barcode, CancellationToken cancellationToken) =>
+		LookupAsync(new PosBarcodeLookupRequest { Barcode = barcode, StoreId = settings.StoreId }, cancellationToken);
+
+	/// <summary>SKUキー（DerivedShohinColSiz.Id）で1SKUを引く。単価は店舗上代。</summary>
+	public Task<PosProduct?> LookupSkuAsync(long skuId, CancellationToken cancellationToken) =>
+		LookupAsync(new PosBarcodeLookupRequest { SkuId = skuId, StoreId = settings.StoreId }, cancellationToken);
+
+	/// <summary>売上・返品を確定する。端末取引ID（PosClientSaleId）が同じ再送は既存の売上が返る。</summary>
+	public Task<Tran01Tenuri> CheckoutAsync(Tran01Tenuri sale, CancellationToken cancellationToken) =>
+		InsertAsync(sale, cancellationToken);
+
+	/// <summary>POS売上を取り消す。返品伝票の内容はサーバが元売上から作り、精算は取消したレジ（設定のレジ番号）で集計する。</summary>
+	public Task<Tran01Tenuri> CancelSaleAsync(Tran01Tenuri original, long staffId, CancellationToken cancellationToken) {
+		if (string.IsNullOrEmpty(original.PosClientSaleId)) throw new InvalidOperationException("POS売上以外は取消できません。");
+		return InsertAsync(new Tran01Tenuri {
+			PosClientSaleId = original.PosClientSaleId + ":C",
+			Id_Shain = staffId,
+			JposPayment = new PosPaymentDetail { RegisterNo = settings.RegisterNo },
+		}, cancellationToken);
 	}
 
-	public async Task<PosCheckoutResponse> CheckoutAsync(PosCheckoutRequest request, CancellationToken cancellationToken) {
-		return await QueryPosAsync<PosCheckoutRequest, PosCheckoutResponse>(CvFlag.Msg071_PosCheckout, request, cancellationToken)
-			?? throw new InvalidOperationException("POS売上確定の応答がありません。");
-	}
-
-	public async Task<PosCancelSaleResponse> CancelSaleAsync(PosCancelSaleRequest request, CancellationToken cancellationToken) {
-		return await QueryPosAsync<PosCancelSaleRequest, PosCancelSaleResponse>(CvFlag.Msg072_PosCancelSale, request, cancellationToken)
-			?? throw new InvalidOperationException("POS売上取消の応答がありません。");
-	}
-
-	public async Task<PosSaveSeisanResponse> SaveSeisanAsync(PosSaveSeisanRequest request, CancellationToken cancellationToken) {
-		return await QueryPosAsync<PosSaveSeisanRequest, PosSaveSeisanResponse>(CvFlag.Msg073_PosSaveSeisan, request, cancellationToken)
-			?? throw new InvalidOperationException("POS日次精算の応答がありません。");
+	/// <summary>日次精算を確定する。SeisanCnt=0 で送り、連番・現金実額・差額はサーバが確定する。</summary>
+	public Task<Tran04PosSeisan> SaveSeisanAsync(Tran04PosSeisan seisan, CancellationToken cancellationToken) {
+		seisan.SeisanCnt = 0;
+		return InsertAsync(seisan, cancellationToken);
 	}
 
 	public Task<LoginReply> LoginAsync(string loginId, string password, CancellationToken cancellationToken) {
@@ -72,31 +81,43 @@ public sealed class PosGrpcClient : IDisposable {
 			DataMsg = Common.SerializeObject(param)
 		};
 		var reply = await coreService.QueryMsgAsync(msg, CreateCallContext(cancellationToken));
-		if (reply.Code < 0) throw new InvalidOperationException(reply.DataMsg);
+		// 0件は負のコード(NotFound)で返るが障害ではない（CvMsgErrorCode.NotFound）
+		if (reply.Code == CvMsgErrorCode.NotFound) return [];
+		if (reply.Code < 0) throw new InvalidOperationException(string.IsNullOrWhiteSpace(reply.Option) ? reply.DataMsg : reply.Option);
 		var list = JsonConvert.DeserializeObject<List<T>>(reply.DataMsg);
 		return list ?? [];
 	}
 
-	private async Task<TResponse?> QueryPosAsync<TRequest, TResponse>(CvFlag flag, TRequest request, CancellationToken cancellationToken, bool allowNotFound = false)
-		where TRequest : class
-		where TResponse : class {
+	/// <summary>ICoreService.Msg201_Op_Execute の汎用追加（InsertParam）。サーバが保存した行を返す。</summary>
+	public async Task<T> InsertAsync<T>(T item, CancellationToken cancellationToken) where T : class {
 		var reply = await coreService.QueryMsgAsync(new CvMsg {
-			Flag = flag,
-			DataType = typeof(TRequest),
+			Flag = CvFlag.Msg201_Op_Execute,
+			DataType = typeof(InsertParam),
+			DataMsg = Common.SerializeObject(new InsertParam(typeof(T), Common.SerializeObject(item))),
+		}, CreateCallContext(cancellationToken));
+
+		if (reply.Code < 0) throw new InvalidOperationException(string.IsNullOrWhiteSpace(reply.Option) ? reply.DataMsg : reply.Option);
+		if (reply.DataType != typeof(T)) {
+			throw new InvalidOperationException($"登録応答の型が不正です。期待値={typeof(T).Name} 実際={reply.DataType?.Name}");
+		}
+		return Common.DeserializeObject(reply.DataMsg ?? string.Empty, reply.DataType) as T
+			?? throw new InvalidOperationException("登録応答の復元に失敗しました。");
+	}
+
+	private async Task<PosProduct?> LookupAsync(PosBarcodeLookupRequest request, CancellationToken cancellationToken) {
+		var reply = await coreService.QueryMsgAsync(new CvMsg {
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(PosBarcodeLookupRequest),
 			DataMsg = Common.SerializeObject(request),
 		}, CreateCallContext(cancellationToken));
 
-		if (reply.Flag != flag) {
-			throw new InvalidOperationException($"POS応答フラグが不正です。期待値={flag} 実際={reply.Flag}");
-		}
-		if (allowNotFound && reply.Code == CvMsgErrorCode.NotFound) return null;
+		if (reply.Code == CvMsgErrorCode.NotFound) return null;
 		if (reply.Code < 0) throw new InvalidOperationException(string.IsNullOrWhiteSpace(reply.Option) ? reply.DataMsg : reply.Option);
-		if (reply.DataType != typeof(TResponse)) {
-			throw new InvalidOperationException($"POS応答型が不正です。期待値={typeof(TResponse).Name} 実際={reply.DataType?.Name}");
+		if (reply.DataType != typeof(PosProduct)) {
+			throw new InvalidOperationException($"商品検索の応答型が不正です。期待値={nameof(PosProduct)} 実際={reply.DataType?.Name}");
 		}
-
-		return Common.DeserializeObject(reply.DataMsg ?? string.Empty, reply.DataType) as TResponse
-			?? throw new InvalidOperationException("POS応答の復元に失敗しました。");
+		return Common.DeserializeObject(reply.DataMsg ?? string.Empty, reply.DataType) as PosProduct
+			?? throw new InvalidOperationException("商品検索の応答の復元に失敗しました。");
 	}
 
 	private CallContext CreateCallContext(CancellationToken cancellationToken, bool includeAccessToken = true) {

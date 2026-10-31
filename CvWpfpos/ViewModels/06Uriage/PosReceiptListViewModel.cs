@@ -73,7 +73,7 @@ public partial class PosReceiptListViewModel : ObservableObject {
 	private async Task PrintAsync(Tran01Tenuri tran, bool isTaxInvoice, CancellationToken cancellationToken) {
 		IsBusy = true;
 		try {
-			var receipt = BuildReceiptFromTran(tran);
+			var receipt = ReceiptData.FromSale(tran, settings, AppVersion);
 			if (isTaxInvoice)
 				await peripherals.PrintTaxInvoiceAsync(receipt, cancellationToken);
 			else
@@ -91,9 +91,11 @@ public partial class PosReceiptListViewModel : ObservableObject {
 		catch (Exception ex) { StatusMessage = $"{settings.PosPrinterName} 接続エラー: {ex.Message}"; }
 	}
 
+	// POS以外の売上（端末取引IDなし）は取消しない（設計判断記録 §2.18）
 	private bool CanCancelSale() =>
 		SelectedTransaction != null &&
 		SelectedTransaction.Kubun is 10 or 11 &&
+		!string.IsNullOrEmpty(SelectedTransaction.PosClientSaleId) &&
 		!IsCancelled(SelectedTransaction);
 
 	private static bool IsCancelled(Tran01Tenuri tran) =>
@@ -112,12 +114,8 @@ public partial class PosReceiptListViewModel : ObservableObject {
 
 		IsBusy = true;
 		try {
-			var response = await client.CancelSaleAsync(new PosCancelSaleRequest {
-				SaleId = SelectedTransaction.Id,
-				StaffId = settings.StaffId
-			}, cancellationToken);
-			if (!response.IsSuccess) { StatusMessage = response.Message; return; }
-			StatusMessage = $"売上No. {SelectedTransaction.Id:N0} を取消しました（取消No. {response.CancelSaleId:N0}）。";
+			var cancelSale = await client.CancelSaleAsync(SelectedTransaction, settings.StaffId, cancellationToken);
+			StatusMessage = $"売上No. {SelectedTransaction.Id:N0} を取消しました（取消No. {cancelSale.Id:N0}）。";
 			await LoadAsync(cancellationToken);
 		}
 		catch (OperationCanceledException) { StatusMessage = "取消処理を中止しました。"; }
@@ -127,47 +125,6 @@ public partial class PosReceiptListViewModel : ObservableObject {
 
 	[RelayCommand]
 	private void Exit() => RequestClose?.Invoke(this, EventArgs.Empty);
-
-	private ReceiptData BuildReceiptFromTran(Tran01Tenuri tran) {
-		var subTotal = tran.KingakuTotal > 0 ? tran.KingakuTotal : tran.Total;
-		var taxAmount = ((long)subTotal * settings.TaxRatePercent / 100);
-		var lines = tran.Jmeisai?.Select(m => new ReceiptLine(
-			m.Code_Shohin,
-			m.Mei_Shohin,
-			FormatColorSize(m),
-			m.JanCode,
-			m.Su,
-			m.Tanka,
-			(int)m.Kingaku
-		)).ToList() ?? [];
-		var payment = tran.JposPayment ?? new PosPaymentDetail();
-		var staffCode = tran.VShain?.Cd ?? settings.ResolvedStaffCode;
-		var soldAt = tran.Vdc > 0 ? new DateTime(tran.Vdc, DateTimeKind.Utc).ToLocalTime() : DateTime.Now;
-		return new ReceiptData(
-			tran.Id,
-			soldAt,
-			new ReceiptStore(settings.StoreName, settings.StoreAddress, settings.StorePhone),
-			staffCode,
-			lines,
-			tran.SuTotal,
-			(int)subTotal,
-			settings.TaxRatePercent,
-			(int)taxAmount,
-			(int)(subTotal + taxAmount),
-			(int)payment.CashAmount,
-			(int)payment.CardAmount,
-			payment.OtherAmount,
-			payment.ChangeAmount,
-			AppVersion,
-			tran.Kubun >= 20 && tran.Kubun <= 29
-		);
-	}
-
-	private static string FormatColorSize(Tran99Meisai m) =>
-		string.Join(' ', new[] { JoinCodeName(m.Code_Col, m.Mei_Col), JoinCodeName(m.Code_Siz, m.Mei_Siz) }.Where(text => text.Length > 0));
-
-	private static string JoinCodeName(string code, string name) =>
-		(code.Length, name.Length) switch { (0, 0) => string.Empty, (0, _) => name, (_, 0) => code, _ => $"{code}-{name}" };
 
 	private static string AppVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? string.Empty;
 }

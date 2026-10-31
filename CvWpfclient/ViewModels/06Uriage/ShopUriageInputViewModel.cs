@@ -249,7 +249,20 @@ public partial class ShopUriageInputViewModel : Helpers.BaseTranInputViewModel<T
 		bool headerIsSale = IsHeaderSaleKubun(CurrentEdit.Kubun);
 		CurrentEdit.Kubun = NormalizeHeaderKubun(CurrentEdit.Kubun);
 		SyncMeisaiToCurrentEdit(headerIsSale);
-		return base.CreateInsertParam();
+		// POS伝票を表示したまま追加すると端末取引IDを引き継ぎ、サーバが再送とみなして元伝票を返すため、送信内容からだけ外す。
+		// 決済内訳（レジ番号・現金・釣銭）も外す。残すと事務所入力がPOS端末のレジ別精算に二重に入る。
+		// 画面の伝票は変えない（追加が失敗した後の［修正］で元のPOS売上を書き換えないため。設計判断記録 §2.18）
+		var posClientSaleId = CurrentEdit.PosClientSaleId;
+		var posPayment = CurrentEdit.JposPayment;
+		CurrentEdit.PosClientSaleId = string.Empty;
+		CurrentEdit.JposPayment = new();
+		try {
+			return base.CreateInsertParam();
+		}
+		finally {
+			CurrentEdit.PosClientSaleId = posClientSaleId;
+			CurrentEdit.JposPayment = posPayment;
+		}
 	}
 
 	protected override object CreateUpdateParam() {

@@ -20,6 +20,8 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 	private readonly PosPeripheralService peripherals;
 	private string checkoutClientSaleId = string.Empty;
 	private bool disposed;
+	private PosTaxCalculator? taxCalculator;
+	private TaxTotals taxTotals = TaxTotals.Zero;
 
 	/// <summary>ViewModel から View に閉じるよう要求する（BaseWindow の ExitCommand 経由）</summary>
 	public event EventHandler? CloseRequested;
@@ -48,10 +50,8 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 	/// <summary>税抜小計（上代の合計）。サーバが計上する売上金額と一致する。</summary>
 	public int SubTotal => CartLines.Sum(line => line.Amount);
 
-	public int TaxRatePercent => settings.TaxRatePercent;
-
-	/// <summary>消費税額（外税、円未満切り捨て）。</summary>
-	public int TaxAmount => (int)((long)SubTotal * settings.TaxRatePercent / 100);
+	/// <summary>消費税額（外税）。サーバと同じ税区分別・伝票単位・店舗端数処理で計算する（<see cref="PosTaxCalculator"/>）。</summary>
+	public int TaxAmount => (int)taxTotals.TaxTotal;
 
 	/// <summary>お買上合計（税込）。お客様への請求額。</summary>
 	public int TotalAmount => checked(SubTotal + TaxAmount);
@@ -85,6 +85,18 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 			IsDisplayConnected = false;
 			StatusMessage = $"DM-D30 に接続できませんでした（{ex.Message}）。接続ボタンで再試行してください。";
 		}
+		_ = LoadTaxCalculatorOnInitAsync();
+	}
+
+	/// <summary>税計算の設定（税率定義・店舗端数処理）を先読みする。失敗しても明細追加・会計時に読み直す。</summary>
+	private async Task LoadTaxCalculatorOnInitAsync() {
+		try { await EnsureTaxCalculatorAsync(CancellationToken.None); }
+		catch (Exception ex) { StatusMessage = $"税計算設定の読み込みエラー: {ex.Message}"; }
+	}
+
+	private async Task EnsureTaxCalculatorAsync(CancellationToken cancellationToken) {
+		taxCalculator ??= await PosTaxCalculator.LoadAsync(client, settings.StoreId, cancellationToken);
+		NotifyTotalsChanged();
 	}
 
 	/// <summary>ESC。会計中なら明細に戻り、そうでなければ画面を閉じる。</summary>
@@ -117,6 +129,7 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 		try {
 			var product = await client.LookupProductAsync(barcode, cancellationToken);
 			if (product == null) { StatusMessage = $"バーコードが見つかりません: {barcode}"; return; }
+			if (taxCalculator == null) await EnsureTaxCalculatorAsync(cancellationToken);
 
 			var line = new PosCartLine {
 				Barcode = barcode,
@@ -130,6 +143,7 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 				SizeName = product.SizeName,
 				Name = product.ProductName,
 				UnitPrice = product.UnitPrice,
+				TaxId = product.TaxId,
 				Quantity = 1,
 				Kubun = 0,
 				StaffId = settings.StaffId,
@@ -200,28 +214,17 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 
 	[RelayCommand(IncludeCancelCommand = true)]
 	private async Task CompleteCheckout(CancellationToken cancellationToken) {
-		if (PaymentAmount < TotalAmount) { StatusMessage = "お預り金額が合計金額に不足しています。"; return; }
 		if (settings.StoreId <= 0 || settings.WarehouseId <= 0 || settings.StaffId <= 0) { StatusMessage = "appsettings.json に StoreId、WarehouseId、StaffId を設定してください。"; return; }
 
 		IsBusy = true;
 		try {
-			var response = await client.CheckoutAsync(new PosCheckoutRequest {
-				ClientSaleId = checkoutClientSaleId,
-				StoreId = settings.StoreId,
-				WarehouseId = settings.WarehouseId,
-				StaffId = settings.StaffId,
-				Lines = [.. CartLines.Select(line => new PosCheckoutLine {
-					Barcode = line.Barcode, ProductId = line.ProductId, ColorId = line.ColorId, ColorCode = line.ColorCode, ColorName = line.ColorName,
-					SizeId = line.SizeId, SizeCode = line.SizeCode, SizeName = line.SizeName, Quantity = line.Quantity,
-					Kubun = line.Kubun, StaffId = line.StaffId, StaffCode = line.StaffCode, StaffName = line.StaffName
-				})],
-				Payment = new PosPayment { CashAmount = CashAmount, CardAmount = CardAmount, OtherAmount = OtherAmount },
-				Kubun = IsReturnMode ? 20 : 10
-			}, cancellationToken);
-			if (!response.IsSuccess) { StatusMessage = response.Message; return; }
+			await EnsureTaxCalculatorAsync(cancellationToken);
+			if (PaymentAmount < TotalAmount) { StatusMessage = "お預り金額が合計金額に不足しています。"; return; }
+			var sale = await client.CheckoutAsync(BuildSale(), cancellationToken);
 
-			// 売上は確定済み。印字が失敗しても取引を宙ぶらりんにしないよう、先に明細を締めて領収書用に保持する
-			var receipt = BuildReceipt(response.SaleId);
+			// 売上は確定済み。印字が失敗しても取引を宙ぶらりんにしないよう、先に明細を締めて領収書用に保持する。
+			// レシートはサーバが確定した金額・税（保存結果）から作る
+			var receipt = ReceiptData.FromSale(sale, settings, AppVersion);
 			LastReceipt = receipt;
 			CartLines.Clear();
 			checkoutClientSaleId = string.Empty;
@@ -233,10 +236,10 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 
 			try {
 				await peripherals.PrintAsync(receipt, cancellationToken);
-				StatusMessage = $"売上No. {response.SaleId:N0} を確定し、レシートを印字しました。領収書が必要な場合は［領収書］ボタンを押してください。";
+				StatusMessage = $"売上No. {receipt.SaleId:N0} を確定し、レシートを印字しました。領収書が必要な場合は［領収書］ボタンを押してください。";
 			}
 			catch (Exception ex) {
-				StatusMessage = $"売上No. {response.SaleId:N0} は確定しましたが、レシートを印字できませんでした（{ex.Message}）。";
+				StatusMessage = $"売上No. {receipt.SaleId:N0} は確定しましたが、レシートを印字できませんでした（{ex.Message}）。";
 			}
 		}
 		catch (OperationCanceledException) { StatusMessage = "会計処理を中止しました。"; }
@@ -331,6 +334,7 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 			SizeName = product.SizeName,
 			Name = product.ProductName,
 			UnitPrice = product.UnitPrice,
+			TaxId = product.TaxId,
 			Quantity = 1,
 			Kubun = 0,
 			StaffId = settings.StaffId,
@@ -361,6 +365,7 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 				SizeName = line.SizeName,
 				Name = line.Name,
 				UnitPrice = line.UnitPrice,
+				TaxId = line.TaxId,
 				Quantity = line.Quantity,
 				Kubun = line.Kubun,
 				StaffId = line.StaffId,
@@ -400,6 +405,7 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 					SizeName = line.SizeName,
 					Name = line.Name,
 					UnitPrice = line.UnitPrice,
+					TaxId = line.TaxId,
 					Quantity = line.Quantity,
 					Kubun = line.Kubun,
 					StaffId = line.StaffId,
@@ -433,35 +439,48 @@ public partial class PosUriageInputViewModel : ObservableObject, IDisposable {
 		catch { /* 客用ディスプレイは必須ではない */ }
 	}
 
-	private ReceiptData BuildReceipt(long saleId) => new(
-		saleId,
-		DateTime.Now,
-		new ReceiptStore(settings.StoreName, settings.StoreAddress, settings.StorePhone),
-		settings.ResolvedStaffCode,
-		[.. CartLines.Select(line => new ReceiptLine(line.ProductCode, line.Name, FormatColorSize(line), line.Barcode, line.Quantity, line.UnitPrice, line.Amount))],
-		TotalQuantity,
-		SubTotal,
-		TaxRatePercent,
-		TaxAmount,
-		TotalAmount,
-		CashAmount,
-		CardAmount,
-		OtherAmount,
-		// サーバは消費税を持たないため釣銭もクライアント計算値（税込合計に対する釣銭）を使う
-		ChangeAmount,
-		AppVersion,
-		IsReturnMode);
+	/// <summary>
+	/// 会計で送る売上伝票。単価・税・合計・V*はサーバが確定させるため、端末は商品・数量・担当・預り金だけを入れる。
+	/// </summary>
+	private Tran01Tenuri BuildSale() => new() {
+		PosClientSaleId = checkoutClientSaleId,
+		Kubun = IsReturnMode ? 20 : 10,
+		Id_Tenpo = settings.StoreId,
+		Id_Soko = settings.WarehouseId,
+		Id_Shain = settings.StaffId,
+		Jmeisai = [.. BuildMeisai()],
+		JposPayment = new PosPaymentDetail { CashAmount = CashAmount, CardAmount = CardAmount, OtherAmount = OtherAmount, RegisterNo = settings.RegisterNo }
+	};
 
-	/// <summary>「10-シロ 00-サンプル」形式のカラー・サイズ表記。</summary>
-	private static string FormatColorSize(PosCartLine line) =>
-		string.Join(' ', new[] { JoinCodeName(line.ColorCode, line.ColorName), JoinCodeName(line.SizeCode, line.SizeName) }.Where(text => text.Length > 0));
-
-	private static string JoinCodeName(string code, string name) =>
-		(code.Length, name.Length) switch { (0, 0) => string.Empty, (0, _) => name, (_, 0) => code, _ => $"{code}-{name}" };
+	private IEnumerable<Tran99Meisai> BuildMeisai() => CartLines.Select(line => new Tran99Meisai {
+		No = line.LineNo,
+		Kubun = line.Kubun,
+		Id_Shohin = line.ProductId,
+		Code_Shohin = line.ProductCode,
+		Mei_Shohin = line.Name,
+		JanCode = line.Barcode,
+		Id_Col = line.ColorId,
+		Code_Col = line.ColorCode,
+		Mei_Col = line.ColorName,
+		Id_Siz = line.SizeId,
+		Code_Siz = line.SizeCode,
+		Mei_Siz = line.SizeName,
+		Su = line.Quantity,
+		Tanka = line.UnitPrice,
+		Kingaku = line.Amount,
+		Id_Shain = line.StaffId,
+		Code_Shain = line.StaffCode,
+		Mei_Shain = line.StaffName,
+		Id_Tax = line.TaxId
+	});
 
 	private static string AppVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? string.Empty;
 
 	private void NotifyTotalsChanged() {
+		// 税はサーバと同じ計算（税区分別・伝票単位・店舗端数処理）。設定を読めるまでは0のまま
+		taxTotals = taxCalculator == null || CartLines.Count == 0
+			? TaxTotals.Zero
+			: taxCalculator.Calc([.. BuildMeisai()], DateTime.Today.ToString("yyyyMMdd"));
 		OnPropertyChanged(nameof(TotalQuantity));
 		OnPropertyChanged(nameof(SubTotal));
 		OnPropertyChanged(nameof(TaxAmount));

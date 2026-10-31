@@ -23,5 +23,7 @@ public partial class PosCartLine : ObservableObject
     [ObservableProperty] public partial long StaffId { get; set; }
     [ObservableProperty] public partial string StaffCode { get; set; } = string.Empty;
     [ObservableProperty] public partial string StaffName { get; set; } = string.Empty;
+    /// <summary>消費税区分（MasterShohin.Id_Tax）。端末の税計算に使う。</summary>
+    [ObservableProperty] public partial long TaxId { get; set; }
     public int Amount => checked(UnitPrice * Quantity);
 }

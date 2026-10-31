@@ -1038,6 +1038,7 @@ public enum EnumUri00 : int {
 [Comment("トランザクション：店舗売上データ 店舗に対する売上と店舗(倉庫)からの出庫")]
 [OldTableCommentAttr("HC$tran_tori0")]
 [KeyDml("nk7", false, nameof(OldSeqNo))] // 旧SEQ_NOからの逆引き（再変換・関連伝票の張替で使う）
+[KeyDml("nk8", false, nameof(PosClientSaleId))] // POS端末取引IDによる再送・取消の検索（空文字が重複するため一意にしない）
 public sealed partial class Tran01Tenuri : TranAllHeader, ITranSoko, ITranTax {
 	[ObservableProperty]
 	[ColumnSizeDml(36)]
@@ -1195,6 +1196,8 @@ public sealed class PosPaymentDetail {
 	public int OtherAmount { get; init; }
 	[Comment("釣銭額")]
 	public int ChangeAmount { get; init; }
+	[Comment("会計（取消は取消操作）を行ったレジ番号 日次精算をレジ別に集計する")]
+	public string RegisterNo { get; init; } = string.Empty;
 }
 public enum EnumUri01 : int {
 	[Comment("P売上")]

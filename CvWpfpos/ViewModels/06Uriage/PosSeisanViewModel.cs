@@ -82,15 +82,20 @@ public partial class PosSeisanViewModel : ObservableObject {
 		IsBusy = true;
 		try {
 			var denDay = SettlementDate.ToString("yyyyMMdd");
-			var sales = await client.QueryListAsync<Tran01Tenuri>(
+			var storeSales = await client.QueryListAsync<Tran01Tenuri>(
 				"DenDay=@0 and Id_Tenpo=@1", "Id",
 				[denDay, settings.StoreId.ToString()], 10000, cancellationToken);
+			// 精算はレジ別。自レジで会計（取消は取消操作）した伝票だけを集計する（設計判断記録 §2.18 P6-2）
+			// サーバはレジ番号を前後の空白を除いて保存する
+			var registerNo = settings.RegisterNo.Trim();
+			var sales = storeSales.Where(s => s.JposPayment?.RegisterNo == registerNo).ToList();
 
 			TransactionCount = sales.Count;
 			ReturnCount = sales.Count(s => s.Kubun >= 20 && s.Kubun <= 29);
 			TotalQuantity = sales.Sum(s => s.SuTotal * s.CalcFlag);
 			TotalAmount = sales.Sum(s => s.Total * s.CalcFlag);
-			CashSalesTotal = sales.Sum(s => (s.JposPayment?.CashAmount ?? 0) * s.CalcFlag);
+			// 釣銭は現金で出すため、現金売上は受領額から釣銭を引いた額
+			CashSalesTotal = sales.Sum(s => ((s.JposPayment?.CashAmount ?? 0) - (s.JposPayment?.ChangeAmount ?? 0)) * s.CalcFlag);
 			CardSalesTotal = sales.Sum(s => (s.JposPayment?.CardAmount ?? 0) * s.CalcFlag);
 			OtherSalesTotal = sales.Sum(s => (s.JposPayment?.OtherAmount ?? 0) * s.CalcFlag);
 
@@ -119,10 +124,12 @@ public partial class PosSeisanViewModel : ObservableObject {
 
 		IsBusy = true;
 		try {
-			var response = await client.SaveSeisanAsync(new PosSaveSeisanRequest {
-				StoreId = settings.StoreId,
+			// 現金実額・計算上の現金・差額はサーバが確定する（SeisanCnt=0 で送る）。同じ営業日・レジの精算が登録済みならサーバが拒否する
+			var seisan = await client.SaveSeisanAsync(new Tran04PosSeisan {
+				Id_Tenpo = settings.StoreId,
+				RegisterNo = settings.RegisterNo,
 				DenDay = SettlementDate.ToString("yyyyMMdd"),
-				StaffId = settings.StaffId,
+				Id_Shain = settings.StaffId,
 				KyakuSu = KyakuSu,
 				Mai10000 = Mai10000,
 				Mai5000 = Mai5000,
@@ -135,18 +142,18 @@ public partial class PosSeisanViewModel : ObservableObject {
 				Mai5 = Mai5,
 				Mai1 = Mai1,
 				JunbiAmount = JunbiAmount,
-				TotalAmount = (int)TotalAmount,
-				CashAmount = CashSalesTotal,
-				CardAmount = CardSalesTotal,
-				OtherAmount = OtherSalesTotal,
-				TransactionCount = TransactionCount,
-				ReturnCount = ReturnCount,
-				TotalQuantity = TotalQuantity
+				Jsummary = new PosSeisanSummary {
+					TotalAmount = (int)TotalAmount,
+					CashAmount = CashSalesTotal,
+					CardAmount = CardSalesTotal,
+					OtherAmount = OtherSalesTotal,
+					TransactionCount = TransactionCount,
+					ReturnCount = ReturnCount,
+					TotalQuantity = TotalQuantity
+				}
 			}, cancellationToken);
 
-			if (!response.IsSuccess) { StatusMessage = response.Message; return; }
-
-			StatusMessage = $"精算を確定しました（精算No. {response.SeisanCnt}）。";
+			StatusMessage = $"精算を確定しました（レジ {seisan.RegisterNo}）。";
 			await LoadAsync(cancellationToken);
 		}
 		catch (OperationCanceledException) { StatusMessage = "精算確定を中止しました。"; }

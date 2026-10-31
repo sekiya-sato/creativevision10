@@ -165,6 +165,9 @@ public class UpdateDb {
 		new (26_10_20_01,
 			"ALTER TABLE SysAiQuery ADD COLUMN SpecSummary TEXT NOT NULL DEFAULT '';",
 			"AI照会の共有保存へ確定した条件（AIの要約）列を追加 既存の保存は未設定('') SysAiQuery未作成のDBではDefineDataTableが新列込みで作るため本SQLは列重複で失敗するが影響はない"),
+		new (26_10_31_01,
+			"CREATE INDEX IF NOT EXISTS Tran01Tenuri_nk8 ON Tran01Tenuri(PosClientSaleId);",
+			"POS端末取引IDの索引を追加（再送・取消の検索用。空文字が重複するため一意にしない） 列は26_07_31_01で追加済み SQLはExDatabase.CreateIndexの生成文と同一"),
 	];
 	public static async Task WriteVersionInfoAsync(IDatabase db, CancellationToken ct = default) {
 		await WriteVersionInfoAsync(db, versions, ct);

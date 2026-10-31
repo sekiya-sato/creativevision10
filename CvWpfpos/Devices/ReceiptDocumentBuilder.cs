@@ -41,9 +41,14 @@ public static class ReceiptDocumentBuilder
 
         builder.Separator()
             .LineLeftRight($"(税抜小計)  {receipt.TotalQuantity:N0}点", $"¥{receipt.SubTotal:N0}")
-            .Separator()
-            .LineLeftRight($"({receipt.TaxRatePercent}%対象)", $"¥{receipt.SubTotal:N0}")
-            .Feed();
+            .Separator();
+        // 税率ごとの対象額と消費税額（サーバが伝票へ確定させた値）
+        foreach (var tax in receipt.TaxLines)
+        {
+            builder.LineLeftRight($"({tax.Label})", $"¥{tax.Taxable:N0}");
+            if (tax.Tax != 0) builder.LineLeftRight("  消費税", $"¥{tax.Tax:N0}");
+        }
+        builder.Feed();
 
         builder.Emphasis(true)
             .LineLeftRight($"お買上合計 {receipt.TotalQuantity:N0}点", $"¥{receipt.TotalAmount:N0}")

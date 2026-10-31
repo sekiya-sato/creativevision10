@@ -76,10 +76,6 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg091_AiQueryChat] = HandleAiQueryChatAsync,
 			[CvFlag.Msg092_AiQueryValidate] = (req, ctx) => Task.FromResult(HandleAiQueryValidate(req, ctx)),
 			[CvFlag.Msg093_OperationLog] = (req, ctx) => Task.FromResult(HandleOperationLog(req, ctx)),
-			[CvFlag.Msg070_PosLookupProduct] = HandlePosLookupProductAsync,
-			[CvFlag.Msg071_PosCheckout] = HandlePosCheckoutAsync,
-			[CvFlag.Msg072_PosCancelSale] = HandlePosCancelSaleAsync,
-			[CvFlag.Msg073_PosSaveSeisan] = HandlePosSaveSeisanAsync,
 		};
 	}
 	[UatChangeable]

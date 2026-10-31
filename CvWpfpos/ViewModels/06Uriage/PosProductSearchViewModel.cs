@@ -78,22 +78,20 @@ public partial class PosProductSearchViewModel : ObservableObject {
 		catch (Exception ex) { StatusMessage = $"SKU 読み込みエラー: {ex.Message}"; }
 	}
 
-	[RelayCommand]
-	private void SelectSku() {
+	/// <summary>選択SKUをサーバで引き直し、会計と同じ店舗上代・税区分で返す。</summary>
+	[RelayCommand(IncludeCancelCommand = true)]
+	private async Task SelectSku(CancellationToken cancellationToken) {
 		if (SelectedSku == null || SelectedProductMaster == null) return;
-		SelectedProduct = new PosProduct {
-			ProductId = SelectedProductMaster.Id,
-			ProductCode = SelectedProductMaster.Code,
-			ProductName = SelectedProductMaster.Name,
-			ColorId = SelectedSku.Id_Col,
-			ColorCode = SelectedSku.Code_Col,
-			ColorName = SelectedSku.Mei_Col,
-			SizeId = SelectedSku.Id_Siz,
-			SizeCode = SelectedSku.Code_Siz,
-			SizeName = SelectedSku.Mei_Siz,
-			UnitPrice = SelectedProductMaster.TankaJodai
-		};
-		SelectedBarcode = SelectedSku.Jan1;
-		RequestClose?.Invoke(this, EventArgs.Empty);
+		IsBusy = true;
+		try {
+			var product = await client.LookupSkuAsync(SelectedSku.Id, cancellationToken);
+			if (product == null) { StatusMessage = "SKU が見つかりません。"; return; }
+			SelectedProduct = product;
+			SelectedBarcode = product.Barcode;
+			RequestClose?.Invoke(this, EventArgs.Empty);
+		}
+		catch (OperationCanceledException) { StatusMessage = "SKU の選択を中止しました。"; }
+		catch (Exception ex) { StatusMessage = $"SKU 選択エラー: {ex.Message}"; }
+		finally { IsBusy = false; }
 	}
 }

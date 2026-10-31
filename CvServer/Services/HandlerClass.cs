@@ -130,56 +130,23 @@ public partial class CoreService {
 		return CreateSuccessResponse(request.Flag, typeof(InfoServer), Common.SerializeObject(_appGlobal.VerInfo));
 	}
 
-	private async Task<CvMsg> HandlePosLookupProductAsync(CvMsg request, CallContext context) {
-		if (!TryDeserializePosRequest<PosBarcodeLookupRequest>(request, out var payload, out var error)) {
-			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, error, typeof(string), string.Empty);
-		}
-		var product = await _pointOfSaleService.LookupProductAsync(payload, context);
-		return product == null
-			? CreateNotFoundResponse(request.Flag, typeof(PosProduct), "null")
-			: CreateSuccessResponse(request.Flag, typeof(PosProduct), Common.SerializeObject(product));
-	}
+	/// <summary>
+	/// POS端末の価格付き商品検索（Msg101の照会）。店舗上代と税区分を付けて1SKUを返す。
+	/// </summary>
+	private CvMsg HandlePosLookupProduct(CvFlag flag, PosBarcodeLookupRequest lookup) {
+		LogDetailedRequest("パラメータ PosBarcodeLookupRequest 内容={Payload}", () => [Common.SerializeObject(lookup)]);
 
-	private async Task<CvMsg> HandlePosCheckoutAsync(CvMsg request, CallContext context) {
-		if (!TryDeserializePosRequest<PosCheckoutRequest>(request, out var payload, out var error)) {
-			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, error, typeof(string), string.Empty);
-		}
-		var response = await _pointOfSaleService.CheckoutAsync(payload, context);
-		return CreateSuccessResponse(request.Flag, typeof(PosCheckoutResponse), Common.SerializeObject(response));
-	}
-
-	private async Task<CvMsg> HandlePosCancelSaleAsync(CvMsg request, CallContext context) {
-		if (!TryDeserializePosRequest<PosCancelSaleRequest>(request, out var payload, out var error)) {
-			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, error, typeof(string), string.Empty);
-		}
-		var response = await _pointOfSaleService.CancelSaleAsync(payload, context);
-		return CreateSuccessResponse(request.Flag, typeof(PosCancelSaleResponse), Common.SerializeObject(response));
-	}
-
-	private async Task<CvMsg> HandlePosSaveSeisanAsync(CvMsg request, CallContext context) {
-		if (!TryDeserializePosRequest<PosSaveSeisanRequest>(request, out var payload, out var error)) {
-			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, error, typeof(string), string.Empty);
-		}
-		var response = await _pointOfSaleService.SaveSeisanAsync(payload, context);
-		return CreateSuccessResponse(request.Flag, typeof(PosSaveSeisanResponse), Common.SerializeObject(response));
-	}
-
-	private static bool TryDeserializePosRequest<T>(CvMsg request, out T payload, out string error) where T : class {
-		payload = default!;
-		error = string.Empty;
-		if (request.DataType != typeof(T)) {
-			error = $"POS要求型が不正です。期待値={typeof(T).Name} 実際={request.DataType?.Name}";
-			return false;
-		}
 		try {
-			payload = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType) as T ?? throw new InvalidOperationException("POS要求を復元できません。");
-			return true;
+			var product = _pointOfSaleService.LookupProduct(lookup);
+			return product == null
+				? CreateNotFoundResponse(flag, typeof(PosProduct), "null")
+				: CreateSuccessResponse(flag, typeof(PosProduct), Common.SerializeObject(product));
 		}
 		catch (Exception ex) {
-			error = $"POS要求の復元に失敗しました: {ex.Message}";
-			return false;
+			return CreateExceptionResponse(flag, ex, typeof(string), ex.Message);
 		}
 	}
+
 	/// <summary>
 	/// Master系のV*列とJSON内の名称スナップショットを参照先マスタの現在値で再同期する
 	/// (マスタ改名時の伝播はHandleUpdateで自動実行されるため、これはDB変換後や取りこぼしの修復用)
@@ -542,8 +509,8 @@ public partial class CoreService {
 	/// <summary>
 	/// 評価替えの取消(「再実行と取消」)。実行社員IdはJWTから解決し、クライアントの申告値は
 	/// 受け取らない(強制クリアと同じ理由。監査値のため)。リクエストからは<c>revalId</c>だけを受け取る。
-	/// 業務規則による拒否(<c>CostUpdateResult.IsSuccess=false</c>)も、既存の<c>PosCheckout</c>等と同じく
-	/// 転送層は成功応答とし、可否はDTO内の<c>IsSuccess</c>で表す。
+	/// 業務規則による拒否(<c>CostUpdateResult.IsSuccess=false</c>)も転送層は成功応答とし、
+	/// 可否はDTO内の<c>IsSuccess</c>で表す。
 	/// </summary>
 	private CvMsg HandleCostRevaluationCancel(CvMsg request, CallContext context) {
 		try {
@@ -593,6 +560,7 @@ public partial class CoreService {
 			QueryByIdParam queryById => HandleQueryById(request.Flag, queryById),
 			QueryListSqlParam querySql => HandleQueryListSql(request.Flag, querySql),
 			QueryListParam queryList => HandleQueryList(request.Flag, queryList),
+			PosBarcodeLookupRequest posLookup => HandlePosLookupProduct(request.Flag, posLookup),
 			_ => throw new NotImplementedException(),
 		};
 	}
@@ -1147,6 +1115,13 @@ public partial class CoreService {
 
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
+			// POS端末の伝票は単価・税・採番をサーバで確定させ、同じ端末取引IDの再送は既存売上を返す(設計判断記録 §2.18)
+			var (prepared, duplicate) = _pointOfSaleService.PrepareInsert(item);
+			if (duplicate) {
+				_db.CompleteTransaction();
+				return CreateSuccessResponse(flag, prepared.GetType(), Common.SerializeObject(prepared));
+			}
+			item = prepared;
 			new PointMasterDb(_db).ValidateSave(item, null);
 			ClosingDaySet.EnsureMasterSaveValid(item, null);
 			_db.Insert(item);
@@ -1182,6 +1157,8 @@ public partial class CoreService {
 		try {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			foreach (var item in list) {
+				// POS伝票はサーバ補正(PrepareInsert)を通す単件追加だけで受ける
+				if (PointOfSaleService.IsPosInsert(item)) throw new InvalidOperationException("POS伝票は一括追加できません。");
 				var vdate = SetCreatedAuditValues(insertBulk.ItemType, item);
 				new PointMasterDb(_db).ValidateSave(item, null);
 				ClosingDaySet.EnsureMasterSaveValid(item, null);
