@@ -13,6 +13,7 @@ CV10 のプロモーションソング「Creative Vision 10！ ～明日へ飛�
 | `band.py` | 和ロック編成の伴奏（ドラム・ギター2本・リードギター・ベース・箏・三味線・尺八・和太鼓・パッド）、アンプ・キャビネット、ミックス（パート間ラウドネスの自動調整）、マスタリング（マッチ EQ・リミッター・ラウドネス）、AAC 化 |
 | `sampler.py` | 実録サンプルの読み込みと発音（ファイル名の規則から音域・強さ・ラウンドロビンを選ぶ。FLAC は ffmpeg で展開してキャッシュ） |
 | `sing.py` | VOICEVOX で歌わせ、音程補正・ビブラート・ダブル・ハモリ・掛け声・ボーカル処理をして完成版を書き出す。声のオーディション |
+| `ace.py` | ACE-Step 1.5（ComfyUI）で既存の伴奏を元に伴奏を作り直すための入力・ワークフロー作成と、元の伴奏との比較（試行中。下記「ACE-Step で伴奏を作り直す」） |
 
 音源合成の基本関数は `../promo-video/core.py` を使う。出力先は `Doc/promo/song/`（`.gitignore` 対象。環境変数 `PROMO_SONG_DIR` で変更可）。
 
@@ -61,6 +62,31 @@ python sing.py --singer 3061 --verse 3061 --gang 3061 3009 3046 3016 --tag _usag
 | `--octave` | メインとダブルだけを移すオクターブ（男声は -1。ハモリは原音域のまま上に乗る） |
 | `--key` | 伴奏ごと曲全体を移調（半音） |
 | `--lyrics` | 歌詞の版。`v1`（既定）か `v2`（1番・2番の主題を入れ替えた版）。v2 は出力名が `creativevision10_v2_...` になり、伴奏は書き出さない。`song.py --lyrics v2` で `譜割り_v2.md`・`creativevision10_v2.mid` |
+
+## ACE-Step で伴奏を作り直す（試行中、2026-10-31）
+
+既存の伴奏（`creativevision10_inst.m4a`）を ACE-Step 1.5 XL SFT の潜在表現に変換し、途中から生成し直して音色と演奏感を作り直す。構成・コード・タイミングが元のまま残れば、既存の歌（`creativevision10_v2_vocal_<名前>.m4a`）をそのまま重ねられる。出力先は `Doc/promo/song/ace/`。
+
+```text
+python ace.py prep                元の伴奏の WAV（ace/input/）、曲調の指定・構成タグの歌詞・セクション表（ace/prompts/）
+python ace.py workflows           API 形式ワークフロー ace/workflows/a1_<方式>_<元>[_d<denoise>]_s<seed>.json
+                                  方式は cover（turbo＋ReferenceTimbreAudio）/ turbo_a2a / sft_a2a（部分描き直し、既定 denoise 0.45・0.6）
+                                  --ref band jp で和楽器版も元にする
+python ace.py compare <音源...>   元の伴奏とセクションごとに 和音一致・ずれ(ms)・音量差 を比べる → ace/compare.md
+python ace.py mix <音源 出力名>... [--singer _ritsu]
+                                  ずれを直し、伴奏のみ creativevision10_<出力名>_inst.m4a と、既存の歌を重ねた
+                                  creativevision10_v2_<出力名>_full<singer>.m4a を Doc/promo/song2 へ書き出す（PROMO_SONG2_DIR で変更可）
+python ace.py workflows --song    方式 B（歌詞 v2 で歌ごと生成）。--ref ritsu で v2 完成版を参照、--mode turbo_t2m sft_t2m で参照なし
+python ace.py place <音源 出力名>...  歌入りの生成音源の音量だけそろえ creativevision10_v2_<出力名>.m4a として song2 へ置く
+```
+
+2026-10-31 の試作：方式 A（伴奏だけ作り直し）6本は試聴で全て不採用。方式 B（歌ごと生成）6本は曲の雰囲気が大きく変わる。この曲は一度完成しているため採用せず、現状の VOICEVOX 版のままとする。ACE-Step は今後新しく作曲するときに改めて試す。試作と評価は `Doc/promo/song2/`（同フォルダの README.md）に残してある。
+
+方式の選び方は createdemo の「ずんだもんの令和版電波ソング」（`createdemo/projects/zunda-denpa-reiwa/qa/listening-ace15.md`）の比較による。試聴で採用されたのは turbo のカバー、元曲との一致の数値が最も高かったのは XL の部分描き直し d0.6。XL のカバーは ComfyUI 0.43.2 で音にならないため使わない。
+
+ComfyUI 側の手順（comfy-mcp）: `upload_file` で `ace/input/*.wav` を ComfyUI の input へ置く → `validate_workflow` → `run_workflow(wait=False)` → `job(action="wait")` → `fetch_outputs` で `ace/out/` へ取得 → `compare`。
+
+denoise が小さいほど元に近く、大きいほど作り直しが大きい。和音一致が 0.7 を下回るセクションやずれが ±20ms を超えるセクションは歌と合わない可能性が高い。数値の良い候補を試聴して選び、`sing.py` のミックス基準（セクション別の歌と伴奏の音量差、-12.3 LUFS）で歌を重ねる。
 
 ## M4A のタグ付け方針
 
