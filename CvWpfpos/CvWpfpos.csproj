@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>CvWpfpos</RootNamespace>
     <AssemblyTitle>CvWpfpos</AssemblyTitle>
+    <ApplicationIcon>cvpos.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
