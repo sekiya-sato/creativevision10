@@ -61,7 +61,8 @@ public partial class SeikyuLedgerReportViewModel : Helpers.BaseReportViewModel {
 
 		// PreviousBalance は対象期間の開始(DayFrom)より前の全行を SUM(TotalSales - TotalIn) で積む
 		// 。行ごとに DayFrom が異なりうるため得意先＋DayFrom で相関させる。
-		var activeOnly = IsActiveOnly ? "AND ((pb.PreviousBalance + u.Balance) != 0 OR u.TotalSales != 0)" : "";
+		// 前の締期間が無い得意先は pb が NULL になるため、選択列と同じく ifnull で0として判定する。
+		var activeOnly = IsActiveOnly ? "AND ((ifnull(pb.PreviousBalance,0) + u.Balance) != 0 OR u.TotalSales != 0)" : "";
 
 		// SELECT の列順は SeikyuLedgerReport.qfm の item1..item10 と一致させる。
 		var sql = $@"
