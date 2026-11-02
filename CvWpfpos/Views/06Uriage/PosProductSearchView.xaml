@@ -7,6 +7,7 @@
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FocusManager.FocusedElement="{Binding ElementName=SearchTextBox}"
 	Foreground="{DynamicResource MaterialDesignBody}"
+	Icon="{DynamicResource WindowIcon}"
 	ResizeMode="NoResize" TextOptions.TextFormattingMode="Display"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>

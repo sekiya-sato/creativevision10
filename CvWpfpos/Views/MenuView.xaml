@@ -9,6 +9,7 @@
 	Width="800" Height="600"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
+	Icon="{DynamicResource WindowIcon}"
 	ResizeMode="CanResize"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>

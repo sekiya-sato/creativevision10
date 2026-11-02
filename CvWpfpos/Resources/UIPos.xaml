@@ -5,6 +5,10 @@
 		店頭オペレーション向けのタッチしやすいサイズ・視認性を上乗せする。
 	-->
 
+	<!--  ウィンドウアイコン（各 View の Icon から参照。Views 配下の階層に依存しないよう絶対 pack URI で指定）  -->
+	<BitmapImage x:Key="WindowIcon"
+		UriSource="pack://application:,,,/CvWpfpos;component/cvpos.ico" />
+
 	<!--  バーコード入力欄（大きめ・等幅寄り）  -->
 	<Style x:Key="PosBarcodeTextBox"
 		BasedOn="{StaticResource FormTextBox}"

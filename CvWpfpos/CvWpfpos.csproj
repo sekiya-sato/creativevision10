@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Resource Include="cvpos.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="MaterialDesignColors" />

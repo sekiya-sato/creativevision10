@@ -6,6 +6,7 @@
 	Width="1100" Height="750" MinWidth="900" MinHeight="600"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
+	Icon="{DynamicResource WindowIcon}"
 	TextOptions.TextFormattingMode="Display"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>

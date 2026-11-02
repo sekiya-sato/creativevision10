@@ -6,6 +6,7 @@
 	Width="600" Height="500" MinWidth="500" MinHeight="400"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	Foreground="{DynamicResource MaterialDesignBody}"
+	Icon="{DynamicResource WindowIcon}"
 	ResizeMode="NoResize" TextOptions.TextFormattingMode="Display"
 	mc:Ignorable="d">
 
