@@ -63,7 +63,8 @@ public partial class ShiharaiLedgerReportViewModel : Helpers.BaseReportViewModel
 
 		// PreviousBalance は対象期間の開始(DayFrom)より前の全行を SUM(TotalShiire - TotalOut) で積む
 		// 。行ごとに DayFrom が異なりうるため仕入先＋DayFrom で相関させる。
-		var activeOnly = IsActiveOnly ? "AND ((pb.PreviousBalance + k.Balance) != 0 OR k.TotalOut != 0)" : "";
+		// 前の締期間が無い仕入先は pb が NULL になるため、選択列と同じく ifnull で0として判定する。
+		var activeOnly = IsActiveOnly ? "AND ((ifnull(pb.PreviousBalance,0) + k.Balance) != 0 OR k.TotalOut != 0)" : "";
 
 		// SELECT の列順は ShiharaiLedgerReport.qfm の item1..item9 と一致させる。
 		var sql = $@"
