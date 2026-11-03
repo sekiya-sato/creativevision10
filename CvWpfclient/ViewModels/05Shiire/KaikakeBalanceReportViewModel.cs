@@ -48,6 +48,8 @@ public partial class KaikakeBalanceReportViewModel : Helpers.BaseReportViewModel
 
 		List<string> parameters = [];
 		var ym = AddSqlParameter(parameters, target.ToString("yyyyMM", CultureInfo.InvariantCulture));
+		// 見出しの年月（qfm item12）。qfm側で日付として「年月: YYYY/MM」に整形する
+		var ymLabel = AddSqlParameter(parameters, target.ToString("yyyy/MM/01", CultureInfo.InvariantCulture));
 		var shiireWhere = BuildCodeRangeWhere(parameters, "Code", ShiireCodeFrom, ShiireCodeTo);
 
 		var activeOnly = IsActiveOnly
@@ -87,7 +89,8 @@ joined AS (
 SELECT
     shiireCode, shiireName,
     prevBalance, totalShiire, tax, henpin, nebiki,
-    totalOut, cash, fee, balance
+    totalOut, cash, fee, balance,
+    {ymLabel} AS targetYearMonth
 FROM joined
 {activeOnly}
 ORDER BY shiireCode";

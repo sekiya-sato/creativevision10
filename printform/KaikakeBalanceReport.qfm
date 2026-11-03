@@ -14,6 +14,7 @@
 			<item id="item9"/>
 			<item id="item10"/>
 			<item id="item11"/>
+			<item id="item12"/>
 		</datarecord>
 		<file>
 			<path datatype="csv" target="data.txt"/>
@@ -189,6 +190,13 @@
 				</text>
 			</record>
 		</region>
+		<text id="TxtYearMonth" valign="middle">
+			<position x="0" y="1" width="40" height="5"/>
+			<color transparent="1"/>
+			<data calctype="item" datasrc="item12"/>
+			<decode datatype="date" format="&quot;”NŒŽ: &quot;YYYY/MM"/>
+			<font size="90"/>
+		</text>
 		<text id="TxtTitle" valign="middle" halign="center">
 			<position x="41" y="0" width="56" height="7"/>
 			<color base="97f2ff" transparent="0"/>
