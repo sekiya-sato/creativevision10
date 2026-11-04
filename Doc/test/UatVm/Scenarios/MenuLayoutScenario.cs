@@ -31,6 +31,20 @@ public static class MenuLayoutScenario {
 	public static string? OutputDirectory { get; set; }
 	/// <summary>対象を絞る部分一致（--filter、View型名またはメニュー名）。未指定なら全画面。</summary>
 	public static string? Filter { get; set; }
+	/// <summary>
+	/// 初期化後に検索・一覧・印刷のコマンドだけを既定条件で実行する（--search。SQL方言変換の検証で実SQLを収集する用途）。
+	/// 撮影は省く。保存・更新・削除・実行系のコマンドは対象外。
+	/// </summary>
+	public static bool RunSearch { get; set; }
+
+	/// <summary>RunSearch で実行するコマンド（読み取りのみのもの）</summary>
+	static readonly HashSet<string> SearchCommandNames = new(StringComparer.Ordinal) {
+		"DoSearchCommand", "SearchCommand", "DoListOnListTabCommand", "GoToListCommand", "DoQueryCommand", "QueryCommand",
+		"DoPrintListCommand", "DoPrintDetailCommand",
+	};
+	const int SearchTimeoutMs = 120_000;
+	/// <summary>処理中の画面（条件ダイアログの応答関数から結果へ書き込むため）</summary>
+	static ScreenResult? _current;
 
 	const int InitTimeoutMs = 30_000;
 
@@ -82,6 +96,22 @@ public static class MenuLayoutScenario {
 
 		var results = new List<ScreenResult>();
 		var no = 0;
+		// 一覧取得前・初期化時に開く条件指定ダイアログ（ShowDialogView）へ「既定条件のまま OK」で応答する。
+		// 撮影モードではダイアログ自体も撮影・表示崩れ判定する（条件ダイアログもメニュー画面の一部として確認する）。
+		DialogTestRoute.Enable(window => {
+			var current = _current;
+			if (current != null) {
+				var name = $"{current.No:000}_dlg_{window.GetType().Name}";
+				if (!RunSearch) {
+					var jpg = ScreenLayoutCheck.SaveJpeg(window, jpgDir, name);
+					var issues = ScreenLayoutCheck.Inspect(window);
+					current.Sizes.Add(new SizeResult { Mode = "条件ダイアログ", Width = window.ActualWidth, Height = window.ActualHeight, Jpeg = jpg, Issues = [.. issues] });
+				}
+				current.Notes.Add($"条件ダイアログ: {window.GetType().Name} を既定条件でOK");
+			}
+			return DialogTestRoute.DefaultResponder(window);
+		});
+		try {
 		foreach (var entry in unique) {
 			no++;
 			var result = await RunOneAsync(session, entry, no, jpgDir);
@@ -89,6 +119,11 @@ public static class MenuLayoutScenario {
 			Console.WriteLine($"[menulayout] {no}/{unique.Count} {entry.ViewType.Name} opened={result.Opened} issues={string.Join("/", result.Sizes.Select(s => s.Issues.Count))}{(result.Error != null ? " error=" + result.Error : string.Empty)}");
 			// 途中で落ちても結果が残るよう毎回書き出す
 			WriteOutputs(outDir, results);
+		}
+		}
+		finally {
+			DialogTestRoute.Disable();
+			_current = null;
 		}
 
 		var failed = results.Where(x => !x.Opened).ToList();
@@ -106,6 +141,7 @@ public static class MenuLayoutScenario {
 			InitParam = entry.InitParam,
 		};
 		var baseName = $"{no:000}_{entry.ViewType.Name}{(entry.InitParam != 0 ? "_p" + entry.InitParam : string.Empty)}";
+		_current = result;
 		var before = Application.Current.Windows.Cast<Window>().ToHashSet();
 		var dialogStart = session.Dialogs.Count;
 		Window? view = null;
@@ -150,6 +186,11 @@ public static class MenuLayoutScenario {
 			result.Opened = true;
 			result.EffectiveMinWidth = view.MinWidth;
 			result.EffectiveMinHeight = view.MinHeight;
+
+			if (RunSearch) {
+				await RunSearchCommandsAsync(view.DataContext, result);
+				return result;
+			}
 
 			result.Sizes.Add(await CaptureAsync(session, view, jpgDir, baseName + "_std", "標準"));
 
@@ -215,6 +256,37 @@ public static class MenuLayoutScenario {
 			if (w.IsLoaded && w.IsVisible) {
 				result.Notes.Add($"閉じられずに残ったため非表示化: {w.GetType().Name}");
 				try { w.Hide(); } catch (InvalidOperationException) { }
+			}
+		}
+	}
+
+	/// <summary>検索・一覧・印刷のコマンドを既定条件のまま順に実行する（実行できないものは飛ばす）</summary>
+	static async Task RunSearchCommandsAsync(object? dataContext, ScreenResult result) {
+		if (dataContext == null) return;
+		foreach (var prop in dataContext.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
+			.Where(p => SearchCommandNames.Contains(p.Name))) {
+			try {
+				switch (prop.GetValue(dataContext)) {
+					case IAsyncRelayCommand asyncCommand when asyncCommand.CanExecute(null):
+						var task = asyncCommand.ExecuteAsync(null);
+						await Task.WhenAny(task, Task.Delay(SearchTimeoutMs));
+						result.Notes.Add($"{prop.Name}: {(task.IsCompleted ? "完了" : "タイムアウト")}");
+						break;
+					case IRelayCommand command when command.CanExecute(null):
+						command.Execute(null);
+						result.Notes.Add($"{prop.Name}: 実行");
+						break;
+					default:
+						result.Notes.Add($"{prop.Name}: 実行不可");
+						break;
+				}
+				// 実行に伴うコマンド（一覧読込など）の完了も待つ
+				var sw = Stopwatch.StartNew();
+				while (HasRunningCommand(dataContext) && sw.ElapsedMilliseconds < SearchTimeoutMs) await Task.Delay(100);
+			}
+			catch (Exception ex) {
+				var inner = ex is TargetInvocationException { InnerException: { } ie } ? ie : ex;
+				result.Notes.Add($"{prop.Name}: 例外 {inner.Message}");
 			}
 		}
 	}

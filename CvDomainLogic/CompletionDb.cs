@@ -63,7 +63,8 @@ public class CompletionDb(ExDatabase db) {
 	/// <summary>
 	/// 未完了の対象伝票のうち、明細の全SKUが実績で充足したものへ <c>EndFlag=1</c> を立てる。
 	/// <para>
-	/// 「充足していないSKUが1件も無い」を <c>NOT EXISTS</c> で判定する。
+	/// 「充足していないSKUが1件も無い」を、不足SKUを持つ伝票Idの <c>NOT IN</c> で判定する
+	/// （残と実績を対象Idだけ1回ずつ集計して突き合わせる。相関副問合せにしない）。
 	/// 実績が1件も無い伝票は最初のSKUで不足になるため対象外になる。
 	/// </para>
 	/// </summary>
@@ -81,31 +82,47 @@ SET EndFlag = 1, Vdu = {vdate}
 WHERE Id IN ({inIds})
   AND EndFlag = 0
   AND EXISTS (SELECT 1 FROM json_each({zanTable}.Jmeisai) WHERE json_valid({zanTable}.Jmeisai))
-  AND NOT EXISTS (
-    /* 発注(受注)明細を SKU 単位に畳んで、実績合計が足りない SKU を探す */
-    SELECT 1
+  AND Id NOT IN (
+    /* 実績合計が足りない SKU を持つ伝票Id。
+       残(zan)と実績(act)をそれぞれ対象Idだけ1回ずつ SKU 単位に集計し、突き合わせる。
+       相関副問合せ（伝票×SKUごとに実績明細JSONを展開し直す）にしないことで、
+       PostgreSQL の jsonb 変換・MariaDB の JSON_TABLE 展開が対象件数に比例して繰り返されないようにする。
+       方言に依存しない形にする（SQLiteの結果は同じ）:
+       - 派生表は外側を参照しない（MariaDB は派生表から外側を参照できない）
+       - 実績側は結合を先に書いてから json_each を並べる（PostgreSQL ではカンマより JOIN が先に結び付く） */
+    SELECT zan.DenId
     FROM (
       SELECT
+        h.Id               AS DenId,
         {Num("Id_Shohin")} AS Id_Shohin,
         {Num("Id_Col")}    AS Id_Col,
         {Num("Id_Siz")}    AS Id_Siz,
         SUM({Num("Su")})   AS Su
       FROM {zanTable} h, {MeisaiFrom}
-      WHERE h.Id = {zanTable}.Id AND {MeisaiGuard}
-      GROUP BY 1, 2, 3
+      WHERE h.Id IN ({inIds}) AND {MeisaiGuard}
+      GROUP BY 1, 2, 3, 4
     ) zan
-    WHERE zan.Su > ifnull((
-      SELECT SUM({Num("Su")} * h.CalcFlag)
-      FROM {actualTable} h, {MeisaiFrom}
-      {actualJoin}
-      WHERE h.RelateNo1 = {zanTable}.Id AND {MeisaiGuard}
-        AND {Num("Id_Shohin")} = zan.Id_Shohin
-        AND {Num("Id_Col")}    = zan.Id_Col
-        AND {Num("Id_Siz")}    = zan.Id_Siz
-    ), 0)
+    LEFT JOIN (
+      SELECT
+        h.RelateNo1                    AS DenId,
+        {Num("Id_Shohin")}             AS Id_Shohin,
+        {Num("Id_Col")}                AS Id_Col,
+        {Num("Id_Siz")}                AS Id_Siz,
+        SUM({Num("Su")} * h.CalcFlag)  AS Su
+      FROM {actualTable} h
+      {actualJoin}, {MeisaiFrom}
+      WHERE h.RelateNo1 IN ({inIds}) AND {MeisaiGuard}
+      GROUP BY 1, 2, 3, 4
+    ) act
+      ON act.DenId = zan.DenId
+     AND act.Id_Shohin = zan.Id_Shohin
+     AND act.Id_Col = zan.Id_Col
+     AND act.Id_Siz = zan.Id_Siz
+    WHERE zan.Su > ifnull(act.Su, 0)
   );
 ";
-		return _db.Execute(sql);
+		// json_each / json_extract / ifnull を含むため接続先の方言へ変換して実行する（SQLiteでは Execute と同じ）
+		return _db.ExecuteDialect(sql);
 	}
 
 	/// <summary>

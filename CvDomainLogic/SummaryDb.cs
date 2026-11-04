@@ -86,9 +86,8 @@ public class SummaryDb {
 	/// <c>DateFrom</c> が未設定・不正なら新税率への切替が起きないよう将来日(99999999)に倒す。
 	/// </summary>
 	private (int Rate, string DateFrom, int NewRate)[] LoadTaxRateDefs() {
-		var tableExists = _db.FirstOrDefault<string>(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name='MasterSysman'");
-		var sysman = string.IsNullOrEmpty(tableExists)
+		// 表の有無はプロバイダー別の実装で確かめる（sqlite_master は SQLite にしか無い）
+		var sysman = !_db.IsExistTable(typeof(MasterSysman))
 			? null
 			: _db.Fetch<MasterSysman>("ORDER BY Id LIMIT 1").FirstOrDefault();
 		var defs = new (int Rate, string DateFrom, int NewRate)[4]; // index 0は未使用、1-3を使う
@@ -898,9 +897,8 @@ WHERE SumMonth <= @0;
 	/// </summary>
 	private string GetFiscalStartDate() {
 		// MasterSysman 未作成(移行前・一部の単体テスト)では既定 "19010101" を返し、ガードを実質無効化する。
-		var tableExists = _db.FirstOrDefault<string>(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name='MasterSysman'");
-		if (string.IsNullOrEmpty(tableExists)) {
+		// 表の有無はプロバイダー別の実装で確かめる（sqlite_master は SQLite にしか無い）
+		if (!_db.IsExistTable(typeof(MasterSysman))) {
 			return "19010101";
 		}
 		var value = _db.FirstOrDefault<string>("SELECT FiscalStartDate FROM MasterSysman ORDER BY Id LIMIT 1");

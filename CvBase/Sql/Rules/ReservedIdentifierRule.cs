@@ -55,6 +55,13 @@ public sealed class ReservedIdentifierRule : ISqlRewriteRule {
 
 	public bool Apply(SqlRewriteContext context, int index) {
 		var token = context.Tokens[index];
+		// SQLite の二重引用符の識別子 "Offset" も同じく各DBの引用へ直す。
+		// MariaDB は二重引用符を文字列リテラルとして読み、PostgreSQL は大文字小文字を区別して列が見つからないため。
+		if (token.Kind == SqlTokenKind.QuotedIdent && token.Text.Length > 2 && token.Text[0] == '"' && token.Text[^1] == '"'
+			&& _targets.Contains(token.Text[1..^1])) {
+			context.Replace(index, _quote(token.Text[1..^1]));
+			return true;
+		}
 		if (token.Kind != SqlTokenKind.Word || !_targets.Contains(token.Text))
 			return false;
 

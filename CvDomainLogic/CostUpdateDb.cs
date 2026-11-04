@@ -131,7 +131,7 @@ SELECT IFNULL(MAX(Vdu), 0) AS MaxVdu, COUNT(*) AS Cnt FROM (
 			_ => throw new ArgumentOutOfRangeException(nameof(processKind), processKind,
 				"確認スナップショットに対応しない処理区分です。評価替えはFetchRevaluationConfirmSnapshotを使用してください。"),
 		};
-		var fp = _db.FirstOrDefault<SourceFingerprintRow>(sql, period.DayFrom, period.DayTo, targetMonth) ?? new SourceFingerprintRow();
+		var fp = _db.FirstOrDefaultDialect<SourceFingerprintRow>(sql, period.DayFrom, period.DayTo, targetMonth) ?? new SourceFingerprintRow();
 		return new CostConfirmSnapshot {
 			SourceMaxVdu = fp.MaxVdu,
 			SourceCount = fp.Cnt,
@@ -153,11 +153,11 @@ SELECT IFNULL(MAX(Vdu), 0) AS MaxVdu, COUNT(*) AS Cnt FROM (
 	/// </para>
 	/// </summary>
 	public CostConfirmSnapshot FetchRevaluationConfirmSnapshot(string sumMonth) {
-		var shohinFp = _db.FirstOrDefault<SourceFingerprintRow>($@"
+		var shohinFp = _db.FirstOrDefaultDialect<SourceFingerprintRow>($@"
 SELECT IFNULL(MAX(Vdu), 0) AS MaxVdu, COUNT(*) AS Cnt
 FROM {nameof(MasterShohin)}
 WHERE IsZaiko = 1 AND PurchaseType = {(int)EnumPurchaseType.Normal}") ?? new SourceFingerprintRow();
-		var stockFp = _db.FirstOrDefault<SourceFingerprintRow>($@"
+		var stockFp = _db.FirstOrDefaultDialect<SourceFingerprintRow>($@"
 SELECT IFNULL(MAX(Vdu), 0) AS MaxVdu, COUNT(*) AS Cnt
 FROM {nameof(SummaryStock)} WHERE SumMonth <= @0", sumMonth) ?? new SourceFingerprintRow();
 		return new CostConfirmSnapshot {
@@ -243,7 +243,7 @@ FROM {nameof(SummaryStock)} WHERE SumMonth <= @0", sumMonth) ?? new SourceFinger
 		if (!_db.IsExistTable(typeof(MasterSysman))) {
 			throw new InvalidOperationException("MasterSysmanが存在しないため、原価方式を取得できません。");
 		}
-		return _db.FirstOrDefault<int>($"SELECT CostMethod FROM {nameof(MasterSysman)} ORDER BY Id LIMIT 1");
+		return _db.FirstOrDefaultDialect<int>($"SELECT CostMethod FROM {nameof(MasterSysman)} ORDER BY Id LIMIT 1");
 	}
 
 	// ==================================================================
@@ -423,7 +423,7 @@ WHERE {nameof(MasterShohin)}.Id IN ({idsCsv})
 	/// <returns>作成した基準行数。</returns>
 	public int EnsureBaselineCostRows(IReadOnlyCollection<long> idShohins, string batchId, long idShain) {
 		var vdate = Common.GetVdate();
-		var shain = _db.FirstOrDefault<MasterShain>("WHERE Id=@0", idShain);
+		var shain = _db.FirstOrDefaultDialect<MasterShain>("WHERE Id=@0", idShain);
 		var vShain = shain != null ? new CodeNameView(shain.Id, shain.Code, shain.Name) : new CodeNameView();
 		var inserted = 0;
 		foreach (var chunk in ChunkIds(idShohins)) {
@@ -568,7 +568,7 @@ ON CONFLICT(SumMonth, Id_Shohin, CostMethod, ChangeKind) DO UPDATE SET
 	private CostMonthStatus FetchCostUpdateStatus(string sumMonth) {
 		var status = new CostMonthStatus { SumMonth = sumMonth, ProcessKind = EnumCostProcessKind.CostUpdate };
 
-		var summary = _db.FirstOrDefault<GenkaMonthSummary>($@"
+		var summary = _db.FirstOrDefaultDialect<GenkaMonthSummary>($@"
 SELECT COUNT(*) AS Cnt, IFNULL(MAX(Vdu), 0) AS MaxVdu
 FROM {nameof(TranGenka)}
 WHERE SumMonth = @0 AND ChangeKind = @1", sumMonth, (int)EnumCostChangeKind.Monthly);
@@ -577,7 +577,7 @@ WHERE SumMonth = @0 AND ChangeKind = @1", sumMonth, (int)EnumCostChangeKind.Mont
 			return status;
 		}
 
-		var latest = _db.FirstOrDefault<GenkaMonthLatest>($@"
+		var latest = _db.FirstOrDefaultDialect<GenkaMonthLatest>($@"
 SELECT BatchId, CostMethod
 FROM {nameof(TranGenka)}
 WHERE SumMonth = @0 AND ChangeKind = @1
@@ -628,7 +628,7 @@ SELECT COUNT(*) FROM (
   SELECT 1 FROM {nameof(SummaryStock)} WHERE SumMonth = @3 AND Vdu > @2
 ) AS c
 ";
-		return _db.FirstOrDefault<int>(sql, period.DayFrom, period.DayTo, lastRunVdu, sumMonth) > 0;
+		return _db.FirstOrDefaultDialect<int>(sql, period.DayFrom, period.DayTo, lastRunVdu, sumMonth) > 0;
 	}
 
 	/// <summary>
@@ -654,7 +654,7 @@ SELECT COUNT(DISTINCT x.Id_Shohin) FROM (
 JOIN {nameof(MasterShohin)} AS ms ON ms.Id = x.Id_Shohin
 WHERE ms.IsZaiko = 1
 ";
-		return _db.FirstOrDefault<long>(sql, period.DayFrom, period.DayTo);
+		return _db.FirstOrDefaultDialect<long>(sql, period.DayFrom, period.DayTo);
 	}
 
 	private sealed class GenkaMonthSummary {

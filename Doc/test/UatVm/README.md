@@ -113,6 +113,19 @@ session.CheckEqual("進捗", 100, d.Vm.ProgressValue);
 製品側の変更は`MessageEx`の各メソッド先頭の分岐だけで、呼び出し側142ファイルは無変更。
 既定（無効）では従来動作と完全に同一である。
 
+### 5.1.1 条件指定ダイアログのテスト専用ルート
+
+一覧取得の前や初期化時に `ClientLib.ShowDialogView` で開く条件指定ダイアログ（`RangeParamView` / `RangeInputParamView` /
+`PointMasterSearchParamView` / `TranPromotionSearchParamView` / `RangeParamMiniView` / `AutoExecHistoryParamMiniView` など）は、
+`CvWpfclient/Helpers/DialogTestRoute.cs` を有効化すると、実ダイアログを表示したうえで描画・初期化の完了後に応答関数を呼んで閉じる。
+既定の応答は「既定条件のまま OK」（ViewModel の `OkCommand` を実行）。条件を入れたい場合は応答関数で ViewModel を設定してから
+`DialogTestRoute.DefaultResponder(window)` を返す。開いたダイアログと結果は `DialogTestRoute.Records` に残る。
+無効（既定）のときは従来どおりモーダル表示のまま。製品側の変更は `ShowDialogView` の分岐1行だけ。
+
+`menulayout` はこのルートを有効にして実行する（条件ダイアログ自体も撮影・表示崩れ判定の対象にする）。
+`--search` を付けると、各画面の検索・一覧・印刷コマンドを既定条件で実行する（撮影は省く。SQL方言変換の検証で実SQLを収集する用途）。
+ファイル保存・選択（`SaveFileDialog` / `OpenFileDialog`）はこのルートの対象外。
+
 ### 5.2 App.xamlのリソースを自前で構築する理由
 
 App.xamlは`/Resources/UIColors.xaml`のように**アセンブリ名なし**でリソースを参照する。

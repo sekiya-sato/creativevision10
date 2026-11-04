@@ -130,6 +130,25 @@ public sealed class CategoryARuleTests {
 	}
 
 	[TestMethod]
+	public void A06_引数2個以上のmaxminはGREATESTLEASTにし集約は変えない() {
+		const string sql = "select max(a.Su), min(b), max(x - ifnull(y, 0), 0), min(p, q, r) from T";
+		Assert.AreEqual("select max(a.Su), min(b), GREATEST(x - ifnull(y, 0), 0), LEAST(p, q, r) from T",
+			SqlDialects.Maria.Translate(sql));
+		Assert.AreEqual("select max(a.Su), min(b), GREATEST(x - coalesce(y, 0), 0), LEAST(p, q, r) from T",
+			SqlDialects.Postgre.Translate(sql));
+	}
+
+	[TestMethod]
+	public void A03_SQLiteの二重引用符の予約語列名も各DBの引用へ直す() {
+		const string sql = "select IFNULL(s.\"Offset\", 0) AS \"Offset\", \"Name\" from SummaryUriKake s";
+		// 予約語以外の二重引用符識別子は変えない
+		Assert.AreEqual("select coalesce(s.\"offset\", 0) AS \"offset\", \"Name\" from SummaryUriKake s",
+			SqlDialects.Postgre.Translate(sql));
+		Assert.AreEqual("select IFNULL(s.`Offset`, 0) AS `Offset`, \"Name\" from SummaryUriKake s",
+			SqlDialects.Maria.Translate(sql));
+	}
+
+	[TestMethod]
 	public void A03_別名や裸の列名も引用する() {
 		Assert.AreEqual("select 0 as `Offset`, sum(`Offset`) from T",
 			SqlDialects.Maria.Translate("select 0 as Offset, sum(Offset) from T"));

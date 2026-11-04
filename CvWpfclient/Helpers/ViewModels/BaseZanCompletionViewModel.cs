@@ -200,51 +200,62 @@ public abstract partial class BaseZanCompletionViewModel<TDen> : BaseQueryViewMo
 	/// </para>
 	/// </summary>
 	async Task<List<ZanCompletionRow>> LoadRowsAsync(string dayFrom, string dayTo, int maxCount, CancellationToken ct) {
-		// 明細SKU単位の不足合計。実績が無ければ発注(受注)数がそのまま残になる
-		var zanExpr = $@"(
-  SELECT ifnull(SUM(max(zan.Su - ifnull((
-      SELECT SUM({MeisaiNum("Su")} * a.CalcFlag)
-      FROM {ActualTableName} a, json_each(a.Jmeisai) m
-      {ActualExtraJoin}
-      WHERE a.RelateNo1 = h.Id{ActualExtraMatchCondition} AND json_valid(a.Jmeisai)
-        AND {MeisaiNum("Id_Shohin")} = zan.Id_Shohin
-        AND {MeisaiNum("Id_Col")}    = zan.Id_Col
-        AND {MeisaiNum("Id_Siz")}    = zan.Id_Siz
-    ), 0), 0)), 0)
-  FROM (
-    SELECT {MeisaiNum("Id_Shohin")} AS Id_Shohin,
-           {MeisaiNum("Id_Col")}    AS Id_Col,
-           {MeisaiNum("Id_Siz")}    AS Id_Siz,
-           SUM({MeisaiNum("Su")})   AS Su
-    FROM json_each(h.Jmeisai) m
-    WHERE json_valid(h.Jmeisai)
-    GROUP BY 1, 2, 3
-  ) zan
-)";
-		var actualExpr = $@"ifnull((
-  SELECT SUM({MeisaiNum("Su")} * a.CalcFlag)
-  FROM {ActualTableName} a, json_each(a.Jmeisai) m
-  {ActualExtraJoin}
-  WHERE a.RelateNo1 = h.Id{ActualExtraMatchCondition} AND json_valid(a.Jmeisai)
-), 0)";
-
 		List<string> parameters = [dayFrom, dayTo];
 		var toriWhere = ToriId > 0 ? $" AND h.{DenToriIdColumn} = {ToriId.ToString(CultureInfo.InvariantCulture)}" : string.Empty;
-		// 「残のみ」は残がある伝票だけを出す。完了済みは残の有無にかかわらず出して解除できるようにする
-		var zanWhere = ViewKind == "残のみ" ? $" AND ({zanExpr} > 0 OR h.EndFlag = 1)" : string.Empty;
+		// 対象伝票の条件。派生表の中でも同じ条件で絞り、集計件数を対象期間・取引先だけに抑える
+		var denWhere = $"h.DenDay BETWEEN @0 AND @1{toriWhere}";
+		// 実績明細（SKU単位）の抽出元。見出し h と結合して受注側の条件（取引先一致・受注日以降）を当てる
+		var actualFrom = $@"FROM {ActualTableName} a
+      INNER JOIN {DenTableName} h ON h.Id = a.RelateNo1
+      {ActualExtraJoin}, json_each(a.Jmeisai) m
+      WHERE {denWhere}{ActualExtraMatchCondition} AND json_valid(a.Jmeisai)";
+		// 残(zan)・実績(act)を伝票×SKUで1回ずつ集計して突き合わせ、伝票ごとの不足合計(za)と実績合計(tot)を作る。
+		// 相関副問合せ（伝票×SKUごとに実績明細JSONを展開し直す）にしないことで、行数に比例した JSON 展開の繰り返しを避ける。
+		// 方言に依存しない形（SQLiteの結果は同じ）: 派生表は外側を参照しない（MariaDB）、結合を json_each より先に書く（PostgreSQL）。
+		// 不足はSKUごとに max(不足, 0) で数える（あるSKUの超過が別のSKUの不足を隠さない）。
 		var sql = $@"
 SELECT h.Id, h.Vdu, h.DenDay, h.RelateNo1, h.SuTotal, h.KingakuTotal, h.EndFlag,
        h.{DenToriIdColumn} AS Id_Tori,
        ifnull(t.Code, '') AS ToriCode,
        ifnull(t.Name, '') AS ToriName,
-       {actualExpr} AS ActualSu,
-       {zanExpr} AS ZanSu
+       ifnull(tot.Su, 0) AS ActualSu,
+       ifnull(za.ZanSu, 0) AS ZanSu
 FROM {DenTableName} h
 LEFT JOIN {ToriMasterTableName} t ON t.Id = h.{DenToriIdColumn}
-WHERE h.DenDay BETWEEN @0 AND @1{toriWhere}{zanWhere}
+LEFT JOIN (
+  SELECT zan.DenId, SUM(max(zan.Su - ifnull(act.Su, 0), 0)) AS ZanSu
+  FROM (
+    SELECT h.Id AS DenId,
+           {MeisaiNum("Id_Shohin")} AS Id_Shohin,
+           {MeisaiNum("Id_Col")}    AS Id_Col,
+           {MeisaiNum("Id_Siz")}    AS Id_Siz,
+           SUM({MeisaiNum("Su")})   AS Su
+    FROM {DenTableName} h, json_each(h.Jmeisai) m
+    WHERE {denWhere} AND json_valid(h.Jmeisai)
+    GROUP BY 1, 2, 3, 4
+  ) zan
+  LEFT JOIN (
+    SELECT a.RelateNo1 AS DenId,
+           {MeisaiNum("Id_Shohin")} AS Id_Shohin,
+           {MeisaiNum("Id_Col")}    AS Id_Col,
+           {MeisaiNum("Id_Siz")}    AS Id_Siz,
+           SUM({MeisaiNum("Su")} * a.CalcFlag) AS Su
+    {actualFrom}
+    GROUP BY 1, 2, 3, 4
+  ) act
+    ON act.DenId = zan.DenId AND act.Id_Shohin = zan.Id_Shohin AND act.Id_Col = zan.Id_Col AND act.Id_Siz = zan.Id_Siz
+  GROUP BY zan.DenId
+) za ON za.DenId = h.Id
+LEFT JOIN (
+  SELECT a.RelateNo1 AS DenId, SUM({MeisaiNum("Su")} * a.CalcFlag) AS Su
+  {actualFrom}
+  GROUP BY a.RelateNo1
+) tot ON tot.DenId = h.Id
+WHERE {denWhere}{(ViewKind == "残のみ" ? " AND (ifnull(za.ZanSu, 0) > 0 OR h.EndFlag = 1)" : string.Empty)}
 ORDER BY h.DenDay, h.Id
 LIMIT {maxCount.ToString(CultureInfo.InvariantCulture)}
 ";
+		// 「残のみ」は残がある伝票だけを出す。完了済みは残の有無にかかわらず出して解除できるようにする
 		var list = await QuerySqlListAsync<ZanCompletionQueryRow>(sql, parameters, ct);
 		return [.. list.Select(x => new ZanCompletionRow {
 			Id = x.Id,

@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    SQL方言変換の実DB検証ツール。CvServer が CV_SQL_CAPTURE で記録した SQLite 方言のSQLを
+    SQLite（基準）・MariaDB・PostgreSQL で再実行し、文法・型・結果を照合する。
+    creativevision10.slnx には含めない。更新系SQLはトランザクション内で実行して必ずロールバックする。
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>sqlreplay</AssemblyName>
+    <RootNamespace>SqlReplay</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\..\..\..\CvBaseSqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\..\..\CvBaseMariadb\CvBaseMariadb.csproj" />
+    <ProjectReference Include="..\..\..\..\CvBasePostgre\CvBasePostgre.csproj" />
+    <ProjectReference Include="..\..\..\..\CodeShare\CodeShare.csproj" />
+  </ItemGroup>
+</Project>

@@ -94,6 +94,9 @@ public static class SqlCorpus {
 	public static List<string> ExtractSqlLiterals(string source) =>
 		[.. ExtractSqlLiteralsWithOffset(source).Select(x => x.Sql)];
 
+	/// <summary>ソース1本からSQLらしいリテラルと、その開始位置を取り出す（経路棚卸しテスト用の公開版）。</summary>
+	public static List<(string Sql, int Offset)> ExtractSqlLiteralsWithOffsetPublic(string source) => ExtractSqlLiteralsWithOffset(source);
+
 	/// <summary>ソース1本からSQLらしいリテラルと、その開始位置を取り出す。</summary>
 	static List<(string Sql, int Offset)> ExtractSqlLiteralsWithOffset(string source) {
 		var result = new List<(string, int)>();

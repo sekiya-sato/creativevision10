@@ -146,6 +146,7 @@ if (Option("--to") is { } to) ResummaryAllScenario.YearMonthTo = to;
 if (Flag("--no-execute")) BillingCalculationScenario.Execute = false;
 if (Option("--out") is { } outDir) MenuLayoutScenario.OutputDirectory = Path.GetFullPath(outDir);
 if (Option("--filter") is { } filter) MenuLayoutScenario.Filter = filter;
+if (Flag("--search")) MenuLayoutScenario.RunSearch = true;
 if (Option("--switch-to") is { } switchTo) SwitchDbScenario.ToConnection = switchTo;
 if (Flag("--verify-only")) SwitchDbScenario.VerifyOnly = true;
 

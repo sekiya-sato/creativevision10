@@ -155,7 +155,7 @@ public class JodaiConflictChecker {
 		var masterCost = new Dictionary<long, int>();
 		if (needsLookup.Count > 0) {
 			var sql = $"SELECT Id, ifnull(TankaGenka,0) AS TankaGenka FROM {nameof(MasterShohin)} WHERE Id IN ({string.Join(",", needsLookup)})";
-			masterCost = _db.Fetch<ShohinCostRow>(sql).ToDictionary(c => c.Id, c => c.TankaGenka);
+			masterCost = _db.FetchDialect<ShohinCostRow>(sql).ToDictionary(c => c.Id, c => c.TankaGenka);
 		}
 
 		var violations = new List<(TranJodaiMeisai Meisai, int Cost)>();

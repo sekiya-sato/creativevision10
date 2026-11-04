@@ -94,9 +94,8 @@ public class TranTaxRebuildDb {
 	/// <c>SummaryDb.GetFiscalStartDate</c> と同じ考え方（期首残高として凍結し再計算しない範囲の境界）。
 	/// </summary>
 	string GetFiscalStartDate() {
-		var tableExists = _db.FirstOrDefault<string>(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name='MasterSysman'");
-		if (string.IsNullOrEmpty(tableExists)) {
+		// 表の有無はプロバイダー別の実装で確かめる（sqlite_master は SQLite にしか無い）
+		if (!_db.IsExistTable(typeof(MasterSysman))) {
 			return "19010101";
 		}
 		var value = _db.FirstOrDefault<string>("SELECT FiscalStartDate FROM MasterSysman ORDER BY Id LIMIT 1");

@@ -50,6 +50,15 @@ public partial class ExDatabaseMaria : ExDatabase {
 			UpdateVersion();
 			ApplySessionSetup();
 		}
+		// NPoco はトランザクション終了時などに接続を閉じて開き直す。プールへ戻した接続は再利用時に
+		// セッション状態がリセットされ、sql_mode(PIPES_AS_CONCAT / NO_BACKSLASH_ESCAPES)が消える。
+		// 消えると `||` が論理和になり、ドライバの NoBackslashEscapes と食い違って '\' が壊れるため、
+		// どの経路で開いても必ずセッション設定を当て直す。
+		if (Connection is MySqlConnection mysql)
+			mysql.StateChange += (_, e) => {
+				if (e.CurrentState == ConnectionState.Open && e.OriginalState != ConnectionState.Open)
+					ApplySessionSetup();
+			};
 	}
 
 	/// <summary>

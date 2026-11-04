@@ -37,6 +37,7 @@ public sealed class MariaSqlDialect : SqlDialectBase {
 	/// 変換ルール。Phase 3 以降で B01〜B08 を追加する。
 	/// </summary>
 	static IEnumerable<ISqlRewriteRule> BuildRules() => [
+		new ScalarMinMaxRule(),
 		GroupConcatRule.ForMaria(),
 		JsonExtractRule.ForMaria(),
 		JsonEachRule.ForMaria(),

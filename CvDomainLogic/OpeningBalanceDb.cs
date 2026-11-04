@@ -120,9 +120,8 @@ public class OpeningBalanceDb {
 	/// <para>MasterSysman 未作成(移行前・一部の単体テスト)でも例外にしない。</para>
 	/// </summary>
 	private string GetFiscalStartDate() {
-		var tableExists = _db.FirstOrDefault<string>(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name='MasterSysman'");
-		if (string.IsNullOrEmpty(tableExists)) {
+		// 表の有無はプロバイダー別の実装で確かめる（sqlite_master は SQLite にしか無い）
+		if (!_db.IsExistTable(typeof(MasterSysman))) {
 			return OpeningBalanceCsv.UnsetFiscalStartDate;
 		}
 		var value = _db.FirstOrDefault<string>("SELECT FiscalStartDate FROM MasterSysman ORDER BY Id LIMIT 1");

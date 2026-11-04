@@ -964,9 +964,8 @@ WHERE {child}.RelateNo1 > 0
     SELECT 1 FROM {parent} p WHERE p.OldSeqNo = {child}.RelateNo1
   )
 ";
-		_toDb.ExecuteDialect(sql);
-		// Execute系は正常終了で0を返すため、更新件数は changes で取る（subCnvTranHeaderSize と同じ規約）
-		var cnt = _toDb.FirstOrDefault<int>("SELECT changes() AS updated_count");
+		// 更新件数は ExecuteDialect の戻り値（影響行数）を使う。changes() は SQLite にしか無い
+		var cnt = _toDb.ExecuteDialect(sql);
 		_logger.LogInformation("関連伝票の張替 {Child}.RelateNo1 -> {Parent}.Id : {Count}件", child, parent, cnt);
 		return cnt;
 	}

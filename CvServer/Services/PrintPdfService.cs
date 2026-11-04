@@ -134,7 +134,9 @@ public partial class CoreService {
 		}
 		else if (param is QueryListSqlParam listParam) {
 			var sql = (listParam.Sql ?? string.Empty).ReplaceServerSqlQuery();
-			var dataList = _db.RawExecCmd(sql, listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
+			if (CvBase.Sql.SqlCapture.Enabled) CvBase.Sql.SqlCapture.Record("print", sql, listParam.Parameters);
+			// 印刷SQLもクライアント由来のSQLite方言なので接続先の方言へ変換する（SQLiteでは何もしない）
+			var dataList = _db.RawExecCmd(TranslateClientSql(sql, listParam.QueryKey), listParam.Parameters).Cast<IDictionary<string, object>>().ToList();
 			// RawExecCmd は例外を握り潰して [{"Error": ...}] の1行を返すため、必ず RawLastError で判定する。
 			// これを見ないと SQL 失敗が「1列だけのCSV」として下流へ流れ、qfm 側の原因不明な失敗に化ける。
 			if (!string.IsNullOrEmpty(_db.RawLastError)) {

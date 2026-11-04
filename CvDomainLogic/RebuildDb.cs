@@ -41,7 +41,7 @@ left outer join MasterMeisho mm on mm.Kubun='{MasterMeisho.KubunColor}' and mm.C
 select distinct '{MasterMeisho.KubunColor}' as Kubun,'ｶﾗｰ' as KubunName,Code_Col as Code, coalesce(nullif(Mei_Col, ''),Name,'新色'||Code_Col) as Name from (
 {coreSql} where json_extract(J.value, '$.Id_Col')=0)
 ";
-		var meishoList = _db.Fetch<MasterMeisho>(meishoSql);
+		var meishoList = _db.FetchDialect<MasterMeisho>(meishoSql);
 		_db.BeginTransaction();
 		// カラーId=0のものがあれば、MasterMeishoに登録する
 		if (meishoList.Count > 0) {
@@ -79,7 +79,7 @@ WHERE EXISTS (
 );
 ";
 			// MasterShohinのJcolsizを更新する(Id_Col)
-			var retData = _db.RawExecCmd(updateSql);
+			var retData = _db.RawExecCmd(_db.TranslateDialect(updateSql)); // 方言変換する（エラーは従来どおり RawLastError に残る）
 		}
 
 		// 次にサイズIdを持たないものを抽出して、MasterMeishoに登録する
@@ -87,7 +87,7 @@ WHERE EXISTS (
 select distinct Kubun,KubunName,Code_Siz as Code, coalesce(nullif(Mei_Siz, ''),'新サイズ'||Code_Siz) as Name from (
 {coreSql} where json_extract(J.value, '$.Id_Siz')=0)
 ";
-		meishoList = _db.Fetch<MasterMeisho>(meishoSql);
+		meishoList = _db.FetchDialect<MasterMeisho>(meishoSql);
 		// サイズId=0のものがあれば、MasterMeishoに登録する
 		if (meishoList.Count > 0) {
 			cnt += meishoList.Count;
@@ -123,7 +123,7 @@ WHERE EXISTS (
     WHERE json_extract(J.value, '$.Id_Siz') = 0
 );";
 			// MasterShohinのJcolsizを更新する(Id_Siz)
-			var retData = _db.RawExecCmd(updateSql);
+			var retData = _db.RawExecCmd(_db.TranslateDialect(updateSql)); // 方言変換する（エラーは従来どおり RawLastError に残る）
 		}
 		_db.CompleteTransaction();
 		// Derived を更新する
@@ -241,11 +241,7 @@ WHERE EXISTS (
 	}
 
 	int ExecuteUpdateAndGetChanges(string sql) {
-		_db.RawExecCmd(_db.TranslateDialect(sql));
-		if (!string.IsNullOrEmpty(_db.RawLastError)) {
-			throw new InvalidOperationException(_db.RawLastError);
-		}
-
-		return _db.FirstOrDefault<int>("SELECT changes() AS updated_count");
+		// 影響行数は ExecuteDialect の戻り値を使う（changes() は SQLite にしか無い）。失敗は例外になる
+		return _db.ExecuteDialect(sql);
 	}
 }

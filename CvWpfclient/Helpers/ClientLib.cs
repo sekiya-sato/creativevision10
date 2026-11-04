@@ -96,8 +96,11 @@ public class ClientLib {
 		}
 		// childWin.WindowStartupLocation = loc;
 		// childWin.ShowInTaskbar = IsShowTaskbar;
-		if (IsDialog)
+		if (IsDialog) {
+			// UATハーネス用: 条件指定ダイアログ等へ応答して閉じる（無効時は何もしない）
+			if (DialogTestRoute.IsActive) DialogTestRoute.Attach(childWin);
 			return childWin.ShowDialog();
+		}
 		else {
 			childWin.Show();
 			return null;

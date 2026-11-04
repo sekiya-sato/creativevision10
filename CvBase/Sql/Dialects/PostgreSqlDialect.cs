@@ -37,6 +37,7 @@ public sealed class PostgreSqlDialect : SqlDialectBase {
 	/// </summary>
 	static IEnumerable<ISqlRewriteRule> BuildRules() => [
 		new IfnullRule(),
+		new ScalarMinMaxRule(),
 		GroupConcatRule.ForPostgre(),
 		JsonExtractRule.ForPostgre(),
 		JsonEachRule.ForPostgre(),

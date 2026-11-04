@@ -1194,7 +1194,7 @@ order by 販売員CD, 日付
 	public int CnvAfterMaster(bool isInit = true) {
 		int cnt = 0;
 		// MasterShain の VTenpo.Cd をキーに MasterTokui を検索し、該当する場合は MasterShain の VTenpo と Id_Tenpo を更新する
-		var shainList = _toDb.Fetch<MasterShain>("where json_extract(VTenpo, '$.Cd') IS NOT NULL AND json_extract(VTenpo, '$.Cd') <> ''");
+		var shainList = _toDb.FetchDialect<MasterShain>("where json_extract(VTenpo, '$.Cd') IS NOT NULL AND json_extract(VTenpo, '$.Cd') <> ''");
 		if (shainList != null && shainList.Count > 0) {
 			foreach (var shain in shainList) {
 				try {
@@ -1222,7 +1222,7 @@ order by 販売員CD, 日付
 			}
 			cnt += shainList.Count;
 		}
-		var customerList = _toDb.Fetch<MasterEndCustomer>("where json_extract(VTenpo, '$.Cd') IS NOT NULL AND json_extract(VTenpo, '$.Cd') <> ''");
+		var customerList = _toDb.FetchDialect<MasterEndCustomer>("where json_extract(VTenpo, '$.Cd') IS NOT NULL AND json_extract(VTenpo, '$.Cd') <> ''");
 		if (customerList != null && customerList.Count > 0) {
 			foreach (var customer in customerList) {
 				try {
@@ -1250,7 +1250,7 @@ order by 販売員CD, 日付
 			}
 			cnt += customerList.Count;
 		}
-		var shohinList = _toDb.Fetch<MasterShohin>("where json_extract(VSoko, '$.Cd') IS NOT NULL AND json_extract(VSoko, '$.Cd') <> ''");
+		var shohinList = _toDb.FetchDialect<MasterShohin>("where json_extract(VSoko, '$.Cd') IS NOT NULL AND json_extract(VSoko, '$.Cd') <> ''");
 		if (shohinList != null && shohinList.Count > 0) {
 			foreach (var shohin in shohinList) {
 				try {

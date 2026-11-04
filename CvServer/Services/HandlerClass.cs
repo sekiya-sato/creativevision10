@@ -1043,6 +1043,7 @@ public partial class CoreService {
 	private CvMsg HandleQueryOne(CvFlag flag, QueryOneParam queryOne) {
 		LogDetailedRequest("パラメータ QueryOneParam.ItemType={ItemType} 内容={Payload}", () => [queryOne.ItemType, Common.SerializeObject(queryOne)]);
 
+		if (SqlCapture.Enabled) SqlCapture.Record("client:QueryOne", queryOne.AddWhere(), queryOne.Parameters, queryOne.ItemType);
 		var sql = TranslateClientSql(queryOne.AddWhere());
 		try {
 			var data = _db.Fetch(queryOne.ItemType, sql, queryOne.Parameters).FirstOrDefault();
@@ -1073,6 +1074,7 @@ public partial class CoreService {
 	}
 
 	private CvMsg HandleQueryList(CvFlag flag, QueryListParam queryList) {
+		if (SqlCapture.Enabled) SqlCapture.Record("client:QueryList", BuildQueryListSql(queryList), queryList.Parameters, queryList.ItemType);
 		var sql = TranslateClientSql(BuildQueryListSql(queryList));
 		var listType = typeof(List<>).MakeGenericType(queryList.ItemType);
 
@@ -1090,6 +1092,7 @@ public partial class CoreService {
 	}
 
 	private CvMsg HandleQueryListSql(CvFlag flag, QueryListSqlParam querySql) {
+		if (SqlCapture.Enabled) SqlCapture.Record("client:QueryListSql", querySql.Sql ?? string.Empty, querySql.Parameters, querySql.ItemType);
 		var sql = TranslateClientSql(querySql.Sql ?? string.Empty, querySql.QueryKey);
 		var listType = typeof(List<>).MakeGenericType(querySql.ItemType);
 

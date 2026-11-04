@@ -44,15 +44,26 @@ public partial class ExDatabase : Database {
 	/// false なので引数がそのまま渡り、<see cref="Execute(string, object[])"/> と完全に同じ動作になる。
 	/// </para>
 	/// </summary>
-	public int ExecuteDialect(string sql, params object[] args) =>
-		Execute(TranslateDialect(sql), args);
+	public int ExecuteDialect(string sql, params object[] args) {
+		if (Sql.SqlCapture.Enabled) Sql.SqlCapture.Record("server:ExecuteDialect", sql, args);
+		return Execute(TranslateDialect(sql), args);
+	}
 
 	/// <summary>
 	/// SQLite方言で書いたSQLを接続先の方言へ変換してから取得する。
 	/// SQLite接続では <see cref="Fetch{T}(string, object[])"/> と完全に同じ動作になる。
 	/// </summary>
-	public List<T> FetchDialect<T>(string sql, params object[] args) =>
-		Fetch<T>(TranslateDialect(sql), args);
+	public List<T> FetchDialect<T>(string sql, params object[] args) {
+		if (Sql.SqlCapture.Enabled) Sql.SqlCapture.Record("server:FetchDialect", sql, args, typeof(T));
+		return Fetch<T>(TranslateDialect(sql), args);
+	}
+
+	/// <summary>
+	/// SQLite方言で書いたSQLを接続先の方言へ変換し、先頭1件を返す（無ければ既定値）。
+	/// SQLite接続では <c>Fetch&lt;T&gt;(sql, args).FirstOrDefault()</c> と同じ動作になる。
+	/// </summary>
+	public T? FirstOrDefaultDialect<T>(string sql, params object[] args) =>
+		FetchDialect<T>(sql, args).FirstOrDefault();
 
 	/// <summary>
 	/// SQLite方言のSQLを接続先の方言へ変換する。SQLiteでは引数の参照をそのまま返す。
@@ -627,6 +638,8 @@ public partial class ExDatabase : Database {
 			var conn = Transaction?.Connection ?? Connection;
 			try {
 				using (DbCommand command = CreateCommand(conn, CommandType.Text, sql, para ?? [])) {
+					// NPoco 経由の実行と同じくプロバイダーの前処理を通す（PostgreSQL の文字列パラメータの型推論など）
+					OnExecutingCommand(command);
 					using (var reader = command.ExecuteReader()) {
 						while (reader.Read()) {
 							var row = new Dictionary<string, object>();

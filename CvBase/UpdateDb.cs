@@ -5,8 +5,26 @@ namespace CvBase;
 
 /// <summary>
 /// DBバージョン情報クラス (SysUpdateDb を使用)
+/// <para>
+/// <see cref="Sql"/> は SQLite（正典）のスキーマ変更SQL。MariaDB / PostgreSQL へDBを切り替えた後の
+/// スキーマ変更は、DDLが方言変換の対象外（型名・ALTER の文法がDBごとに違う）のため、
+/// 必要になった版だけ <see cref="DialectSql"/> に方言名（<c>ISqlDialect.Name</c>）をキーとして書く。
+/// </para>
 /// </summary>
-public record InnerVersion(int DbVersion, string Sql, string Memo);
+public record InnerVersion(int DbVersion, string Sql, string Memo) {
+	/// <summary>SQLite以外の方言別SQL（キー: MariaDb / Postgre）。未定義の方言ではその版を適用しない。</summary>
+	public IReadOnlyDictionary<string, string>? DialectSql { get; init; }
+
+	/// <summary>
+	/// 接続先の方言で実行するSQLを返す。SQLite（変換しない方言）は <see cref="Sql"/>。
+	/// それ以外は <see cref="DialectSql"/> の該当があればそれ、無ければ null（＝適用しない）。
+	/// SQLite のDDLを他DBへそのまま流すと失敗または意図しない型になるため、黙って流さない。
+	/// </summary>
+	public string? ResolveSql(CvBase.Sql.ISqlDialect dialect) =>
+		!dialect.TranslatesSql
+			? Sql
+			: DialectSql != null && DialectSql.TryGetValue(dialect.Name, out var sql) ? sql : null;
+}
 
 /// <summary>
 /// SqlDepends: DBのテーブル変更を管理する versions配列を定義し、実稼働DBとプログラムの整合性をとる
@@ -215,7 +233,14 @@ public class UpdateDb {
 	/// </summary>
 	static async Task<string> SubInsertRecordAsync(IDatabase db, InnerVersion verInfo, int orgVersion, NLogExtender<UpdateDb> logger, CancellationToken ct) {
 		string? errorMsg = null;
-		var sqls = verInfo.Sql.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		// 接続先の方言のSQLを選ぶ（SQLiteは従来どおり verInfo.Sql）。方言SQLが無い版は適用せず、未適用として記録する
+		var dialect = (db as ExDatabase)?.Dialect ?? CvBase.Sql.PassThroughSqlDialect.Instance;
+		var resolvedSql = verInfo.ResolveSql(dialect);
+		if (resolvedSql == null) {
+			errorMsg = $"未適用: {dialect.Name} 用のスキーマ変更SQLが未定義のため実行しなかった（InnerVersion.DialectSql に定義する）;";
+			logger.LogError("UpdateDb: {Dialect} 用のSQLが未定義のため版 {Version} を適用しませんでした。スキーマが現行定義と異なる可能性があります。", dialect.Name, verInfo.DbVersion);
+		}
+		var sqls = (resolvedSql ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 		foreach (var oneSql in sqls) {
 			if (string.IsNullOrWhiteSpace(oneSql)) continue;
@@ -229,7 +254,7 @@ public class UpdateDb {
 		var item = new SysUpdateDb {
 			DbVersion = verInfo.DbVersion,
 			DateStart = DateTime.Now.ToString("yyyyMMddHHmmss"),
-			Sql = verInfo.Sql,
+			Sql = resolvedSql ?? string.Empty,
 			Memo = errorMsg ?? verInfo.Memo,
 			PreVersion = orgVersion,
 		};

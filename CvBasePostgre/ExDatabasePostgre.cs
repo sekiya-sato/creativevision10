@@ -83,6 +83,23 @@ public sealed class ExDatabasePostgre : ExDatabase {
 		}
 	}
 
+	/// <summary>
+	/// 文字列パラメータを「型未指定(unknown)」として送る。
+	/// <para>
+	/// クライアントの QueryListSqlParam / QueryOneParam は引数をすべて文字列で送る（SQLite は列アフィニティで解釈する）。
+	/// Npgsql は文字列を text 型で送るため、整数列との比較 <c>Status = @0</c> や <c>Id in (@0,...)</c> が
+	/// <c>integer = text</c> の型エラーになる。unknown で送ると PostgreSQL が比較相手の型から推論するため、
+	/// 引用なしリテラルを書いたときと同じ扱いになる（文字列列との比較は従来どおり文字列）。
+	/// </para>
+	/// </summary>
+	protected override void OnExecutingCommand(DbCommand cmd) {
+		foreach (var parameter in cmd.Parameters) {
+			if (parameter is NpgsqlParameter { Value: string } npgsqlParameter)
+				npgsqlParameter.NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Unknown;
+		}
+		base.OnExecutingCommand(cmd);
+	}
+
 	public override void ChangeTimeout(int timeoutSec) {
 		ArgumentOutOfRangeException.ThrowIfNegative(timeoutSec);
 		CommandTimeout = timeoutSec;
