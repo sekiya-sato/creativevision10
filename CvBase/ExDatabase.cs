@@ -370,6 +370,15 @@ public partial class ExDatabase : Database {
 			}
 		}
 	}
+	/// <summary>
+	/// Idを明示して行を投入した後、自動採番の次の値を表内の最大Id+1へ合わせる。
+	/// <para>
+	/// 基底では何もしない。SQLite(AUTOINCREMENT の sqlite_sequence)と MariaDB(AUTO_INCREMENT)は
+	/// 明示Idの挿入で自動的に追随する。PostgreSQL の IDENTITY は追随しないためプロバイダーで実装する。
+	/// </para>
+	/// </summary>
+	public virtual void ResetIdentity(Type classT) {
+	}
 	void CreateIndex(Type classT, bool isForce = false) {
 		var tableName = GetTableName(classT);
 		var attrs = classT.GetCustomAttributes<KeyDmlAttribute>();

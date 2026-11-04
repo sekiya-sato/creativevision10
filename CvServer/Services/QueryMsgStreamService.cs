@@ -208,6 +208,18 @@ public partial class CoreService {
 				yield break;
 			}
 		}
+		// DB切替のデータ移行
+		else if (request.Flag is CvFlag.Msg043_SwitchDb) {
+			var param = Common.DeserializeObject(request.DataMsg ?? string.Empty, request.DataType);
+			if (param is SwitchDbParam switchDb) {
+				await foreach (var msg in WithManualExecHistoryAsync("DB切替データ移行", HandleSwitchDbStreamAsync(switchDb, ct, request.Flag),
+					$"移動元={switchDb.FromConnection}, 移動先={switchDb.ToConnection}", ct)) {
+					yield return msg;
+				}
+				yield break;
+			}
+			yield return CreateCostUpdateParamErrorStreamMsg(request.Flag);
+		}
 		// 	集計処理
 		else if (request.Flag is CvFlag.Msg050_Summary
 			or CvFlag.Msg051_SummaryRealStock
@@ -277,6 +289,73 @@ public partial class CoreService {
 			yield return msg;
 		}
 	}
+	/// <summary>
+	/// DB切替（データ移行）のストリーミング処理ハンドラ。
+	/// 接続定義名から移動元・移動先の専用接続を作り、終了時に閉じる（メインDBの接続 _db は使わない）。
+	/// </summary>
+	private async IAsyncEnumerable<StreamMsg> HandleSwitchDbStreamAsync(SwitchDbParam param, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct, CvFlag flag) {
+		ExDatabase? fromDb = null;
+		ExDatabase? toDb = null;
+		string? error = null;
+		try {
+			if (string.Equals(param.FromConnection, param.ToConnection, StringComparison.OrdinalIgnoreCase)) {
+				throw new InvalidOperationException("移動元と移動先に同じ接続定義は指定できません。");
+			}
+			fromDb = CreateDbByConnectionName(param.FromConnection);
+			toDb = CreateDbByConnectionName(param.ToConnection);
+			// 照合順序などDB作成時にしか決められない前提を、書き込み前に確かめる
+			var schemaErrors = toDb.ValidateSchema();
+			if (schemaErrors.Count > 0) {
+				throw new InvalidOperationException($"移動先DBの前提条件を満たしていません。{string.Join(" / ", schemaErrors)}");
+			}
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "DB切替: 接続の準備に失敗しました。 From={From} To={To}", param.FromConnection, param.ToConnection);
+			error = ex.Message;
+		}
+		if (error != null) {
+			fromDb?.Dispose();
+			toDb?.Dispose();
+			yield return new StreamMsg {
+				Flag = flag,
+				Code = -1,
+				DataType = typeof(string),
+				DataMsg = $"エラー: {error} ----{DateTime.Now: MM/dd HH:mm:ss.fff}",
+				Progress = 0,
+				IsCompleted = true,
+				IsError = true
+			};
+			yield break;
+		}
+
+		try {
+			var switchDb = new SwitchDb(fromDb!, toDb!);
+			await foreach (var msg in ForwardProgressStreamAsync(flag, switchDb.CopyAllAsyncStream(), ct)) {
+				yield return msg;
+			}
+		}
+		finally {
+			fromDb?.Dispose();
+			toDb?.Dispose();
+		}
+	}
+
+	/// <summary>
+	/// ConnectionStrings のキー名から接続を作る。プロバイダーはキー名で判別する
+	/// （sqlite / maria・mysql / postgre を含む名前。例: "mariadb"、"back-postgres"）。
+	/// </summary>
+	private ExDatabase CreateDbByConnectionName(string name) {
+		var connStr = _configuration.GetConnectionString(name);
+		if (string.IsNullOrWhiteSpace(connStr)) {
+			throw new InvalidOperationException($"接続定義 '{name}' がサーバ設定(ConnectionStrings)にありません。");
+		}
+		var key = name.ToLowerInvariant();
+		if (key.Contains("sqlite")) return CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr);
+		if (key.Contains("maria") || key.Contains("mysql")) return CvBaseMariadb.ExDatabaseMaria.GetDbConn(connStr);
+		if (key.Contains("postgre")) return CvBasePostgre.ExDatabasePostgre.GetDbConn(connStr);
+		throw new InvalidOperationException($"接続定義 '{name}' のDB種別を判別できません。名前に sqlite / mariadb / postgres のいずれかを含めてください。");
+	}
+
 	/// <summary>
 	/// 集計処理とHHTデータ更新のストリーミング処理ハンドラ
 	/// </summary>

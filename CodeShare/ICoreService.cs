@@ -164,6 +164,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg042_GetTableList = 42,
 	/// <summary>
+	/// DB切替のデータ移行（接続定義名で指定した移動元DBから移動先DBへ全テーブルを複写する）
+	/// </summary>
+	[EnumMember]
+	Msg043_SwitchDb = 43,
+	/// <summary>
 	/// 商品マスタのId_Col=0,Id_Siz=0のデータから名称マスタを再構築する
 	/// </summary>
 	[EnumMember]

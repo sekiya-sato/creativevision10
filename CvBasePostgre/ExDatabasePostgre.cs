@@ -132,6 +132,18 @@ public sealed class ExDatabasePostgre : ExDatabase {
 		return columns;
 	}
 
+	/// <summary>
+	/// IDENTITY列の次の値を表内の最大Id+1へ合わせる（空の表は1から採番させる）。
+	/// </summary>
+	public override void ResetIdentity(Type classT) {
+		var tableName = NormalizeIdentifier(GetTableName(classT));
+		var quoted = QuoteIdentifier(tableName);
+		var sequence = ExecuteScalar<string>("select pg_get_serial_sequence(@0, 'id')", quoted);
+		if (string.IsNullOrEmpty(sequence))
+			return;
+		ExecuteScalar<long>($"select setval(cast(@0 as regclass), coalesce((select max(id) from {quoted}), 0) + 1, false)", sequence);
+	}
+
 	public override int CreateComment(Type classT) {
 		var comment = classT.GetCustomAttribute<CommentAttribute>()?.Content;
 		if (comment == null)

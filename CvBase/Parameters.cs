@@ -532,6 +532,13 @@ public sealed record ConvertDbParam(bool IsInit);
 /// <param name="IsInit"></param>
 /// <param name="SelectedTask"></param>
 public sealed record ConvertSelectedDbParam(bool IsInit, List<string> SelectedTask);
+/// <summary>
+/// DB切替（データ移行）のストリーミング処理パラメータ。
+/// 値はサーバ側 appsettings の ConnectionStrings のキー名（例: sqlite / mariadb / postgres）。
+/// </summary>
+/// <param name="FromConnection">移動元の接続定義名</param>
+/// <param name="ToConnection">移動先の接続定義名（対象表は削除して再作成する）</param>
+public sealed record SwitchDbParam(string FromConnection, string ToConnection);
 
 /// <summary>
 /// 評価替え（）の実行パラメータ。確認(<c>PreviewRevaluation</c>)・
