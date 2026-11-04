@@ -48,6 +48,8 @@ public partial class UrikakeBalanceReportViewModel : Helpers.BaseReportViewModel
 
 		List<string> parameters = [];
 		var ym = AddSqlParameter(parameters, target.ToString("yyyyMM", CultureInfo.InvariantCulture));
+		// 見出しの年月（qfm item12）。qfm側で日付として「年月: YYYY/MM」に整形する
+		var ymLabel = AddSqlParameter(parameters, target.ToString("yyyy/MM/01", CultureInfo.InvariantCulture));
 		var tokuiWhere = BuildCodeRangeWhere(parameters, "Code", TokuiCodeFrom, TokuiCodeTo);
 
 		var activeOnly = IsActiveOnly
@@ -87,7 +89,8 @@ joined AS (
 SELECT
     tokuiCode, tokuiName,
     prevBalance, totalSales, tax, henpin, nebiki,
-    totalIn, cash, fee, balance
+    totalIn, cash, fee, balance,
+    {ymLabel} AS targetYearMonth
 FROM joined
 {activeOnly}
 ORDER BY tokuiCode";

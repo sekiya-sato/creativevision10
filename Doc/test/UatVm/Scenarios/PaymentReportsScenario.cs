@@ -298,7 +298,7 @@ ORDER BY t.Code, k.DenMonth", [PaymentReportSeeder.CodeFrom, PaymentReportSeeder
 			new { expectedCount = expected.Count, actualCount = actual.Count, diffs, sample = actual.Take(3) });
 	}
 
-	static async Task PrintAsync<TViewModel>(VmSession session, ViewDriver<TViewModel> d, string outDir, string name)
+	internal static async Task PrintAsync<TViewModel>(VmSession session, ViewDriver<TViewModel> d, string outDir, string name)
 		where TViewModel : BaseReportViewModel {
 		session.ClearDialogs();
 		await d.RunAsync($"{name}:印刷", vm => GetDoOutputPdfCommand(vm));
@@ -333,7 +333,7 @@ ORDER BY t.Code, k.DenMonth", [PaymentReportSeeder.CodeFrom, PaymentReportSeeder
 		ClosePdfViews();
 	}
 
-	static void ClosePdfViews() {
+	internal static void ClosePdfViews() {
 		foreach (var view in Application.Current.Windows.OfType<CvWpfclient.Views.Sub.WebPdfView>().ToList()) {
 			try { view.Close(); }
 			catch (InvalidOperationException) { /* 既に閉じている */ }

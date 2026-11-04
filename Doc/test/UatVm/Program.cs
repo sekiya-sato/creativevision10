@@ -17,6 +17,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["material"] = MaterialPurchaseScenario.RunAsync,
 	["uat06payment"] = Uat06PaymentScenario.RunAsync,
 	["paymentreports"] = PaymentReportsScenario.RunAsync,
+	["urikakereport"] = UrikakeReportScenario.RunAsync,
 	["juchushipping"] = JuchuShippingScenario.RunAsync,
 	["transfer"] = TransferScenario.RunAsync,
 	["intransitclear"] = InTransitClearScenario.RunAsync,
