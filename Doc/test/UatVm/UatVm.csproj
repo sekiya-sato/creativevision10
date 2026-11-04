@@ -16,5 +16,8 @@
     <ProjectReference Include="..\..\..\CvWpfclient\CvWpfclient.csproj" />
     <!-- 網羅データの投入。実DBへ直接書くため、CvServer起動前に実行する。 -->
     <ProjectReference Include="..\UatVmSeed\UatVmSeed.csproj" />
+    <!-- DB切替(switchdb)の移動先照合で MariaDB / PostgreSQL を直接開く。 -->
+    <ProjectReference Include="..\..\..\CvBaseMariadb\CvBaseMariadb.csproj" />
+    <ProjectReference Include="..\..\..\CvBasePostgre\CvBasePostgre.csproj" />
   </ItemGroup>
 </Project>

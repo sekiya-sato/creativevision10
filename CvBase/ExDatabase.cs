@@ -91,7 +91,8 @@ public partial class ExDatabase : Database {
 
 		var columns = GetSqlColumns(classT);
 
-		var key = (primaryKey == null) ? "" : $",PRIMARY KEY({primaryKey})"; // キー定義 [Key definition]
+		// 属性オブジェクトではなく列名(Value)を使う（属性をそのまま埋め込むと "PRIMARY KEY(NPoco.PrimaryKeyAttribute)" になり MariaDB で表を作れない）
+		var key = (primaryKey == null) ? "" : $",PRIMARY KEY({primaryKey.Value})"; // キー定義 [Key definition]
 		if (columns.Where(c => c.ToUpper().Contains("PRIMARY KEY")).Count() > 0) // 既に主キー定義があれば二重にならないようにする [Ensure that there is no duplication if a primary key is already defined]
 			key = "";
 
@@ -469,7 +470,8 @@ public partial class ExDatabase : Database {
 		var tableNameAttr = (CommentAttribute?)Attribute.GetCustomAttribute(classT, typeof(CommentAttribute));
 		var tableName = GetTableName(classT);
 		if (tableNameAttr != null) {
-			var sql = $"ALTER TABLE {tableName} COMMENT = '{tableNameAttr.Content}'";
+			// コメント内の ' を二重化する（MasterShohin のコメントに ' を含み、MariaDBで構文エラーになっていた）
+			var sql = $"ALTER TABLE {tableName} COMMENT = '{tableNameAttr.Content.Replace("'", "''")}'";
 			ret = Execute(sql);
 		}
 		return ret;

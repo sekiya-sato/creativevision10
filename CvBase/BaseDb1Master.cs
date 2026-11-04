@@ -310,7 +310,8 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	/// コード
 	/// </summary>
 	[ObservableProperty]
-	[ColumnSizeDml(12)]
+	// 旧CVからの移行データに13桁のコードがあるため12→20（MariaDB/PostgreSQLは桁数を検査する）
+	[ColumnSizeDml(20)]
 	[OldTableCommentAttr("顧客CD")]
 	[Comment("コード")]
 	public partial string Code { get; set; } = string.Empty;
@@ -380,7 +381,8 @@ public sealed partial class MasterEndCustomer : BaseDbHasAddress, IBaseCodeName 
 	/// メモ
 	/// </summary>
 	[ObservableProperty]
-	[ColumnSizeDml(120)]
+	// 移行データに最大173文字のメモがあるため120→200
+	[ColumnSizeDml(200)]
 	[OldTableCommentAttr("メモ")]
 	[Comment("メモ")]
 	public partial string Memo { get; set; } = string.Empty;
@@ -757,7 +759,8 @@ public sealed partial class MasterShohin : BaseDbClass, IBaseCodeName, IDerivedO
 	/// メーカー品番
 	/// </summary>
 	[ObservableProperty]
-	[ColumnSizeDml(20)]
+	// 移行データに最大23文字の品番があるため20→30
+	[ColumnSizeDml(30)]
 	[OldTableCommentAttr("メーカー品番")]
 	[Comment("メーカー品番")]
 	public partial string MakerHin { get; set; } = string.Empty;

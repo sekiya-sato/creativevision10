@@ -80,7 +80,8 @@ public partial class BaseDbHasAddress : BaseDbClass {
 	/// 住所3 番地
 	/// </summary>
 	[ObservableProperty]
-	[ColumnSizeDml(60)]
+	// 移行データ(得意先・仕入先)に最大93文字の番地があるため60→100
+	[ColumnSizeDml(100)]
 	[Comment("住所3 番地")]
 	public partial string Address3 { get; set; } = string.Empty;
 	/// <summary>

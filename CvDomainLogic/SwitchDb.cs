@@ -25,8 +25,10 @@ public sealed class SwitchDb {
 	readonly ExDatabase _toDb;
 	readonly ILogger<SwitchDb> _logger = new NLogExtender<SwitchDb>();
 
-	/// <summary>1回のINSERTで送る最大行数（MariaDB の max_allowed_packet を超えないよう控えめにする）</summary>
-	const int MaxRowsPerInsert = 200;
+	/// <summary>1回のINSERTで送る最大行数</summary>
+	const int MaxRowsPerInsert = 1000;
+	/// <summary>1回のINSERTの概算データ量上限（MariaDB の max_allowed_packet 既定16MBを超えないよう控えめにする）</summary>
+	const long MaxBytesPerInsert = 4L * 1024 * 1024;
 	/// <summary>1回のINSERTのパラメータ数上限（SQLite 32766 / PostgreSQL・MariaDB 65535 より小さく）</summary>
 	const int MaxParamsPerInsert = 30000;
 
@@ -76,7 +78,13 @@ public sealed class SwitchDb {
 	int CopyTables(IReadOnlyList<Type> tables) {
 		var total = 0;
 		foreach (var table in tables) {
-			total += CopyTable(table);
+			try {
+				total += CopyTable(table);
+			}
+			catch (Exception ex) when (ex is not InvalidOperationException) {
+				// DBドライバの例外は表名を含まないため、どの表で失敗したかを付けて上げ直す
+				throw new InvalidOperationException($"{_toDb.GetTableName(table)}: {ex.Message}", ex);
+			}
 		}
 		return total;
 	}
@@ -86,7 +94,10 @@ public sealed class SwitchDb {
 	/// </summary>
 	int CopyTable(Type tableType) {
 		var tableName = _toDb.GetTableName(tableType);
-		if (!_toDb.CreateTable(tableType, isForce: true)) {
+		// 表ごと削除してから作る。CreateTable(isForce:true) は索引を DROP INDEX IF EXISTS <名前> で消すが、
+		// MariaDB は ON <表名> が必須で構文エラーになるため使わない（表を消せば索引も消える）。
+		_toDb.DropTable(tableType);
+		if (!_toDb.CreateTable(tableType, isForce: false)) {
 			throw new InvalidOperationException($"{tableName}: 移動先の表作成に失敗しました。");
 		}
 		if (!_fromDb.IsExistTable(tableType)) {
@@ -114,9 +125,10 @@ public sealed class SwitchDb {
 		var sourceCount = Convert.ToInt64(ExecuteScalar(fromConn, $"select count(*) from {tableName}"), CultureInfo.InvariantCulture);
 
 		var hasId = columns.Any(c => c.Equals("Id", StringComparison.OrdinalIgnoreCase));
-		var selectSql = $"select {string.Join(",", columns.Select(c => fromLookup[c]))} from {tableName}{(hasId ? " order by Id" : "")}";
+		// 列名は各DBの規則で引用する（SysUpdateDb.Sql のように MariaDB の予約語と重なる列があるため）
+		var selectSql = $"select {string.Join(",", columns.Select(c => _fromDb.DatabaseType.EscapeSqlIdentifier(fromLookup[c])))} from {tableName}{(hasId ? " order by Id" : "")}";
 		var rowsPerInsert = Math.Max(1, Math.Min(MaxRowsPerInsert, MaxParamsPerInsert / columns.Count));
-		var insertHead = $"insert into {tableName} ({string.Join(",", columns)}) values ";
+		var insertHead = $"insert into {tableName} ({string.Join(",", columns.Select(_toDb.DatabaseType.EscapeSqlIdentifier))}) values ";
 
 		long inserted = 0;
 		using (var tx = toConn.BeginTransaction()) {
@@ -125,15 +137,20 @@ public sealed class SwitchDb {
 				select.CommandTimeout = 0;
 				using var reader = select.ExecuteReader();
 				var batch = new List<object?[]>(rowsPerInsert);
+				long batchBytes = 0;
 				while (reader.Read()) {
 					var row = new object?[columns.Count];
 					for (var i = 0; i < columns.Count; i++) {
-						row[i] = ConvertValue(reader.GetValue(i), targetTypes[i]);
+						var value = ConvertValue(reader.GetValue(i), targetTypes[i]);
+						row[i] = value;
+						// 文字列はUTF-8で最大3バイト/文字として概算する（JSON列の多い伝票で送信量が膨らむため）
+						batchBytes += value is string s ? s.Length * 3L + 8 : 16;
 					}
 					batch.Add(row);
-					if (batch.Count >= rowsPerInsert) {
+					if (batch.Count >= rowsPerInsert || batchBytes >= MaxBytesPerInsert) {
 						inserted += InsertBatch(toConn, tx, insertHead, columns.Count, batch);
 						batch.Clear();
+						batchBytes = 0;
 					}
 				}
 				if (batch.Count > 0) {

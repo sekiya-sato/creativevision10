@@ -34,7 +34,8 @@ public partial class ExDatabaseMaria : ExDatabase {
 	/// 式の比較でDB既定が効くため、DB自体も揃えておく必要がある。
 	/// </summary>
 	public override IReadOnlyList<string> ValidateSchema() {
-		var collation = ExecuteScalar<string>("select @@collation_database") ?? "";
+		// NPoco は "@@" を "@" へ戻すため、システム変数 @@collation_database ではなく information_schema から読む
+		var collation = ExecuteScalar<string>("select DEFAULT_COLLATION_NAME from information_schema.SCHEMATA where SCHEMA_NAME = database()") ?? "";
 		return collation.Equals(RequiredCollation, StringComparison.OrdinalIgnoreCase)
 			? []
 			: [$"データベースの照合順序を {RequiredCollation} にしてください(SQLiteのBINARY照合に合わせるため)。現在={collation}"];
@@ -101,6 +102,37 @@ public partial class ExDatabaseMaria : ExDatabase {
 		CommandTimeout = timeoutSec;
 	}
 
+	/// <summary>
+	/// 基底の列定義をMariaDB向けに補正する。
+	/// <para>
+	/// 1) 列名を `` ` `` で囲む（<c>SysUpdateDb.Sql</c> のような予約語の列で CREATE TABLE が失敗するため）。
+	/// 2) <c>[SerializedColumn]</c>（JSONを文字列で保存する列）は <c>ColumnSizeDml</c> の桁数に関係なく longtext にする。
+	///    SQLiteは桁数を検査しないため実データが varchar(n) を超えており、MariaDB(厳格モード)では投入できない。
+	///    JSON型(json_valid検査)にしないのは、空文字 '' の既定値・既存値を受け付けるため。
+	/// </para>
+	/// </summary>
+	public override List<string> GetSqlColumns(Type classT) {
+		var columns = base.GetSqlColumns(classT);
+		var result = new List<string>(columns.Count);
+		foreach (var column in columns) {
+			var separator = column.IndexOf(' ');
+			if (separator <= 0) {
+				result.Add(column);
+				continue;
+			}
+			var name = column[..separator];
+			var definition = column[(separator + 1)..];
+			var property = classT.GetProperty(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+			if (property != null
+				&& System.Reflection.CustomAttributeExtensions.GetCustomAttribute<NPoco.SerializedColumnAttribute>(property) != null
+				&& !definition.StartsWith("JSON", StringComparison.OrdinalIgnoreCase)) {
+				definition = "longtext";
+			}
+			result.Add($"{QuoteIdentifier(name)} {definition}");
+		}
+		return result;
+	}
+
 	public override IReadOnlyList<string> GetUserTableNames() =>
 		Fetch<string>("select table_name from information_schema.tables where table_schema=database() and table_type='BASE TABLE' order by table_name");
 
@@ -133,10 +165,21 @@ select table_name, coalesce(table_comment, '') table_comment
 
 	static DbConnection EnsureMariaConnection(DbConnection conn) {
 		ArgumentNullException.ThrowIfNull(conn);
-		if (conn is not MySqlConnection)
+		if (conn is not MySqlConnection mysql)
 			throw new ArgumentException("MySqlConnectionを指定してください。", nameof(conn));
+		// セッションで NO_BACKSLASH_ESCAPES を設定する(ApplySessionSetup)ため、ドライバにも同じ前提を伝える。
+		// 伝えないと MySqlConnector がパラメータの '\' を '\\' へエスケープし、サーバは2文字として保存する
+		// (JSON の あ が \\u3042 になり、名称・明細が読めなくなる)。
+		if (mysql.State == ConnectionState.Closed) {
+			var builder = new MySqlConnectionStringBuilder(mysql.ConnectionString) { NoBackslashEscapes = true };
+			mysql.ConnectionString = builder.ConnectionString;
+		}
 		return conn;
 	}
+
+	/// <summary>ドライバが '\' をエスケープしない設定になっているか（単体テスト用）</summary>
+	public bool IsNoBackslashEscapes =>
+		Connection is MySqlConnection mysql && new MySqlConnectionStringBuilder(mysql.ConnectionString).NoBackslashEscapes;
 
 	void UpdateVersion() {
 		if (Connection is MySqlConnection conn && conn.State == ConnectionState.Open)

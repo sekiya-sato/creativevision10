@@ -68,6 +68,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["rfm"] = RfmCrossAnalysisScenario.RunAsync,
 	["menulayout"] = MenuLayoutScenario.RunAsync,
 	["menuperm"] = MenuPermissionScenario.RunAsync,
+	["switchdb"] = SwitchDbScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。
@@ -105,6 +106,7 @@ var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnor
 	["pointmigration"] = PointMigrationScreenScenario.Seeder,
 	["customerprofile"] = CustomerProfileScenario.Seeder,
 	["aiquery"] = AiQueryScenario.Seeder,
+	["switchdb"] = SwitchDbScenario.Seeder,
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));
@@ -123,6 +125,8 @@ if (string.IsNullOrEmpty(name) || !scenarios.TryGetValue(name, out var scenario)
 	Console.Error.WriteLine("  --hide-views       Viewを表示しない");
 	Console.Error.WriteLine("  --out <dir>        画像・結果の出力先（menulayout）");
 	Console.Error.WriteLine("  --filter <文字列>  View型名・メニュー名の部分一致で対象を絞る（menulayout）");
+	Console.Error.WriteLine("  --switch-to <接続名> DB切替の移動先（switchdb、既定: MariaDb。PostgreSQLは Postgres）");
+	Console.Error.WriteLine("  --verify-only      移行せず、前回の移行結果を照合だけする（switchdb）");
 	Console.Error.WriteLine("  --fire-at <HH:mm:ss> 同日の壁時計時刻まで待ってから実行する（manuallockrace）");
 	Console.Error.WriteLine("  --race-label <名前>  証跡・記録上の自分の名前、例 A/B（manuallockrace、既定は請求計算役、Bのみ支払計算役）");
 	return 2;
@@ -141,6 +145,8 @@ if (Option("--to") is { } to) ResummaryAllScenario.YearMonthTo = to;
 if (Flag("--no-execute")) BillingCalculationScenario.Execute = false;
 if (Option("--out") is { } outDir) MenuLayoutScenario.OutputDirectory = Path.GetFullPath(outDir);
 if (Option("--filter") is { } filter) MenuLayoutScenario.Filter = filter;
+if (Option("--switch-to") is { } switchTo) SwitchDbScenario.ToConnection = switchTo;
+if (Flag("--verify-only")) SwitchDbScenario.VerifyOnly = true;
 
 // manuallockrace: 2プロセスを同一の壁時計時刻で発火させるための同期パラメータ（Run-ManualLockRace.ps1が渡す）。
 if (Option("--race-label") is { } raceLabel) ManualLockRaceScenario.RaceLabel = raceLabel;

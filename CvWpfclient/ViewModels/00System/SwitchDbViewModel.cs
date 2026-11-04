@@ -18,7 +18,7 @@ public partial class SwitchDbViewModel : BaseViewModel {
 	const string DefaultFrom = "sqlite";
 	const string DefaultTo = "mariadb";
 
-	/// <summary>選択できる接続定義名（Oracle は旧DB変換専用なので除く）</summary>
+	/// <summary>選択できる接続定義名（名前に oracle を含むものは旧DB変換専用なので除く）</summary>
 	[ObservableProperty]
 	public partial ObservableCollection<string> ConnectionNames { get; set; } = [];
 
@@ -51,7 +51,8 @@ public partial class SwitchDbViewModel : BaseViewModel {
 	private async Task InitAsync(CancellationToken cancellationToken) {
 		try {
 			var connections = await CoreServiceClient.GetConnectionStatusAsync(cancellationToken);
-			ConnectionNames = [.. connections.Where(c => !string.Equals(c, "oracle", StringComparison.OrdinalIgnoreCase))];
+			// Oracle（old-oracle 等も含む）は旧DB変換専用で移動元・移動先にできない
+			ConnectionNames = [.. connections.Where(c => !c.Contains("oracle", StringComparison.OrdinalIgnoreCase))];
 			if (ConnectionNames.Count < 2) {
 				MessageEx.ShowErrorDialog("DB切替には、サーバ設定(ConnectionStrings)に移動元と移動先の2つ以上の接続定義が必要です。", owner: ClientLib.GetActiveView(this));
 				ClientLib.Exit(this);
@@ -140,8 +141,8 @@ public partial class SwitchDbViewModel : BaseViewModel {
 			return;
 		}
 		if (hadError) {
-			StreamMessages.Insert(0, "===== エラーのあるテーブルがあります。メインDBは切り替えず、原因を解消してから再実行してください。");
-			MessageEx.ShowErrorDialog("エラーのあるテーブルがあります。ログを確認してください。\nメインDBは切り替えないでください。", owner: ClientLib.GetActiveView(this));
+			StreamMessages.Insert(0, "===== エラーが発生しました。メインDBは切り替えず、原因を解消してから再実行してください。");
+			MessageEx.ShowErrorDialog("DB切替データ移行でエラーが発生しました。ログを確認してください。\nメインDBは切り替えないでください。", owner: ClientLib.GetActiveView(this));
 			return;
 		}
 		var provider = GetProviderName(to);
