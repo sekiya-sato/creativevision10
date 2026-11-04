@@ -56,6 +56,17 @@ SET ReserveQty = excluded.ReserveQty, Vdu = 1
 	// ---- 行番号列（json_each の key） ----
 
 	[TestMethod]
+	public void 派生表の展開SQLは両方言へ未対応構文なしで変換できる() {
+		// DerivedDb は展開SQLを ExecuteDialect で流す。変換漏れがあると MariaDB/PostgreSQL で保存時に失敗する
+		foreach (var sql in new[] { CvBase.DerivedShohinColSiz.InsertSql, CvBase.DerivedShohinColSiz.DeleteSql, CvBase.DerivedJodai.InsertSql, CvBase.DerivedJodai.DeleteSql }) {
+			foreach (var dialect in new CvBase.Sql.ISqlDialect[] { SqlDialects.Maria, SqlDialects.Postgre }) {
+				var findings = ((CvBase.Sql.SqlDialectBase)dialect).Inspect(sql);
+				Assert.AreEqual(0, findings.Count, $"{dialect.Name}: {string.Join(", ", findings.Select(f => f.ToString()))}");
+			}
+		}
+	}
+
+	[TestMethod]
 	public void 要素順の保持に使うkey列を行番号列へ読み替える() {
 		var pg = SqlDialects.Postgre.Translate(JsubRebuildSql);
 		StringAssert.Contains(pg, "WITH ORDINALITY AS J(value, jkey)");
@@ -64,7 +75,8 @@ SET ReserveQty = excluded.ReserveQty, Vdu = 1
 
 		var maria = SqlDialects.Maria.Translate(JsubRebuildSql);
 		StringAssert.Contains(maria, "jkey FOR ORDINALITY");
-		StringAssert.Contains(maria, "order by cast(J.jkey as SIGNED)");
+		// MariaDB は派生表から外側の列を参照できないため派生表を外し、集約関数の ORDER BY で順序を保つ
+		StringAssert.Contains(maria, "order by J.jkey)");
 		Assert.IsFalse(maria.Contains("J.key"), maria);
 	}
 

@@ -81,8 +81,19 @@ public abstract class SqlDialectBase : ISqlDialect {
 		return findings;
 	}
 
+	/// <summary>
+	/// 字句ルールの前に1回だけ行う文全体の書換え。既定は何もしない（引数の参照を返す）。
+	/// <para>
+	/// 字句ルールは関数1つ分の差し替えしかできないため、問い合わせの構造ごと組み替える必要がある
+	/// 方言固有の制約（例: MariaDB は派生表から外側の列を参照できない）だけをここで扱う。
+	/// 結果はSQLite方言の語彙のまま返し、以降の字句ルールに変換させる。
+	/// </para>
+	/// </summary>
+	protected virtual string PreTranslate(string sql) => sql;
+
 	/// <summary>ルールを適用し、変換結果と未対応構文を返す。</summary>
-	(string Result, IReadOnlyList<SqlDialectFinding> Findings) TranslateCore(string sql) {
+	(string Result, IReadOnlyList<SqlDialectFinding> Findings) TranslateCore(string original) {
+		var sql = PreTranslate(original);
 		var context = new SqlRewriteContext(sql);
 		// 右から左へ1回走査する。
 		// 入れ子の内側は必ず外側より後ろの位置にあるため、右から処理すれば
@@ -96,7 +107,8 @@ public abstract class SqlDialectBase : ISqlDialect {
 					break; // 同じ位置に複数ルールを重ねない
 			}
 		}
-		var result = context.Mutated ? context.Render() : sql;
+		// 書換えが1つも無ければ引数の参照をそのまま返す（PreTranslate の書換えだけでも変換済みとして扱う）
+		var result = context.Mutated ? context.Render() : (ReferenceEquals(sql, original) ? original : sql);
 		return (result, InspectTranslated(result));
 	}
 

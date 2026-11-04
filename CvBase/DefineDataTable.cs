@@ -291,7 +291,7 @@ public class DefineDataTable {
 			Vdu = Common.GetVdate()
 		};
 		db.Insert<MasterShohin>(shohin);
-		db.Execute(DerivedShohinColSiz.InsertSql, shohin.Id);
+		db.ExecuteDialect(DerivedShohinColSiz.InsertSql, shohin.Id);
 		var customer = new MasterEndCustomer {
 			Code = "0001",
 			Name = "サンプル顧客",

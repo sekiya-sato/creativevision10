@@ -5,7 +5,7 @@ JsonFunctionRule は引数1個のJSON関数を対象DBの表現へ置き換え�
 対象は次の2つです。
 - `json_valid(X)` : 不正JSONガード。PostgreSQL は 16 以降の `IS JSON` 述語を使う。
   MariaDB は同名関数があるため書き換え不要（NativeConstructIds で扱う）。
-- `json(X)` : JSONとしての正規化。PostgreSQL は `::jsonb`、MariaDB は `CAST(X AS JSON)`。
+- `json(X)` : JSONとしての正規化。PostgreSQL は `::jsonb`、MariaDB は `JSON_COMPACT(X)`（CAST AS JSON が無い）。
 
 不正JSONを空配列へ置換する `json_valid()` ガードが必要なため、変換漏れが起きると不正JSONで
 例外になる。そのためこのルールは引数1個の形だけを厳密に照合し、
@@ -13,7 +13,7 @@ JsonFunctionRule は引数1個のJSON関数を対象DBの表現へ置き換え�
 
 # example
 PostgreSQL: json_valid(h.Jmeisai)  ->  ((h.Jmeisai) IS JSON)
-MariaDB   : json(X.value2)         ->  CAST(X.value2 AS JSON)
+MariaDB   : json(X.value2)         ->  JSON_COMPACT(X.value2)
  */
 namespace CvBase.Sql.Rules;
 
@@ -40,9 +40,13 @@ public sealed class JsonFunctionRule : ISqlRewriteRule {
 	public static JsonFunctionRule JsonCastForPostgre() =>
 		new("B04-JsonCast", "json", target => $"(({target})::jsonb)");
 
-	/// <summary>B04 json。MariaDB は CAST(x AS JSON)。</summary>
+	/// <summary>
+	/// B04 json。MariaDB は JSON_COMPACT(x)。
+	/// MariaDB には CAST(x AS JSON) が無い（MySQL にはある）。JSON_COMPACT はJSON型として扱われるため、
+	/// JSON_ARRAYAGG の要素が文字列へ二重にエスケープされない。
+	/// </summary>
 	public static JsonFunctionRule JsonCastForMaria() =>
-		new("B04-JsonCast", "json", target => $"CAST({target} AS JSON)");
+		new("B04-JsonCast", "json", target => $"JSON_COMPACT({target})");
 
 	public string Id { get; }
 

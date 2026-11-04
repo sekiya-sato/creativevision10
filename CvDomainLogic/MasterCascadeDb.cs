@@ -286,7 +286,7 @@ update {table}
 update {table} as S
    set {col} = ( select json_group_array(json(X.value2))
                    from ( select J.key,
-                                 case when json_extract(J.value, '$.Sid') = @0
+                                 case when cast(json_extract(J.value, '$.Sid') as integer) = @0
                                       then json_set(J.value, '$.Cd', @1, '$.Mei', @2)
                                       else J.value end as value2
                             from json_each(S.{col}) as J
@@ -294,7 +294,7 @@ update {table} as S
        Vdu = @3
  where {JsonArrayReady($"S.{col}")}
    and exists ( select 1 from json_each(S.{col}) as J
-                 where json_extract(J.value, '$.Sid') = @0
+                 where cast(json_extract(J.value, '$.Sid') as integer) = @0
                    and ( ifnull(json_extract(J.value, '$.Cd' ), '') <> @1
                       or ifnull(json_extract(J.value, '$.Mei'), '') <> @2 ) )";
 		return _db.ExecuteDialect(sql, [id, code, name, vdate]);
@@ -311,7 +311,7 @@ update {table} as S
 		var source = _db.GetTableName(rule.Source);
 		var col = rule.JsonColumn;
 		// M=名称行($.Sid で参照) K=区分定義行($.Kb で参照)
-		var joins = $@"left join {source} M on M.Id = json_extract(J.value, '$.Sid')
+		var joins = $@"left join {source} M on M.Id = cast(json_extract(J.value, '$.Sid') as integer)
                             left join {source} K on K.Kubun = '{MasterMeisho.KubunIndex}' and K.Code = json_extract(J.value, '$.Kb')";
 		var sql = $@"
 update {table} as S
@@ -433,7 +433,7 @@ update {table} as S
 		var sql = $@"
 select distinct S.Id from {table} S, json_each(S.Jcolsiz) J
  where {JsonArrayReady("S.Jcolsiz")}
-   and ( json_extract(J.value, '$.Id_Col') = @0 or json_extract(J.value, '$.Id_Siz') = @0 )";
+   and ( cast(json_extract(J.value, '$.Id_Col') as integer) = @0 or cast(json_extract(J.value, '$.Id_Siz') as integer) = @0 )";
 		return _db.FetchDialect<long>(sql, id);
 	}
 
@@ -444,7 +444,7 @@ select distinct S.Id from {table} S, json_each(S.Jcolsiz) J
 update {table} as S
    set Jcolsiz = ( select json_group_array(json(X.value2))
                      from ( select J.key,
-                                   case when json_extract(J.value, '$.{idPath}') = @0
+                                   case when cast(json_extract(J.value, '$.{idPath}') as integer) = @0
                                         then json_set(J.value, '$.{codePath}', @1, '$.{meiPath}', @2)
                                         else J.value end as value2
                               from json_each(S.Jcolsiz) as J
@@ -452,7 +452,7 @@ update {table} as S
        Vdu = @3
  where {JsonArrayReady("S.Jcolsiz")}
    and exists ( select 1 from json_each(S.Jcolsiz) as J
-                 where json_extract(J.value, '$.{idPath}') = @0
+                 where cast(json_extract(J.value, '$.{idPath}') as integer) = @0
                    and ( ifnull(json_extract(J.value, '$.{codePath}'), '') <> @1
                       or ifnull(json_extract(J.value, '$.{meiPath}' ), '') <> @2 ) )";
 		return _db.ExecuteDialect(sql, [id, code, name, vdate]);
@@ -471,8 +471,8 @@ update {table} as S
 select S.Id from {table} S
  where {JsonArrayReady("S.Jcolsiz")}
    and exists ( select 1 from json_each(S.Jcolsiz) as J
-                 left join {source} C on C.Id = json_extract(J.value, '$.Id_Col')
-                 left join {source} Z on Z.Id = json_extract(J.value, '$.Id_Siz')
+                 left join {source} C on C.Id = cast(json_extract(J.value, '$.Id_Col') as integer)
+                 left join {source} Z on Z.Id = cast(json_extract(J.value, '$.Id_Siz') as integer)
                 where ( C.Id is not null
                         and ( ifnull(json_extract(J.value, '$.Code_Col'), '') <> ifnull(C.Code,'')
                            or ifnull(json_extract(J.value, '$.Mei_Col' ), '') <> ifnull(C.Name,'') ) )
@@ -493,8 +493,8 @@ update {table} as S
                                      '$.Code_Siz', ifnull(Z.Code, ifnull(json_extract(J.value, '$.Code_Siz'), '')),
                                      '$.Mei_Siz',  ifnull(Z.Name, ifnull(json_extract(J.value, '$.Mei_Siz' ), ''))) as value2
                               from json_each(S.Jcolsiz) as J
-                              left join {source} C on C.Id = json_extract(J.value, '$.Id_Col')
-                              left join {source} Z on Z.Id = json_extract(J.value, '$.Id_Siz')
+                              left join {source} C on C.Id = cast(json_extract(J.value, '$.Id_Col') as integer)
+                              left join {source} Z on Z.Id = cast(json_extract(J.value, '$.Id_Siz') as integer)
                              order by cast(J.key as integer) ) as X ),
        Vdu = @0
  where S.Id in ({string.Join(",", chunk)})";
@@ -521,7 +521,7 @@ update {table} as S
 		foreach (var chunk in shohinIds.Chunk(IdChunkSize)) {
 			var ids = string.Join(",", chunk);
 			_db.Execute($"delete from {derived} where Id_Shohin in ({ids})");
-			_db.Execute($"{DerivedShohinColSiz.CreateSql} where M.Id in ({ids})");
+			_db.ExecuteDialect($"{DerivedShohinColSiz.CreateSql} where M.Id in ({ids})");
 		}
 	}
 

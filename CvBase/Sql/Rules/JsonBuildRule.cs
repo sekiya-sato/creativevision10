@@ -16,7 +16,7 @@ JsonBuildRule はJSONを組み立てる関数を写像します（ルール B04 
 # example
 PostgreSQL: json_group_array(json(X.v))            -> jsonb_agg(((X.v)::jsonb))
 PostgreSQL: json_set(J.value, '$.Cd', @1)          -> jsonb_set(J.value, '{Cd}', to_jsonb(@1), true)
-MariaDB   : json_group_array(json(X.v))            -> JSON_ARRAYAGG(CAST(X.v AS JSON))
+MariaDB   : json_group_array(json(X.v))            -> JSON_ARRAYAGG(JSON_COMPACT(X.v))（配列再構築の派生表は JsonArrayRebuildFlattenRule が外す）
  */
 namespace CvBase.Sql.Rules;
 

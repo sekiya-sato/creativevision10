@@ -14,7 +14,7 @@ MariaDB の `JSON_TABLE` は別名が必須なので、省略時は `json_each` 
 （`from T, json_each(x) where ...` を誤って `where` を別名として取り込まないため）。
 
 # example
-PostgreSQL: json_each(h.Jmeisai) m  ->  jsonb_array_elements((h.Jmeisai)::jsonb) AS m(value)
+PostgreSQL: json_each(h.Jmeisai) m  ->  jsonb_array_elements(CASE WHEN (h.Jmeisai) IS JSON ARRAY THEN (h.Jmeisai)::jsonb ELSE '[]'::jsonb END) AS m(value)
 MariaDB   : json_each(h.Jmeisai) m  ->  JSON_TABLE(h.Jmeisai,'$[*]' COLUMNS(value JSON PATH '$')) AS m
  */
 namespace CvBase.Sql.Rules;
@@ -39,11 +39,22 @@ public sealed class JsonEachRule : ISqlRewriteRule {
 		_build = build;
 	}
 
-	/// <summary>PostgreSQL向け。jsonb_array_elements は alias(value) で列名を与える。</summary>
+	/// <summary>
+	/// PostgreSQL向け。jsonb_array_elements は alias(value) で列名を与える。
+	/// <para>
+	/// 配列でない値（空文字・'{}'・スカラー）は空配列として展開する。jsonb_array_elements は配列以外で例外になり、
+	/// PostgreSQL は WHERE の AND の評価順を保証しないため json_valid ガードより先に展開されることがある。
+	/// SQLite（呼び出し側のガード）と MariaDB（JSON_TABLE '$[*]'）は配列以外を0行として扱うので、それに揃える。
+	/// IS JSON ARRAY は PostgreSQL 16 以降（対応下限）。
+	/// </para>
+	/// </summary>
 	public static JsonEachRule ForPostgre() =>
 		new((target, alias, withOrdinality) => withOrdinality
-			? $"jsonb_array_elements(({target})::jsonb) WITH ORDINALITY AS {QuotePostgre(alias)}(value, {SqlRewriteContext.OrdinalityColumn})"
-			: $"jsonb_array_elements(({target})::jsonb) AS {QuotePostgre(alias)}(value)");
+			? $"jsonb_array_elements({PostgreArray(target)}) WITH ORDINALITY AS {QuotePostgre(alias)}(value, {SqlRewriteContext.OrdinalityColumn})"
+			: $"jsonb_array_elements({PostgreArray(target)}) AS {QuotePostgre(alias)}(value)");
+
+	static string PostgreArray(string target) =>
+		$"CASE WHEN ({target}) IS JSON ARRAY THEN ({target})::jsonb ELSE '[]'::jsonb END";
 
 	/// <summary>MariaDB向け。JSON_TABLE で value 列を作る。別名は必須。</summary>
 	public static JsonEachRule ForMaria() =>

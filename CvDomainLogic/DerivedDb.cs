@@ -10,6 +10,7 @@ namespace CvDomainLogic;
 /// 元テーブルの追加・更新・削除に追随して、派生テーブルの行を作り直す。
 /// 展開SQLは派生クラス側の <c>InsertSql</c> / <c>DeleteSql</c> 定数が持つ(元テーブルのIdを@0で受ける)。
 /// 呼び出し元(CvServer)が張ったトランザクション内で実行される前提。
+/// 展開SQLはSQLite方言(json_each 等)で書かれているため ExecuteDialect で接続先の方言へ変換する(SQLiteでは Execute と同じ)。
 /// </para>
 /// </summary>
 public sealed class DerivedDb(ExDatabase db) {
@@ -24,7 +25,7 @@ public sealed class DerivedDb(ExDatabase db) {
 			return 0;
 		}
 		var insertSql = Common.GetRequiredSql(origin.DerivedClass, "InsertSql");
-		return _db.Execute(insertSql, id);
+		return _db.ExecuteDialect(insertSql, id);
 	}
 
 	/// <summary>
@@ -37,8 +38,8 @@ public sealed class DerivedDb(ExDatabase db) {
 		}
 		var deleteSql = Common.GetRequiredSql(origin.DerivedClass, "DeleteSql");
 		var insertSql = Common.GetRequiredSql(origin.DerivedClass, "InsertSql");
-		var cnt = _db.Execute(deleteSql, id);
-		return cnt + _db.Execute(insertSql, id);
+		var cnt = _db.ExecuteDialect(deleteSql, id);
+		return cnt + _db.ExecuteDialect(insertSql, id);
 	}
 
 	/// <summary>
@@ -50,6 +51,6 @@ public sealed class DerivedDb(ExDatabase db) {
 			return 0;
 		}
 		var deleteSql = Common.GetRequiredSql(origin.DerivedClass, "DeleteSql");
-		return _db.Execute(deleteSql, id);
+		return _db.ExecuteDialect(deleteSql, id);
 	}
 }

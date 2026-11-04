@@ -63,8 +63,8 @@ SELECT sh.Id AS Id, {DerivedJodai.FinalJodaiSql("sh.Id", "@0", "@1", "@2", "sh")
 	/// </summary>
 	/// <returns>展開した行数</returns>
 	public int Rebuild(long idTran) {
-		_db.Execute(DerivedJodai.DeleteSql, idTran);
-		_db.Execute(DerivedJodai.InsertSql, idTran);
+		_db.ExecuteDialect(DerivedJodai.DeleteSql, idTran);
+		_db.ExecuteDialect(DerivedJodai.InsertSql, idTran);
 		var cnt = _db.FirstOrDefault<int>($"SELECT count(*) FROM {nameof(DerivedJodai)} WHERE Id_Tran = @0", idTran);
 		_db.Execute($"UPDATE {nameof(TranJodai)} SET ExpandCnt = @1 WHERE Id = @0", idTran, cnt);
 		_logger.LogInformation("DerivedJodai 再展開 伝票Id={IdTran} 展開行数={Count}", idTran, cnt);

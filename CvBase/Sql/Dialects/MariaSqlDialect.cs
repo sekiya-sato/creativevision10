@@ -30,6 +30,9 @@ public sealed class MariaSqlDialect : SqlDialectBase {
 	public MariaSqlDialect() : base(DialectName, BuildRules()) {
 	}
 
+	/// <summary>JSON配列再構築の派生表を外す（MariaDBは派生表から外側の列を参照できないため）</summary>
+	protected override string PreTranslate(string sql) => JsonArrayRebuildFlattenRule.Apply(sql);
+
 	/// <summary>
 	/// 変換ルール。Phase 3 以降で B01〜B08 を追加する。
 	/// </summary>

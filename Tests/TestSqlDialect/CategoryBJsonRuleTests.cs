@@ -41,7 +41,8 @@ public sealed class CategoryBJsonRuleTests {
 
 	[TestMethod]
 	public void B01_ifnullとcastの組み合わせを保つ() {
-		Assert.AreEqual("cast(coalesce(((m.value)::jsonb ->> 'Su'),0) as integer)",
+		// ->> はテキストを返すため数値の既定値と組むときは numeric へ寄せる（coalesce(text,0) は型エラー）
+		Assert.AreEqual("cast(coalesce(nullif(((m.value)::jsonb ->> 'Su'),'')::numeric, 0) as integer)",
 			SqlDialects.Postgre.Translate("cast(ifnull(json_extract(m.value,'$.Su'),0) as integer)"));
 		Assert.AreEqual("cast(ifnull(JSON_VALUE(m.value,'$.Su'),0) as SIGNED)",
 			SqlDialects.Maria.Translate("cast(ifnull(json_extract(m.value,'$.Su'),0) as integer)"));
@@ -70,7 +71,7 @@ public sealed class CategoryBJsonRuleTests {
 
 	[TestMethod]
 	public void B02_PostgreSQLは別名付きで行展開へ写像する() {
-		Assert.AreEqual("from Tran00Uriage h, jsonb_array_elements((h.Jmeisai)::jsonb) AS m(value)",
+		Assert.AreEqual("from Tran00Uriage h, jsonb_array_elements(CASE WHEN (h.Jmeisai) IS JSON ARRAY THEN (h.Jmeisai)::jsonb ELSE '[]'::jsonb END) AS m(value)",
 			SqlDialects.Postgre.Translate("from Tran00Uriage h, json_each(h.Jmeisai) m"));
 	}
 
@@ -82,14 +83,14 @@ public sealed class CategoryBJsonRuleTests {
 
 	[TestMethod]
 	public void B02_AS付きの別名も扱える() {
-		Assert.AreEqual("from T h, jsonb_array_elements((h.Jmeisai)::jsonb) AS meisai(value)",
+		Assert.AreEqual("from T h, jsonb_array_elements(CASE WHEN (h.Jmeisai) IS JSON ARRAY THEN (h.Jmeisai)::jsonb ELSE '[]'::jsonb END) AS meisai(value)",
 			SqlDialects.Postgre.Translate("from T h, json_each(h.Jmeisai) AS meisai"));
 	}
 
 	[TestMethod]
 	public void B02_別名を省略した場合は既定名を補う() {
 		// 既定名は引用識別子にする。生成SQLを再度変換にかけても関数呼び出しとして再照合されない
-		Assert.AreEqual("from T t, jsonb_array_elements((t.Jmeisai)::jsonb) AS \"json_each\"(value) where json_each.value is not null",
+		Assert.AreEqual("from T t, jsonb_array_elements(CASE WHEN (t.Jmeisai) IS JSON ARRAY THEN (t.Jmeisai)::jsonb ELSE '[]'::jsonb END) AS \"json_each\"(value) where json_each.value is not null",
 			SqlDialects.Postgre.Translate("from T t, json_each(t.Jmeisai) where json_each.value is not null"));
 		Assert.AreEqual("from T t, JSON_TABLE(t.Jmeisai,'$[*]' COLUMNS(value JSON PATH '$')) AS `json_each` where 1=1",
 			SqlDialects.Maria.Translate("from T t, json_each(t.Jmeisai) where 1=1"));
@@ -145,8 +146,60 @@ public sealed class CategoryBJsonRuleTests {
 	public void B04_jsonキャストを写像する() {
 		Assert.AreEqual("select ((X.value2)::jsonb) from T",
 			SqlDialects.Postgre.Translate("select json(X.value2) from T"));
-		Assert.AreEqual("select CAST(X.value2 AS JSON) from T",
+		// MariaDB には CAST(x AS JSON) が無い（MySQL にはある）ため JSON_COMPACT を使う
+		Assert.AreEqual("select JSON_COMPACT(X.value2) from T",
 			SqlDialects.Maria.Translate("select json(X.value2) from T"));
+	}
+
+	// ---- B04 JSON配列の再構築（MariaDB は派生表を外す）----
+
+	[TestMethod]
+	public void B04_MariaDBは配列再構築の派生表を外して集約のORDERBYで順序を保つ() {
+		const string sql = """
+update MasterTokui as S
+   set Jsub = ( select json_group_array(json(X.value2))
+                  from ( select J.key,
+                                case when json_extract(J.value, '$.Sid') = @0
+                                     then json_set(J.value, '$.Cd', @1, '$.Mei', @2)
+                                     else J.value end as value2
+                           from json_each(S.Jsub) as J
+                          order by cast(J.key as integer) ) as X ),
+       Vdu = @3
+ where json_valid(S.Jsub)
+""";
+		var maria = SqlDialects.Maria.Translate(sql);
+		StringAssert.Contains(maria, "JSON_ARRAYAGG(JSON_COMPACT(case when JSON_VALUE(J.value,'$.Sid') = @0");
+		StringAssert.Contains(maria, "ORDER BY J.jkey", System.StringComparison.OrdinalIgnoreCase);
+		Assert.IsFalse(maria.Contains("as X", System.StringComparison.OrdinalIgnoreCase), maria);
+		Assert.IsFalse(maria.Contains("AS JSON", System.StringComparison.OrdinalIgnoreCase), maria);
+		Assert.AreEqual(0, SqlDialects.Maria.Inspect(sql).Count);
+		// SQLite・PostgreSQL の変換経路は派生表のまま（組み替えは MariaDB だけ）
+		StringAssert.Contains(SqlDialects.Postgre.Translate(sql), ") as X");
+	}
+
+	[TestMethod]
+	public void B04_MariaDBの派生表外しは小文字別名とCASE引数と結合を保つ() {
+		const string sql = """
+UPDATE Tran00Uriage
+SET Jmeisai = (
+  SELECT json_group_array(json(x.value2))
+  FROM (
+    SELECT
+      j.key,
+      CASE WHEN m.Id_Siz IS NOT NULL THEN json_set(j.value, '$.Id_Siz', m.Id_Siz) ELSE j.value END AS value2
+    FROM json_each(CASE WHEN json_valid(Tran00Uriage.Jmeisai) THEN Tran00Uriage.Jmeisai ELSE '[]' END) AS j
+    LEFT JOIN DerivedShohinColSiz AS m
+      ON json_extract(j.value, '$.Id_Shohin') = m.Id_Shohin
+    ORDER BY CAST(j.key AS INTEGER)
+  ) AS x
+)
+""";
+		var maria = SqlDialects.Maria.Translate(sql);
+		StringAssert.Contains(maria, "JSON_ARRAYAGG(JSON_COMPACT(CASE WHEN m.Id_Siz IS NOT NULL");
+		StringAssert.Contains(maria, "ORDER BY j.jkey", System.StringComparison.OrdinalIgnoreCase);
+		StringAssert.Contains(maria, "LEFT JOIN DerivedShohinColSiz AS m");
+		StringAssert.Contains(maria, "JSON_TABLE(");
+		Assert.IsFalse(maria.Contains("AS x", System.StringComparison.Ordinal), maria);
 	}
 
 	// ---- 未対応構文の報告 ----

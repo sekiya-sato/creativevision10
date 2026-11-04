@@ -41,6 +41,18 @@ public sealed class CategoryARuleTests {
 	}
 
 	[TestMethod]
+	public void A01_JSONの値と数値の既定値はnumericへ型を合わせる() {
+		// PostgreSQL の ->> はテキストを返し coalesce(text, 0) は型エラーになるため
+		Assert.AreEqual("select cast(coalesce(nullif(((m.value)::jsonb ->> 'Su'),'')::numeric, 0) as integer) from T",
+			SqlDialects.Postgre.Translate("select cast(ifnull(json_extract(m.value,'$.Su'),0) as integer) from T"));
+		Assert.AreEqual("where coalesce(nullif(((V)::jsonb ->> 'Sid'),'')::numeric, 0) <> @0",
+			SqlDialects.Postgre.Translate("where ifnull(json_extract(V, '$.Sid'),  0) <> @0"));
+		// 文字列の既定値は従来どおり関数名だけ置き換える
+		Assert.AreEqual("select coalesce(((V)::jsonb ->> 'Cd'), '') from T",
+			SqlDialects.Postgre.Translate("select ifnull(json_extract(V,'$.Cd'), '') from T"));
+	}
+
+	[TestMethod]
 	public void A01_入れ子のifnullも全て置き換える() {
 		Assert.AreEqual("select coalesce(coalesce(a,b), 0) from T",
 			SqlDialects.Postgre.Translate("select ifnull(ifnull(a,b), 0) from T"));
