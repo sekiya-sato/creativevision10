@@ -1,7 +1,8 @@
-﻿using CvBaseSqlite;
+using CvBaseSqlite;
 using Microsoft.Data.Sqlite;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
+using McpCommon;
 
 namespace McpSql;
 
@@ -200,6 +201,7 @@ static class Program {
 		};
 
 		var tools = new List<McpServerTool> {
+			McpServerTool.Create(SqliteTools.SearchColumnsAsync, readOnlyOpts("search_columns", "列名を部分一致で検索する。Sys* は既定で除外する。")),
 			McpServerTool.Create(SqliteTools.ListTablesAsync, readOnlyOpts(
 				"list_tables",
 				"DB 内のテーブルとビューの一覧を返す。行数は既定では取得しない (大きな DB では非常に遅いため)。")),
@@ -227,6 +229,8 @@ static class Program {
 			}));
 		}
 
+		tools = tools.Select(tool => (McpServerTool)new DiagnosticTool(tool)).ToList();
+		tools.Add(McpServerTool.Create(ErrorDetails.Get, readOnlyOpts("get_error_details", "エラー ID に対応する安全な診断情報を返す。")));
 		var mode = allowWrite
 			? "このサーバは --allow-write 付きで起動しているため execute ツールで DB を変更できます。実行前に必ず内容を確認してください。"
 			: "このサーバは読み取り専用です。INSERT/UPDATE/DELETE/DDL/ATTACH は全て拒否されます。";

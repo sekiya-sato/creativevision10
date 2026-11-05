@@ -18,4 +18,8 @@
     <ProjectReference Include="..\CvBaseSqlite\CvBaseSqlite.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\McpCommon\ErrorDetails.cs" Link="ErrorDetails.cs" />
+  </ItemGroup>
+
 </Project>

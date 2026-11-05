@@ -1,6 +1,7 @@
 ﻿using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using Oracle.ManagedDataAccess.Client;
+using McpCommon;
 
 namespace McpOracle;
 
@@ -85,11 +86,15 @@ static class Program {
 			Name = name, Description = description, ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false
 		};
 		var tools = new List<McpServerTool> {
+			McpServerTool.Create(OracleTools.SearchColumnsAsync, readOnly("search_columns", "接続ユーザーの列名を部分一致で検索する。")),
 			McpServerTool.Create(OracleTools.ListTablesAsync, readOnly("list_tables", "接続ユーザーのテーブルとビューの一覧を返す。")),
 			McpServerTool.Create(OracleTools.DescribeTableAsync, readOnly("describe_table", "指定テーブルまたはビューの列、制約、DDL を返す。")),
 			McpServerTool.Create(OracleTools.ListIndexesAsync, readOnly("list_indexes", "インデックスの一覧と対象列を返す。")),
 			McpServerTool.Create(OracleTools.QueryAsync, readOnly("query", "読み取り専用 SQL を実行して結果を返す。SELECT または WITH ... SELECT のみ。")),
-			McpServerTool.Create(OracleTools.ExplainAsync, readOnly("explain", "読み取り専用 SQL の実行計画を返す。"))
+			McpServerTool.Create(OracleTools.ExplainAsync, new McpServerToolCreateOptions {
+				Name = "explain", Description = "SELECT の実行計画を返す。Oracle の計画表へ書き込む場合があります。",
+				ReadOnly = false, Destructive = false, Idempotent = false, OpenWorld = false
+			})
 		};
 		if (allowWrite) {
 			tools.Add(McpServerTool.Create(OracleTools.ExecuteAsync, new McpServerToolCreateOptions {
@@ -97,6 +102,8 @@ static class Program {
 				ReadOnly = false, Destructive = true, Idempotent = false, OpenWorld = false
 			}));
 		}
+		tools = tools.Select(tool => (McpServerTool)new DiagnosticTool(tool)).ToList();
+		tools.Add(McpServerTool.Create(ErrorDetails.Get, readOnly("get_error_details", "エラー ID に対応する安全な診断情報を返す。")));
 		var mode = allowWrite
 			? "このサーバは --allow-write 付きで起動しているため execute で DB を変更できます。"
 			: "このサーバは読み取り専用です。更新系 SQL は拒否されます。最終的なアクセス制御は Oracle アカウントの権限で設定してください。";

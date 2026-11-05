@@ -24,6 +24,16 @@ static class OracleTools {
 
 	public static void Initialize(OracleConnection connection, bool allowWrite) { _connection = connection; _allowWrite = allowWrite; }
 
+	public static Task<string> SearchColumnsAsync(
+		[Description("列名に含まれる文字列。大文字化の動作は Oracle の UPPER に従います。")] string columnName,
+		[Description("返却する最大行数。既定 100、上限 1000。")] int maxRows = DefaultMaxRows,
+		CancellationToken cancellationToken = default) {
+		if (string.IsNullOrWhiteSpace(columnName)) throw new McpException("列名を指定してください。");
+		return RunAsync((conn, ct) => ExecuteQueryJson(conn,
+			"SELECT table_name, column_name, data_type FROM user_tab_columns WHERE INSTR(UPPER(column_name), UPPER(:p0)) > 0 ORDER BY table_name, column_id",
+			[columnName], Math.Clamp(maxRows, 1, MaxRowsHardLimit), ct), cancellationToken);
+	}
+
 	public static Task<string> ListTablesAsync(
 		[Description("テーブル名の前方一致フィルタ。省略時は全件。")] string? namePrefix = null,
 		[Description("各テーブルの行数を count(*) で取得するか。既定は false。")] bool includeRowCounts = false,
@@ -107,7 +117,7 @@ static class OracleTools {
 		catch (McpException) { throw; }
 		catch (OperationCanceledException) { throw; }
 		catch (OracleException ex) { throw new McpException($"Oracle エラー (ORA-{ex.Number}): {ex.Message}"); }
-		catch (Exception ex) { Console.Error.WriteLine($"[McpOracle] {ex}"); throw new McpException(ex.Message); }
+		catch (Exception) { throw new McpException("内部エラーが発生しました。"); }
 		finally { _gate.Release(); }
 	}
 

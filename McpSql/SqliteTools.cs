@@ -1,4 +1,4 @@
-﻿using CvBase;
+using CvBase;
 using CvBaseSqlite;
 using Microsoft.Data.Sqlite;
 using ModelContextProtocol;
@@ -41,6 +41,21 @@ static class SqliteTools {
 	public static void Initialize(ExDatabaseSqlite db, bool allowWrite) {
 		_db = db;
 		_allowWrite = allowWrite;
+	}
+
+	public static Task<string> SearchColumnsAsync(
+		[Description("列名に含まれる文字列。ASCII 英字の大文字・小文字は区別しません。")] string columnName,
+		[Description("Sys* のテーブルを含めるか。既定は false。")] bool includeSystem = false,
+		[Description("返却する最大行数。既定 100、上限 1000。")] int maxRows = DefaultMaxRows,
+		CancellationToken cancellationToken = default) {
+		if (string.IsNullOrWhiteSpace(columnName)) throw new McpException("列名を指定してください。");
+		return RunAsync((conn, ct) => ExecuteQueryJson(conn, """
+			SELECT m.name AS table_name, c.name AS column_name, c.type AS data_type
+			FROM sqlite_master m JOIN pragma_table_info(m.name) c
+			WHERE m.type IN ('table', 'view') AND m.name NOT LIKE 'sqlite\_%' ESCAPE '\'
+			  AND (@p1 = 1 OR m.name NOT LIKE 'Sys%') AND INSTR(UPPER(c.name), UPPER(@p0)) > 0
+			ORDER BY m.name, c.cid
+			""", [columnName, includeSystem ? 1L : 0L], Math.Clamp(maxRows, 1, MaxRowsHardLimit), ct), cancellationToken);
 	}
 
 	#region ツール本体 =========================================================
@@ -306,10 +321,8 @@ static class SqliteTools {
 		catch (SqliteException ex) {
 			throw new McpException($"SQLite エラー ({ex.SqliteErrorCode}): {ex.Message}");
 		}
-		catch (Exception ex) {
-			// ★診断は必ず stderr へ。stdout は JSON-RPC 専用。
-			Console.Error.WriteLine($"[McpSql] {ex}");
-			throw new McpException(ex.Message);
+		catch (Exception) {
+			throw new McpException("内部エラーが発生しました。");
 		}
 		finally {
 			_gate.Release();

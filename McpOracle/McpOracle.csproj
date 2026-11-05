@@ -13,4 +13,8 @@
     <PackageReference Include="Oracle.ManagedDataAccess.Core" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\McpCommon\ErrorDetails.cs" Link="ErrorDetails.cs" />
+  </ItemGroup>
+
 </Project>
