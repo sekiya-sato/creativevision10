@@ -35,6 +35,10 @@ public sealed record ManualLockResult(bool IsAcquired, ManualLockHandle? Handle,
 /// これは監視タスクによる自動解放（最短でも<c>max(ExpectedDuration×2, 15分)</c>）と
 /// 運用者による強制クリアのどちらかで解消される設計であり、Step 9-4/9-5の責務である。
 /// </para>
+/// <para>
+/// 業務チェック（支払計算済み範囲、確認後の変更、計算エラー等）で処理を止める場合は異常終了ではないため、
+/// <see cref="ManualLockDb.CompleteBusinessStop"/>で行を解放してから戻る（2026-11-05）。
+/// </para>
 /// </summary>
 public sealed class ManualLockHandle : IDisposable {
 	/// <summary>
@@ -163,7 +167,7 @@ public class ManualLockDb(ExDatabase db) {
 		var row = new SysSequence {
 			SysSeqType = (int)EmSysSeqType.ManualLock,
 			TableName = processName,
-			ColumnName = stepName,
+			ColumnName = FitStepName(stepName),
 			SeqNo = 1,
 			Memo = memo,
 			ExpectedDuration = expectedDurationSeconds,
@@ -233,7 +237,19 @@ public class ManualLockDb(ExDatabase db) {
 
 		return _db.ExecuteDialect(
 			$"UPDATE {nameof(SysSequence)} SET ColumnName=@0, SeqNo=@1, Memo=@2, Vdu=@3 WHERE Id=@4",
-			stepName, seqNo, newMemo, vdate, row.Id);
+			FitStepName(stepName), seqNo, newMemo, vdate, row.Id);
+	}
+
+	/// <summary>
+	/// 処理名を <see cref="SysSequence.ColumnName"/> の桁数（<c>ColumnSizeDml</c>）へ収める。
+	/// SysSequence は採番表と共用で列は30桁。SQLite は桁数を検査しないが MariaDB / PostgreSQL は超過でエラーになり、
+	/// 再集計・請求計算などの一連処理が開始できなくなるため。処理名は表示用の途中経過で、排他の判定には使わない
+	/// （判定は TableName=一連処理名）。全文は Memo の経過に残る。
+	/// </summary>
+	static string FitStepName(string stepName) {
+		var size = typeof(SysSequence).GetProperty(nameof(SysSequence.ColumnName))?
+			.GetCustomAttributes(typeof(ColumnSizeDmlAttribute), true).OfType<ColumnSizeDmlAttribute>().FirstOrDefault()?.Size ?? 30;
+		return stepName.Length <= size ? stepName : stepName[..size];
 	}
 
 	/// <summary>
@@ -324,6 +340,59 @@ public class ManualLockDb(ExDatabase db) {
 		}
 
 		handle.MarkCompleted();
+	}
+
+	/// <summary>
+	/// 業務チェック（入力・状態・確認内容の検査）の結果として処理を止めたときの
+	/// <see cref="SysHistAutoexec.ReturnCode"/>。
+	/// <para>
+	/// 中断の種類を次のとおり区別する。
+	/// <list type="bullet">
+	/// <item><description>業務チェックによる中断: 判断を終えて止めた正常な中断であり、再実行を妨げないよう
+	/// <see cref="CompleteBusinessStop"/>で排他行を解放し、本コードと<see cref="BusinessStopMarker"/>付きの履歴を残す</description></item>
+	/// <item><description>想定外の例外による中断: <see cref="Complete"/>を呼ばず行を残す（異常終了。
+	/// <see cref="ManualLockHandle"/>の方針どおり監視タスクまたは強制クリアで解放する）</description></item>
+	/// </list>
+	/// </para>
+	/// </summary>
+	public const int BusinessStopReturnCode = 2;
+
+	/// <summary>業務チェックによる中断の履歴の目印。<see cref="SysHistAutoexec.Memo"/>の終了メモの先頭に付ける</summary>
+	public const string BusinessStopMarker = "[業務チェック中断]";
+
+	/// <summary>
+	/// 業務チェック（入力・状態の検査）による中断を表す例外かどうか。
+	/// 想定外の例外（DB障害・プログラム誤り等）と区別するために使う。
+	/// <c>ArgumentException</c>は入力検査（基準日の形式など）で投げる型そのものだけを対象にし、
+	/// 派生型（<c>ArgumentNullException</c>・<c>ArgumentOutOfRangeException</c>・辞書のキー重複など）は
+	/// プログラム誤りとして想定外の例外に含める。
+	/// </summary>
+	public static bool IsBusinessStopException(Exception ex) => ex
+		is ConsumptionPurchasePaidPeriodException
+		or CostRevaluationPaidPeriodException
+		or StocktakeMisdatedException
+		or LogisticsUserException
+		|| ex.GetType() == typeof(ArgumentException);
+
+	/// <summary>業務チェック中断の理由としてメモへ書く上限文字数（履歴メモ全体の上限より十分小さくする）</summary>
+	private const int BusinessStopReasonMaxLength = 500;
+
+	/// <summary>
+	/// 業務チェックの結果として一連処理を止めたときの終了記録。排他行を解放し、
+	/// <see cref="BusinessStopReturnCode"/>と理由を履歴へ残す。
+	/// 想定外の例外で中断した場合は呼ばないこと（行を残して異常終了として扱うため）。
+	/// </summary>
+	/// <param name="handle"><see cref="TryBegin"/>で得たハンドル</param>
+	/// <param name="reason">中断理由（利用者へ返すメッセージ）</param>
+	/// <param name="count">中断までの処理件数（既定0）</param>
+	/// <param name="isAutoExec">実行種別。<see cref="Complete"/>と同じ</param>
+	public void CompleteBusinessStop(ManualLockHandle handle, string? reason, int count = 0, int isAutoExec = (int)EmSysHistType.ManualExec) {
+		var text = reason ?? string.Empty;
+		if (text.Length > BusinessStopReasonMaxLength) {
+			text = text[..BusinessStopReasonMaxLength];
+		}
+		var memo = text.Length == 0 ? BusinessStopMarker : $"{BusinessStopMarker} {text}";
+		Complete(handle, BusinessStopReturnCode, count, memo, isAutoExec);
 	}
 
 	/// <summary>

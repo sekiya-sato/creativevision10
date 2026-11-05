@@ -169,15 +169,14 @@ public class ManualLockCostUpdateTests {
 	}
 
 	// ------------------------------------------------------------------
-	// 4. ApplyTotalAverageCostが業務エラー(負在庫)で失敗したとき、
-	//    SysSequenceの行が残る(監視タスクが解放する対象になる)
+	// 4. ApplyTotalAverageCostが業務チェック(計算エラー)で止まったとき、
+	//    SysSequenceの行は解放され、結果コード2(業務チェック中断)の履歴が残る(2026-11-05変更)
 	// ------------------------------------------------------------------
 
 	[TestMethod]
-	public void ApplyTotalAverageCost_BusinessError_LeavesLockRowForMonitor() {
+	public void ApplyTotalAverageCost_BusinessError_ReleasesLockWithBusinessStopHistory() {
 		// 「当月仕入額はあるが数量0はエラー」。2026-09-06改訂で負在庫・原価0円は対象外(エラーではない)へ
-		// 変わったため(-2・のロールバック対象外)、本テストは改訂後も残るエラー条件で業務エラーを起こす。
-		// 業務エラーはCompleteを呼ばず、行を残す方針(ManualLockHandle参照)
+		// 変わったため、本テストは改訂後も残るエラー条件で業務チェックの中断を起こす
 		CreateCostTables((int)EnumCostMethod.TotalAverage);
 		var idShain = InsertShain();
 		var idBad = InsertShohin("BAD", tankaGenka: 100);
@@ -187,7 +186,30 @@ public class ManualLockCostUpdateTests {
 
 		Assert.IsFalse(result.IsSuccess);
 		Assert.AreEqual(0, Db.Fetch<TranGenka>().Count);
-		// 排他行が残っている(異常終了として監視タスク/強制クリアで解放される対象)
+		// 業務チェックによる中断は異常終了ではないため、排他行を解放する
+		Assert.AreEqual(0, Db.Fetch<SysSequence>($"WHERE SysSeqType={(int)EmSysSeqType.ManualLock}").Count);
+		var history = Db.Fetch<SysHistAutoexec>($"WHERE SysHistType={(int)EmSysHistType.ManualExec}").Single();
+		Assert.AreEqual("総平均原価更新", history.TaskName);
+		Assert.AreEqual(ManualLockDb.BusinessStopReturnCode, history.ReturnCode);
+		StringAssert.Contains(history.Memo, ManualLockDb.BusinessStopMarker);
+		StringAssert.Contains(history.Memo, result.Message);
+	}
+
+	// ------------------------------------------------------------------
+	// 4b. 想定外の例外で中断したときは、SysSequenceの行が残る(監視タスク/強制クリアで解放する対象)
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void ApplyTotalAverageCost_UnexpectedException_LeavesLockRowForMonitor() {
+		CreateCostTables((int)EnumCostMethod.TotalAverage);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 5000);
+		InsertPurchase("20260910", 10, idShohin, su: 14, kingaku: 68000);
+		// 計算途中で参照する表を消し、DB例外(想定外の例外)を起こす
+		Db.Execute($"DROP TABLE {nameof(TranGenka)}");
+
+		Assert.ThrowsExactly<SqliteException>(() => new CostUpdateDb(Db).ApplyTotalAverageCost(NewParam("202609", idShain)));
+
 		var locks = Db.Fetch<SysSequence>($"WHERE SysSeqType={(int)EmSysSeqType.ManualLock}");
 		Assert.AreEqual(1, locks.Count);
 		Assert.AreEqual("総平均原価更新", locks[0].TableName);

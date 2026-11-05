@@ -170,7 +170,7 @@ public class StocktakeDb(ExDatabase db) {
 		var cnt = 0;
 		try {
 			_db.Execute($@"
-CREATE TEMP TABLE IF NOT EXISTS {TempBookQtyTable} (
+CREATE TEMPORARY TABLE IF NOT EXISTS {TempBookQtyTable} (
   Id_Shohin INTEGER NOT NULL,
   Id_Col INTEGER NOT NULL,
   Id_Siz INTEGER NOT NULL,
@@ -213,9 +213,9 @@ INSERT INTO {TempBookQtyTable} (Id_Shohin, Id_Col, Id_Siz, BookQty)
 SELECT s.Id_Shohin, s.Id_Col, s.Id_Siz, 0
 FROM (
   SELECT DISTINCT
-    json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
-    json_extract(j.value, '$.Id_Col')    AS Id_Col,
-    json_extract(j.value, '$.Id_Siz')    AS Id_Siz
+    cast(json_extract(j.value, '$.Id_Shohin') as integer) AS Id_Shohin,
+    cast(json_extract(j.value, '$.Id_Col') as integer)    AS Id_Col,
+    cast(json_extract(j.value, '$.Id_Siz') as integer)    AS Id_Siz
   FROM {nameof(Tran60Tana)} AS t
        CROSS JOIN json_each(t.Jmeisai) AS j
   WHERE t.Id_Soko = {soko}
@@ -638,14 +638,14 @@ WHERE SumMonth = @0
 	private static string BuildBookQtyAsOfSql(long idSoko) {
 		var branches = StockSuSources.Select(x => $@"
   SELECT
-    json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
-    json_extract(j.value, '$.Id_Col')    AS Id_Col,
-    json_extract(j.value, '$.Id_Siz')    AS Id_Siz,
-    json_extract(j.value, '$.Su')*t.CalcFlag*{x.SuFlag} AS Su
+    cast(json_extract(j.value, '$.Id_Shohin') as integer) AS Id_Shohin,
+    cast(json_extract(j.value, '$.Id_Col') as integer)    AS Id_Col,
+    cast(json_extract(j.value, '$.Id_Siz') as integer)    AS Id_Siz,
+    cast(json_extract(j.value, '$.Su') as integer)*t.CalcFlag*{x.SuFlag} AS Su
   FROM {x.TableName} AS t
        CROSS JOIN json_each(t.Jmeisai) AS j
        LEFT JOIN MasterTokui AS mt ON mt.Id = t.{x.Axis}
-       LEFT JOIN MasterShohin AS ms ON ms.Id = json_extract(j.value, '$.Id_Shohin')
+       LEFT JOIN MasterShohin AS ms ON ms.Id = cast(json_extract(j.value, '$.Id_Shohin') as integer)
   WHERE t.{x.Axis} = {idSoko}
     AND t.DenDay > @0
     AND t.DenDay <= @1

@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    月次集計・原価・棚卸の3DB検証ツール。同じ処理を SQLite（基準）・MariaDB・PostgreSQL で実際に2回実行し、
+    冪等性（1回目と2回目の結果が同じ）と方言変換の正しさ（各DBの結果が SQLite と同じ）を集計値で照合する。
+    対象DBを更新するため、専用の複製DB・試験用の cv00 だけに使う。creativevision10.slnx には含めない。
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>batchverify</AssemblyName>
+    <RootNamespace>BatchVerify</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\CvBase\CvBase.csproj" />
+    <ProjectReference Include="..\..\..\..\CvBaseSqlite\CvBaseSqlite.csproj" />
+    <ProjectReference Include="..\..\..\..\CvBaseMariadb\CvBaseMariadb.csproj" />
+    <ProjectReference Include="..\..\..\..\CvBasePostgre\CvBasePostgre.csproj" />
+    <ProjectReference Include="..\..\..\..\CvDomainLogic\CvDomainLogic.csproj" />
+    <ProjectReference Include="..\..\..\..\CodeShare\CodeShare.csproj" />
+  </ItemGroup>
+</Project>

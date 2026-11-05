@@ -88,7 +88,7 @@ carry AS (
         UNION ALL
         SELECT h.Id_Torisaki AS idTori, 0 AS kari, h.KingakuTotal AS kashi
         FROM Tran06Nyukin h WHERE h.KakeDay < {dayFrom}
-    )
+    ) AS src
     GROUP BY idTori
 ),
 -- 期間内の動き

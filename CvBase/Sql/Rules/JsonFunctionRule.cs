@@ -48,10 +48,49 @@ public sealed class JsonFunctionRule : ISqlRewriteRule {
 	public static JsonFunctionRule JsonCastForMaria() =>
 		new("B04-JsonCast", "json", target => $"JSON_COMPACT({target})");
 
+	/// <summary>
+	/// B09 json_type。PostgreSQL は IS JSON 述語で 'array' / 'object' を返す（不正JSONでも例外にしない）。
+	/// それ以外の値は jsonb_typeof の名前（'string' / 'number' 等）になり SQLite（'text' / 'integer' 等）と違うが、
+	/// CV10 の使用箇所はすべて <c>json_type(x) = 'array'</c> の判定である。
+	/// </summary>
+	public static JsonFunctionRule JsonTypeForPostgre() =>
+		new("B09-JsonType", "json_type", target =>
+			$"(CASE WHEN ({target}) IS JSON ARRAY THEN 'array' WHEN ({target}) IS JSON OBJECT THEN 'object' " +
+			$"WHEN ({target}) IS JSON THEN jsonb_typeof(({target})::jsonb) END)");
+
+	/// <summary>
+	/// B09 json_type。MariaDB の JSON_TYPE は大文字（'ARRAY'）を返すので小文字へ揃える。
+	/// 変換後も同名関数が残るため、<c>LOWER(</c> の直後にあるものは変換済みとして再変換しない（変換の冪等性）。
+	/// </summary>
+	public static JsonFunctionRule JsonTypeForMaria() =>
+		new("B09-JsonType", "json_type", target => $"LOWER(JSON_TYPE({target}))", skip: IsWrappedByLower);
+
+	/// <summary>直前が <c>LOWER(</c> か</summary>
+	static bool IsWrappedByLower(SqlRewriteContext context, int index) {
+		var open = context.PrevCode(index);
+		if (open < 0 || !context.Tokens[open].IsOperator("("))
+			return false;
+		var name = context.PrevCode(open);
+		return name >= 0 && context.Tokens[name].IsWord("lower");
+	}
+
+	readonly Func<SqlRewriteContext, int, bool>? _skip;
+
+	/// <param name="id">ルールID</param>
+	/// <param name="functionName">SQLite側の関数名</param>
+	/// <param name="build">引数の式から置換後の式を作る</param>
+	/// <param name="skip">この位置では変換しない条件</param>
+	public JsonFunctionRule(string id, string functionName, Func<string, string> build, Func<SqlRewriteContext, int, bool>? skip)
+		: this(id, functionName, build) {
+		_skip = skip;
+	}
+
 	public string Id { get; }
 
 	public bool Apply(SqlRewriteContext context, int index) {
 		if (!context.TryMatchCall(index, _functionName, out var open, out var close))
+			return false;
+		if (_skip != null && _skip(context, index))
 			return false;
 		var args = context.SplitArguments(open, close);
 		if (args.Count != 1)

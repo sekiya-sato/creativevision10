@@ -439,6 +439,8 @@ public partial class CostUpdateDb {
 			return NewManualLockFailure(param.BatchId, param.TargetMonth, startedAt, RevaluationLabel, lockResult.Blocker);
 		}
 		using var lockHandle = lockResult.Handle!;
+		// 業務チェックで止めるときは排他行を解放してから失敗を返す（想定外の例外とは区別する）
+		CostUpdateResult Stop(CostUpdateResult result) => StopByBusinessCheck(manualLockDb, lockHandle, result);
 
 		// 確認後の変更検知(設計書§2.4-4)。排他取得後・トランザクション開始前に検査する
 		// (検査から更新までの間に他処理が割り込めないようにするため。他の3処理と同じ配置)。
@@ -450,7 +452,7 @@ public partial class CostUpdateDb {
 				var current = FetchRevaluationConfirmSnapshot(resolution.SumMonth);
 				var mismatch = DetectConfirmMismatch(param.Confirmed, current);
 				if (mismatch != null) {
-					return NewRevalFailure(param, startedAt, 0, mismatch);
+					return Stop(NewRevalFailure(param, startedAt, 0, mismatch));
 				}
 			}
 		}
@@ -464,25 +466,25 @@ public partial class CostUpdateDb {
 			if (computation.InputError != null) {
 				_db.AbortTransaction();
 				started = false;
-				return NewRevalFailure(param, startedAt, 1, computation.InputError);
+				return Stop(NewRevalFailure(param, startedAt, 1, computation.InputError));
 			}
 
 			if (IsPeriodAlreadyPaid(computation.Period)) {
-				// 消化仕入更新(§4.6)と同じ扱い。catchブロックがstartedを見てAbortTransactionする。
+				// 消化仕入更新(§4.6)と同じ扱い。catchブロックがstartedを見てAbortTransactionし、排他行を解放する。
 				throw new CostRevaluationPaidPeriodException(param.TargetMonth);
 			}
 
 			if (computation.MatchedCount == 0) {
 				_db.AbortTransaction();
 				started = false;
-				return NewRevalFailure(param, startedAt, 0, "データが存在しません。");
+				return Stop(NewRevalFailure(param, startedAt, 0, "データが存在しません。"));
 			}
 
 			var errorCount = computation.Rows.Count(r => r.Error != EnumCostCalcError.None);
 			if (errorCount > 0) {
 				_db.AbortTransaction();
 				started = false;
-				return NewRevalFailure(param, startedAt, errorCount, $"エラーが{errorCount}件あるため{RevaluationLabel}を更新しませんでした。");
+				return Stop(NewRevalFailure(param, startedAt, errorCount, $"エラーが{errorCount}件あるため{RevaluationLabel}を更新しませんでした。"));
 			}
 
 			var targetRows = computation.Rows.Where(r => r.IsTarget).ToList();
@@ -490,7 +492,7 @@ public partial class CostUpdateDb {
 				_db.AbortTransaction();
 				started = false;
 				var message = computation.InfoMessages.Count > 0 ? computation.InfoMessages[0] : "更新対象がありませんでした。";
-				return NewRevalFailure(param, startedAt, 0, message);
+				return Stop(NewRevalFailure(param, startedAt, 0, message));
 			}
 
 			var vShain = ResolveVShain(param.Id_Shain);
@@ -570,10 +572,19 @@ public partial class CostUpdateDb {
 				FinishedAt = Common.GetVdate(),
 			};
 		}
+		catch (CostRevaluationPaidPeriodException ex) {
+			if (started) {
+				_db.AbortTransaction();
+			}
+			// 支払計算済み範囲の検査による中断は業務チェックのため、排他行を解放してから例外を返す
+			manualLockDb.CompleteBusinessStop(lockHandle, ex.Message);
+			throw;
+		}
 		catch {
 			if (started) {
 				_db.AbortTransaction();
 			}
+			// 想定外の例外ではCompleteを呼ばず、行を残す（異常終了。ManualLockHandle参照）
 			throw;
 		}
 	}
@@ -603,6 +614,8 @@ public partial class CostUpdateDb {
 			return NewManualLockFailure(string.Empty, string.Empty, startedAt, RevaluationLabel, lockResult.Blocker);
 		}
 		using var lockHandle = lockResult.Handle!;
+		// 業務チェックで止めるときは排他行を解放してから失敗を返す（想定外の例外とは区別する）
+		CostUpdateResult Stop(CostUpdateResult result) => StopByBusinessCheck(manualLockDb, lockHandle, result);
 
 		var started = false;
 		try {
@@ -613,12 +626,12 @@ public partial class CostUpdateDb {
 			if (header == null) {
 				_db.AbortTransaction();
 				started = false;
-				return NewCancelFailure(revalId, startedAt, "対象の評価替え実行が見つかりません。");
+				return Stop(NewCancelFailure(revalId, startedAt, "対象の評価替え実行が見つかりません。"));
 			}
 			if (header.Status == (int)EnumCostRevalStatus.Canceled) {
 				_db.AbortTransaction();
 				started = false;
-				return NewCancelFailure(revalId, startedAt, "既に取消済みです。");
+				return Stop(NewCancelFailure(revalId, startedAt, "既に取消済みです。"));
 			}
 
 			var targetIds = _db.Fetch<long>($"SELECT DISTINCT Id_Shohin FROM {nameof(TranGenka)} WHERE SourceRevalId=@0", revalId);
@@ -639,7 +652,7 @@ WHERE g.ChangeKind = {(int)EnumCostChangeKind.Reval}
 				if (newerCount > 0) {
 					_db.AbortTransaction();
 					started = false;
-					return NewCancelFailure(revalId, startedAt, "この評価替えより新しい評価替えが対象商品にあるため取消できません。");
+					return Stop(NewCancelFailure(revalId, startedAt, "この評価替えより新しい評価替えが対象商品にあるため取消できません。"));
 				}
 			}
 

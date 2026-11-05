@@ -213,6 +213,16 @@ FROM {nameof(SummaryStock)} WHERE SumMonth <= @0", sumMonth) ?? new SourceFinger
 		FinishedAt = Common.GetVdate(),
 	};
 
+	/// <summary>
+	/// 業務チェック（確認後の変更、原価方式不一致、計算エラー、対象なし等）で処理を止めるときに、
+	/// マニュアル排他の行を解放してから失敗結果を返す。トランザクションは呼出元で終了済みであること。
+	/// 想定外の例外による中断では呼ばない（行を残して異常終了として扱う。<see cref="ManualLockHandle"/>参照）。
+	/// </summary>
+	private static CostUpdateResult StopByBusinessCheck(ManualLockDb manualLockDb, ManualLockHandle lockHandle, CostUpdateResult result) {
+		manualLockDb.CompleteBusinessStop(lockHandle, result.Message);
+		return result;
+	}
+
 	// ==================================================================
 	// 4-1. 対象期間の解決
 	// ==================================================================

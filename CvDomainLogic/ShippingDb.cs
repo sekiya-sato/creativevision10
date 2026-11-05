@@ -72,7 +72,7 @@ public class ShippingDb(ExDatabase db) {
 		if (ids.Count == 0) {
 			return [];
 		}
-		var rows = _db.Fetch<TranHaibun>(
+		var rows = _db.FetchDialect<TranHaibun>(
 			$"where Id in ({string.Join(",", ids)}) and EndFlag = 0 and ifnull(KakuteiDay,'') <> '' "
 			+ $"order by {HaibunHeaderKey.KeyColumnsSql()}, Id");
 		if (rows.Count == 0) {
@@ -80,7 +80,7 @@ public class ShippingDb(ExDatabase db) {
 		}
 		var tokuiById = LoadTokui(rows.Select(x => x.Id_Tenpo));
 		// MasterSysman(税率)・商品Id→消費税区分は明細をまとめて処理する前に一括で読む(TranTaxRebuildDb.LoadShohinTaxIdsと同じ考え方)。
-		var sysman = _db.Fetch<MasterSysman>("where Id = 1").FirstOrDefault() ?? new MasterSysman();
+		var sysman = _db.FetchDialect<MasterSysman>("where Id = 1").FirstOrDefault() ?? new MasterSysman();
 		var taxIdByShohin = new TranTaxRebuildDb(_db).LoadShohinTaxIds();
 		var summaryDb = new SummaryDb(_db);
 		var created = new List<long>();
@@ -117,7 +117,7 @@ public class ShippingDb(ExDatabase db) {
 			}
 			// 出荷した行も全量欠品の行も完了にして引当から外す
 			var vdate = Common.GetVdate();
-			_db.Execute(
+			_db.ExecuteDialect(
 				$"UPDATE {nameof(TranHaibun)} SET EndFlag = 1, RelateNo2 = @0, Vdu = {vdate} "
 				+ $"WHERE Id IN ({string.Join(",", group.Select(x => x.Id))})", (int)slipId);
 		}
@@ -156,7 +156,7 @@ public class ShippingDb(ExDatabase db) {
 		if (targets.Count == 0) {
 			return ([], 0, 0);
 		}
-		var current = _db.Fetch<TranHaibun>(
+		var current = _db.FetchDialect<TranHaibun>(
 			$"where Id in ({string.Join(",", targets.Select(r => r.Id))}) and EndFlag = 0")
 			.ToDictionary(x => x.Id);
 		// 1件でも「対象に無い」「Vdu不一致」があれば何も書かずに競合として返す(fail-fast)
@@ -176,7 +176,7 @@ public class ShippingDb(ExDatabase db) {
 			.Select(x => (long)x.RelateNo1).Distinct().ToList();
 		var arrival = new ArrivalDb(_db);
 		if (hachuIds.Count > 0 && arrival.Recalc(hachuIds) > 0) {
-			current = _db.Fetch<TranHaibun>(
+			current = _db.FetchDialect<TranHaibun>(
 				$"where Id in ({string.Join(",", targets.Select(r => r.Id))}) and EndFlag = 0")
 				.ToDictionary(x => x.Id);
 		}
@@ -200,7 +200,7 @@ public class ShippingDb(ExDatabase db) {
 		var vdate = Common.GetVdate();
 		foreach (var (id, su) in commitSu) {
 			var h = current[id];
-			_db.Execute(
+			_db.ExecuteDialect(
 				$"update {nameof(TranHaibun)} set {nameof(TranHaibun.KakuteiDay)} = @0, {nameof(TranHaibun.JitsuSu)} = @1, "
 				+ $"{nameof(TranHaibun.ShortSu)} = @2, {nameof(TranHaibun.Vdu)} = {vdate} where {nameof(TranHaibun.Id)} = @3",
 				denDay, su, h.Su - su, id);
@@ -227,7 +227,7 @@ public class ShippingDb(ExDatabase db) {
 		}
 		var shohinIds = string.Join(",", groups.Select(g => g.Key.Id_Shohin).Distinct());
 		var sokoIds = string.Join(",", groups.Select(g => g.Key.Id_Soko).Distinct());
-		var stock = _db.Fetch<SummaryRealStock>($"where Id_Shohin in ({shohinIds}) and Id_Soko in ({sokoIds})")
+		var stock = _db.FetchDialect<SummaryRealStock>($"where Id_Shohin in ({shohinIds}) and Id_Soko in ({sokoIds})")
 			.ToDictionary(x => (x.Id_Soko, x.Id_Shohin, x.Id_Col, x.Id_Siz));
 		return [.. groups.Select(g => {
 			var s = stock.GetValueOrDefault(g.Key);
@@ -306,7 +306,7 @@ public class ShippingDb(ExDatabase db) {
 		if (ids.Count == 0) {
 			return [];
 		}
-		return _db.Fetch<MasterTokui>($"where Id in ({string.Join(",", ids)})")
+		return _db.FetchDialect<MasterTokui>($"where Id in ({string.Join(",", ids)})")
 			.ToDictionary(x => x.Id);
 	}
 }

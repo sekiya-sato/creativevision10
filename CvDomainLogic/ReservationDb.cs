@@ -56,7 +56,7 @@ public class ReservationDb(ExDatabase db) {
 		if (outcome != ReservationOutcome.Success || targets.Count == 0) {
 			return ([], 0);
 		}
-		var sysman = _db.Fetch<MasterSysman>("where Id = 1").FirstOrDefault() ?? new MasterSysman();
+		var sysman = _db.FetchDialect<MasterSysman>("where Id = 1").FirstOrDefault() ?? new MasterSysman();
 		var taxIdByShohin = new TranTaxRebuildDb(_db).LoadShohinTaxIds();
 		var tokuiById = FetchByIds<MasterTokui>(targets.Select(x => x.Id_Tenpo));
 		var customerById = FetchByIds<MasterEndCustomer>(targets.Select(x => x.Id_Customer));
@@ -134,7 +134,7 @@ public class ReservationDb(ExDatabase db) {
 			summaryDb.CalcTran2SummaryStock(nameof(Tran01Tenuri), nameof(ITranSoko.Id_Soko), slip.Id, invertFlag: false);
 			// 顧客付きの店舗売上なので、汎用保存と同じくポイント台帳・残高を同じトランザクション内で同期する
 			new PointCalcDb(_db).SyncTenuri(slip.Id, slip);
-			_db.Execute(
+			_db.ExecuteDialect(
 				$"UPDATE {nameof(TranHaibun)} SET EndFlag = 1, JitsuSu = Su, ShortSu = 0, KakuteiDay = @0, RelateNo2 = @1, "
 				+ $"EndReason = @2, Vdu = {vdate} WHERE Id IN ({string.Join(",", group.Select(x => x.Id))})",
 				denDay, (int)slip.Id, (int)EnumHaibunEndReason.Converted);
@@ -168,7 +168,7 @@ public class ReservationDb(ExDatabase db) {
 	/// <returns>取り消した行数</returns>
 	public int ExpireOverdue(DateTime today) {
 		var todayYmd = today.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-		var targets = _db.Fetch<TranHaibun>(
+		var targets = _db.FetchDialect<TranHaibun>(
 			$"where Kubun = {(int)EnumHaibun.Reservation} and EndFlag = 0 and LimitDay <> '' and LimitDay < @0", todayYmd);
 		if (targets.Count == 0) {
 			return 0;
@@ -184,7 +184,7 @@ public class ReservationDb(ExDatabase db) {
 	/// <summary>取消・期限切れの更新。全量を欠品として完了し、伝票は作らない。</summary>
 	void MarkCancelled(List<TranHaibun> targets, string endDay, EnumHaibunEndReason reason, bool recalcReserve = true) {
 		var vdate = Common.GetVdate();
-		_db.Execute(
+		_db.ExecuteDialect(
 			$"UPDATE {nameof(TranHaibun)} SET EndFlag = 1, JitsuSu = 0, ShortSu = Su, KakuteiDay = @0, EndReason = @1, "
 			+ $"Vdu = {vdate} WHERE Id IN ({string.Join(",", targets.Select(x => x.Id))})",
 			endDay, (int)reason);
@@ -202,7 +202,7 @@ public class ReservationDb(ExDatabase db) {
 		if (refs.Count == 0) {
 			return [];
 		}
-		var current = _db.Fetch<TranHaibun>(
+		var current = _db.FetchDialect<TranHaibun>(
 			$"where Id in ({string.Join(",", refs.Select(r => r.Id))}) and EndFlag = 0")
 			.ToDictionary(x => x.Id);
 		foreach (var r in refs) {
@@ -231,7 +231,7 @@ public class ReservationDb(ExDatabase db) {
 		if (list.Count == 0) {
 			return [];
 		}
-		return _db.Fetch<T>($"where Id in ({string.Join(",", list)})").ToDictionary(x => x.Id);
+		return _db.FetchDialect<T>($"where Id in ({string.Join(",", list)})").ToDictionary(x => x.Id);
 	}
 
 	/// <summary>明細の色・サイズのコードと名称（伝票時点の値として明細へ写す）</summary>
@@ -240,7 +240,7 @@ public class ReservationDb(ExDatabase db) {
 		if (list.Count == 0) {
 			return [];
 		}
-		return _db.Fetch<DerivedShohinColSiz>($"where Id_Shohin in ({string.Join(",", list)})")
+		return _db.FetchDialect<DerivedShohinColSiz>($"where Id_Shohin in ({string.Join(",", list)})")
 			.DistinctBy(x => (x.Id_Shohin, x.Id_Col, x.Id_Siz))
 			.ToDictionary(x => (x.Id_Shohin, x.Id_Col, x.Id_Siz));
 	}

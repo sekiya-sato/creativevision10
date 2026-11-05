@@ -408,6 +408,14 @@ public class CostUpdateDbConsumptionTests {
 
 		Assert.AreEqual(0, Db.Fetch<Tran03Shiire>("WHERE GeneratedKind=@0", (int)EnumGeneratedKind.ConsumptionPurchase).Count);
 		Assert.AreEqual(0, Db.Fetch<TranConsumptionPurchaseLink>("").Count);
+
+		// 業務チェックによる中断のため排他行は解放され、結果コード2の履歴が残る(2026-11-05変更)
+		Assert.AreEqual(0, Db.Fetch<SysSequence>($"WHERE SysSeqType={(int)EmSysSeqType.ManualLock}").Count);
+		var history = Db.Fetch<SysHistAutoexec>("").Single();
+		Assert.AreEqual(ManualLockDb.BusinessStopReturnCode, history.ReturnCode);
+		StringAssert.Contains(history.Memo, ManualLockDb.BusinessStopMarker);
+		// 排他が残らないため、再実行しても排他失敗ではなく同じ業務チェックで止まる
+		Assert.ThrowsExactly<ConsumptionPurchasePaidPeriodException>(() => costUpdateDb.ApplyConsumptionPurchases(NewParam("202609", idShain)));
 	}
 
 	// ------------------------------------------------------------------

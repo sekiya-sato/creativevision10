@@ -69,7 +69,10 @@ internal static class StreamStepProgressRunner {
 			logger.LogInformation("{Message} ステップ数={StepCount}", startMessage, steps.Count);
 			var start = DateTime.Now;
 			var totalCount = 0;
+			// 想定外の例外で失敗したステップがあるか / 業務チェックで止めたステップがあるか（履歴の結果コードで区別する）
 			var hadError = false;
+			var hadBusinessStop = false;
+			var businessStopReasons = new List<string>();
 
 			for (var index = 0; index < steps.Count; index++) {
 				var (name, action) = steps[index];
@@ -93,15 +96,23 @@ internal static class StreamStepProgressRunner {
 					count = action(argument);
 				}
 				catch (Exception ex) {
-					logger.LogError(ex, errorMessageTemplate, name);
 					isError = true;
 					errorMsg = ex.Message;
+					if (ManualLockDb.IsBusinessStopException(ex)) {
+						// 業務チェックによる中断。想定外の例外とは区別して記録する
+						logger.LogWarning(ex, "業務チェックによる中断: {StepName} {Message}", name, ex.Message);
+						hadBusinessStop = true;
+						businessStopReasons.Add($"{name}: {ex.Message}");
+					}
+					else {
+						logger.LogError(ex, errorMessageTemplate, name);
+						hadError = true;
+					}
 				}
 
 				var stepElapsed = (DateTime.Now - stepStart).TotalSeconds;
 				var endProgress = (int)Math.Round((index + 1) * 100d / steps.Count, MidpointRounding.AwayFromZero);
 				if (isError) {
-					hadError = true;
 					yield return new StreamStepProgress(name, count, endProgress, false, true, errorMsg, StreamStepProgressPhase.Error, stepElapsed);
 				}
 				else {
@@ -116,8 +127,17 @@ internal static class StreamStepProgressRunner {
 			logger.LogInformation("{Message} 所要={Elapsed:0.0}s", endMessage, elapsed.TotalSeconds);
 
 			if (lockHandle != null) {
-				// 1c: 全ステップ終了後に終了を記録する。ここへ到達したときだけが正常終了である
-				manualLockDb!.Complete(lockHandle, hadError ? 1 : 0, totalCount, isAutoExec: isAutoExec);
+				// 1c: 全ステップ終了後に終了を記録する。ここへ到達したときだけが正常終了である。
+				// 結果コードは想定外の例外=1を優先し、業務チェックによる中断だけなら2（BusinessStopReturnCode）とする
+				if (hadError) {
+					manualLockDb!.Complete(lockHandle, 1, totalCount, isAutoExec: isAutoExec);
+				}
+				else if (hadBusinessStop) {
+					manualLockDb!.CompleteBusinessStop(lockHandle, string.Join(" / ", businessStopReasons), totalCount, isAutoExec);
+				}
+				else {
+					manualLockDb!.Complete(lockHandle, 0, totalCount, isAutoExec: isAutoExec);
+				}
 			}
 
 			yield return new StreamStepProgress("Complete", 0, 100, true, false, $"{elapsed.TotalSeconds:0.0}s",

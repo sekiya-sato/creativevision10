@@ -403,6 +403,8 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 			return NewManualLockFailure(param, startedAt, ConsumptionLabel, lockResult.Blocker);
 		}
 		using var lockHandle = lockResult.Handle!;
+		// 業務チェックで止めるときは排他行を解放してから失敗を返す（想定外の例外とは区別する）
+		CostUpdateResult Stop(CostUpdateResult result) => StopByBusinessCheck(manualLockDb, lockHandle, result);
 
 		// 確認後の変更検知。排他取得後・トランザクション開始前に検査する
 		// (検査から更新までの間に他処理が割り込めないようにするため)。Confirmedがnullなら検査しない。
@@ -410,7 +412,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 			var current = FetchConfirmSnapshot(EnumCostProcessKind.ConsumptionPurchase, param.TargetMonth);
 			var mismatch = DetectConfirmMismatch(param.Confirmed, current);
 			if (mismatch != null) {
-				return NewConfirmMismatchFailure(param, startedAt, mismatch);
+				return Stop(NewConfirmMismatchFailure(param, startedAt, mismatch));
 			}
 		}
 
@@ -428,7 +430,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 			if (errorCount > 0) {
 				_db.AbortTransaction();
 				started = false;
-				return new CostUpdateResult {
+				return Stop(new CostUpdateResult {
 					IsSuccess = false,
 					BatchId = param.BatchId,
 					TargetMonth = param.TargetMonth,
@@ -437,7 +439,7 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 					Message = $"エラーが{errorCount}件あるため更新しませんでした。",
 					StartedAt = startedAt,
 					FinishedAt = Common.GetVdate(),
-				};
+				});
 			}
 
 			DeleteExistingGenerated(computation.Period);
@@ -459,12 +461,20 @@ WHERE DenDay BETWEEN @0 AND @1", period.DayFrom, period.DayTo);
 				FinishedAt = Common.GetVdate(),
 			};
 		}
+		catch (ConsumptionPurchasePaidPeriodException ex) {
+			if (started) {
+				_db.AbortTransaction();
+			}
+			// 支払計算済み範囲の検査による中断は業務チェックのため、排他行を解放してから例外を返す
+			manualLockDb.CompleteBusinessStop(lockHandle, ex.Message);
+			throw;
+		}
 		catch {
 			if (started) {
 				_db.AbortTransaction();
 			}
-			// マニュアル排他制御: Completeを呼ばず、行はusing(lockHandle)のDisposeに任せて残す
-			// (異常終了として監視タスクまたは強制クリアで解放される。、ManualLockHandle参照)。
+			// マニュアル排他制御: 想定外の例外ではCompleteを呼ばず、行はusing(lockHandle)のDisposeに任せて残す
+			// (異常終了として監視タスクまたは強制クリアで解放される。ManualLockHandle参照)。
 			throw;
 		}
 	}

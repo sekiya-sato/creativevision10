@@ -76,7 +76,14 @@ public partial class LogisticsLinkDb(ExDatabase db) {
 			lockDb.Complete(handle, 0, count(result), stepName, execType);
 			return result;
 		}
+		catch (Exception ex) when (ManualLockDb.IsBusinessStopException(ex)) {
+			// 入力・状態の検査による中断（業務チェック）。想定外の例外と区別して記録し、排他行を解放する
+			lockDb.CompleteBusinessStop(handle, $"{stepName} {SafeMessage(ex)}", isAutoExec: execType);
+			throw;
+		}
 		catch (Exception ex) {
+			// 想定外の例外。物流連携は外部ファイルの読み書きを含み、再実行で回復させる運用のため
+			// 従来どおり行を解放する（結果コード-1で業務チェック中断と区別する）
 			lockDb.Complete(handle, -1, 0, $"{stepName} {SafeMessage(ex)}", execType);
 			throw;
 		}

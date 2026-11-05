@@ -325,6 +325,20 @@ public partial class ConvertDb {
 	}
 
 	/// <summary>
+	/// 接続先DB用のDDL（<see cref="ExDatabase.GetSqlColumns(Type)"/>）から、列名→型（既定値・制約を除いた型名）を引く関数を返す。
+	/// 見つからない列は varchar(1000)。
+	/// </summary>
+	Func<string, string> ColumnTypes(Type tableType) {
+		var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		foreach (var def in _toDb.GetSqlColumns(tableType)) {
+			var parts = def.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+			if (parts.Length >= 2)
+				map[parts[0].Trim('`', '"', '[', ']')] = parts[1];
+		}
+		return name => map.TryGetValue(name, out var type) && !type.Contains("auto", StringComparison.OrdinalIgnoreCase) ? type : "varchar(1000)";
+	}
+
+	/// <summary>
 	/// 旧DBの (Code, 値…) を一時テーブルへ bulk 投入し、Code の join で1回のUPDATEにまとめる。
 	/// <para>
 	/// 1件ずつ Update すると顧客150万件規模で数時間かかるため（既存の
@@ -341,29 +355,34 @@ public partial class ConvertDb {
 		var table = _toDb.GetTableName(typeof(T));
 		var tmp = $"_bf_{table}";
 		var cols = string.Join(",", columns.Select((c, i) => $"C{i}"));
+		// 一時表の列型は移し先の表の列定義（接続先DB用のDDL）から取る。型なし列・TEXT主キーは SQLite でしか作れないため。
+		// SQLite は最終的に移し先の列アフィニティで格納されるので結果は変わらない
+		var typeOf = ColumnTypes(typeof(T));
 		_toDb.ExecuteDialect($"drop table if exists {tmp}");
-		_toDb.ExecuteDialect($"create table {tmp} (Code TEXT not null primary key, {string.Join(",", columns.Select((c, i) => $"C{i}"))})");
+		_toDb.ExecuteDialect($"create table {tmp} (Code {typeOf("Code")} not null primary key, "
+			+ $"{string.Join(",", columns.Select((c, i) => $"C{i} {typeOf(c)}"))})");
 
-		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
+		// 同じCodeは後勝ち（SQLite の衝突解決句 OR REPLACE と同じ結果）。重複はここで畳み、1件1回の insert にする
+		var latest = new Dictionary<string, object[]>(StringComparer.Ordinal);
 		foreach (var rec in rows) {
 			var code = getString(rec, "Code");
-			if (string.IsNullOrEmpty(code))
-				continue;
-			var vals = values(rec);
-			var ph = string.Join(",", Enumerable.Range(1, vals.Length).Select(i => $"@{i}"));
-			_toDb.ExecuteDialect(
-				$"insert or replace into {tmp} (Code,{cols}) values (@0,{ph})",
-				[code, .. vals]);
+			if (!string.IsNullOrEmpty(code))
+				latest[code] = values(rec);
 		}
+		var ph = string.Join(",", Enumerable.Range(1, columns.Length).Select(i => $"@{i}"));
+		var insertSql = $"insert into {tmp} (Code,{cols}) values (@0,{ph})";
+		_toDb.BeginTransaction(System.Data.IsolationLevel.Serializable);
+		foreach (var (code, vals) in latest)
+			_toDb.ExecuteDialect(insertSql, [code, .. vals]);
 		_toDb.CompleteTransaction();
 
 		var setClause = string.Join(", ", columns.Select((c, i) =>
 			$"{c} = (select t.C{i} from {tmp} t where t.Code = {table}.Code)"));
-		_toDb.ExecuteDialect($@"
+		// 更新件数は ExecuteDialect の戻り値（影響行数）を使う。changes() は SQLite にしか無い
+		var cnt = _toDb.ExecuteDialect($@"
 UPDATE {table}
 SET {setClause}
 WHERE EXISTS (select 1 from {tmp} t where t.Code = {table}.Code)");
-		var cnt = _toDb.FirstOrDefault<int>("SELECT changes() AS updated_count");
 		_toDb.ExecuteDialect($"drop table if exists {tmp}");
 
 		_logger.LogInformation("{Table} の後付け項目({Columns})を {Count}件へ反映",

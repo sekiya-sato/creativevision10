@@ -325,4 +325,37 @@ public class ManualLockDbTests {
 		var tableSeqRows = FetchAllSequences().Where(x => x.SysSeqType == (int)EmSysSeqType.TableSeq).ToList();
 		Assert.AreEqual(3, tableSeqRows.Count);
 	}
+
+	// ------------------------------------------------------------------
+	// 業務チェックによる中断: 行を解放し、結果コード2と目印付きの理由を履歴へ残す(2026-11-05)
+	// ------------------------------------------------------------------
+
+	[TestMethod]
+	public void CompleteBusinessStop_行を解放し業務チェック中断の履歴を残す() {
+		var target = new ManualLockDb(Db);
+		var handle = target.TryBegin("消化仕入更新", "対象抽出・計算", 600).Handle!;
+
+		target.CompleteBusinessStop(handle, "支払計算済みの期間です。");
+		handle.Dispose();
+
+		Assert.IsTrue(handle.Completed);
+		Assert.AreEqual(0, FetchAllSequences().Count);
+		var history = Db.Fetch<SysHistAutoexec>("").Single();
+		Assert.AreEqual(ManualLockDb.BusinessStopReturnCode, history.ReturnCode);
+		Assert.AreEqual(0, history.Count);
+		StringAssert.Contains(history.Memo, $"{ManualLockDb.BusinessStopMarker} 支払計算済みの期間です。");
+	}
+
+	[TestMethod]
+	public void IsBusinessStopException_業務チェックと想定外の例外を区別する() {
+		Assert.IsTrue(ManualLockDb.IsBusinessStopException(new ConsumptionPurchasePaidPeriodException("202609")));
+		Assert.IsTrue(ManualLockDb.IsBusinessStopException(new CostRevaluationPaidPeriodException("202609")));
+		Assert.IsTrue(ManualLockDb.IsBusinessStopException(new LogisticsUserException("他で更新されました")));
+		Assert.IsTrue(ManualLockDb.IsBusinessStopException(new ArgumentException("基準日が不正")));
+		// プログラム誤り・DB障害などは想定外の例外として扱う
+		Assert.IsFalse(ManualLockDb.IsBusinessStopException(new ArgumentNullException("x")));
+		Assert.IsFalse(ManualLockDb.IsBusinessStopException(new ArgumentOutOfRangeException("x")));
+		Assert.IsFalse(ManualLockDb.IsBusinessStopException(new InvalidOperationException("x")));
+		Assert.IsFalse(ManualLockDb.IsBusinessStopException(new SqliteException("x", 1)));
+	}
 }

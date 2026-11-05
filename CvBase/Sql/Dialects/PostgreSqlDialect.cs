@@ -44,6 +44,7 @@ public sealed class PostgreSqlDialect : SqlDialectBase {
 		new JsonEachKeyRule(),
 		JsonFunctionRule.JsonValidForPostgre(),
 		JsonFunctionRule.JsonCastForPostgre(),
+		JsonFunctionRule.JsonTypeForPostgre(),
 		JsonRenameRule.GroupArrayForPostgre(),
 		JsonRenameRule.ObjectForPostgre(),
 		new JsonSetRule(),

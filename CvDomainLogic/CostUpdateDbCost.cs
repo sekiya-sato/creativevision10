@@ -254,6 +254,8 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 			return NewManualLockFailure(param, startedAt, LastPurchaseLabel, lockResult.Blocker);
 		}
 		using var lockHandle = lockResult.Handle!;
+		// 業務チェックで止めるときは排他行を解放してから失敗を返す（想定外の例外とは区別する）
+		CostUpdateResult Stop(CostUpdateResult result) => StopByBusinessCheck(manualLockDb, lockHandle, result);
 
 		// 確認後の変更検知(設計書§2.4-4)。排他取得後・トランザクション開始前に検査する
 		// (検査から更新までの間に他処理が割り込めないようにするため)。Confirmedがnullなら検査しない。
@@ -261,7 +263,7 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 			var current = FetchConfirmSnapshot(EnumCostProcessKind.CostUpdate, param.TargetMonth);
 			var mismatch = DetectConfirmMismatch(param.Confirmed, current);
 			if (mismatch != null) {
-				return NewConfirmMismatchFailure(param, startedAt, mismatch);
+				return Stop(NewConfirmMismatchFailure(param, startedAt, mismatch));
 			}
 		}
 
@@ -274,7 +276,7 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 			if (currentCostMethod != EnumCostMethod.LastPurchase) {
 				_db.AbortTransaction();
 				started = false;
-				return Failure(param, startedAt, 1, LastPurchaseLabel);
+				return Stop(Failure(param, startedAt, 1, LastPurchaseLabel));
 			}
 
 			var (rows, plans, _) = ComputeLastPurchaseForMonth(param.TargetMonth);
@@ -282,7 +284,7 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 			if (errorCount > 0) {
 				_db.AbortTransaction();
 				started = false;
-				return Failure(param, startedAt, errorCount, LastPurchaseLabel);
+				return Stop(Failure(param, startedAt, errorCount, LastPurchaseLabel));
 			}
 
 			if (plans.Count == 0) {
@@ -576,6 +578,8 @@ ORDER BY SumMonth ASC
 			return NewManualLockFailure(param, startedAt, TotalAverageLabel, lockResult.Blocker);
 		}
 		using var lockHandle = lockResult.Handle!;
+		// 業務チェックで止めるときは排他行を解放してから失敗を返す（想定外の例外とは区別する）
+		CostUpdateResult Stop(CostUpdateResult result) => StopByBusinessCheck(manualLockDb, lockHandle, result);
 
 		// 確認後の変更検知(設計書§2.4-4)。排他取得後・トランザクション開始前に検査する
 		// (検査から更新までの間に他処理が割り込めないようにするため)。Confirmedがnullなら検査しない。
@@ -583,7 +587,7 @@ ORDER BY SumMonth ASC
 			var current = FetchConfirmSnapshot(EnumCostProcessKind.CostUpdate, param.TargetMonth);
 			var mismatch = DetectConfirmMismatch(param.Confirmed, current);
 			if (mismatch != null) {
-				return NewConfirmMismatchFailure(param, startedAt, mismatch);
+				return Stop(NewConfirmMismatchFailure(param, startedAt, mismatch));
 			}
 		}
 
@@ -596,7 +600,7 @@ ORDER BY SumMonth ASC
 			if (currentCostMethod != EnumCostMethod.TotalAverage) {
 				_db.AbortTransaction();
 				started = false;
-				return Failure(param, startedAt, 1, TotalAverageLabel);
+				return Stop(Failure(param, startedAt, 1, TotalAverageLabel));
 			}
 
 			var months = new List<string> { param.TargetMonth };
@@ -619,7 +623,7 @@ ORDER BY SumMonth ASC
 					totalErrorCount += errorCount;
 					_db.AbortTransaction();
 					started = false;
-					return Failure(param, startedAt, totalErrorCount, TotalAverageLabel);
+					return Stop(Failure(param, startedAt, totalErrorCount, TotalAverageLabel));
 				}
 
 				if (plans.Count == 0) {

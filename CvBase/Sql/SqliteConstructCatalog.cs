@@ -71,6 +71,8 @@ public static class SqliteConstructCatalog {
 			"PGは jsonb_agg、MariaDBは JSON_ARRAYAGG。順序保証が異なる。現状はサーバ層のみで使用"),
 		new("B04-JsonSet", "json_set", SqliteConstructCategory.Json,
 			"PGは jsonb_set、MariaDBは JSON_SET。現状はサーバ層のみで使用"),
+		new("B09-JsonType", "json_type", SqliteConstructCategory.Json,
+			"JSONの型名。PGは IS JSON ARRAY/OBJECT で 'array'/'object'、MariaDBは LOWER(JSON_TYPE)。使用箇所は = 'array' の判定のみ"),
 		new("B05-Strftime", "strftime", SqliteConstructCategory.DateTimeFormat,
 			"書式は %Y%m / %Y%m%d / %w / %d / %s の5種のみ"),
 		new("B06-Printf", "printf", SqliteConstructCategory.DateTimeFormat,

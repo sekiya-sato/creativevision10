@@ -87,7 +87,7 @@ merged AS (
         UNION ALL
         SELECT ym, 0 AS oroshiKingaku, kingaku * {shopWeight} AS shopKingaku,
                su * {shopWeight} AS su, denCount * {shopWeight} AS denCount FROM shop
-    )
+    ) AS src
     GROUP BY ym
 ),
 grid AS (

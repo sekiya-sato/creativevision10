@@ -4,7 +4,7 @@ CategoryBDateRuleTests は カテゴリB の日付・整形ルール（B05〜B08
 
 永続列は `yyyyMMdd` / `yyyyMM` の文字列のままなので、対象は物理型ではなく
 「文字列日付を整形・加減算する式」です。使われている形が閉じている（書式5種、
-修飾子3単位、printfは %0Nd のみ）ことを前提にした写像なので、
+修飾子3単位、printfは %0Nd / %d / %s のみ）ことを前提にした写像なので、
 その外側の形を変換しないことも併せて確認します。
 
 `PeriodSql` と帳票SQLで実際に使われている組み合わせを最後にまとめて確認します。
@@ -109,11 +109,44 @@ public sealed class CategoryBDateRuleTests {
 	[TestMethod]
 	public void B06_未対応の指定子は変換しない() {
 		foreach (var sql in new[] {
-			"select printf('%s', n) from T",
-			"select printf('%d', n) from T",
 			"select printf('%-2d', n) from T",
+			"select printf('%5s', n) from T",
+			"select printf('%.2f', n) from T",
 		}) {
 			Assert.AreEqual(sql, SqlDialects.Postgre.Translate(sql), sql);
+			Assert.AreEqual(sql, SqlDialects.Maria.Translate(sql), sql);
+		}
+	}
+
+	[TestMethod]
+	public void B06_幅指定なしのdとsはNULLをSQLiteと同じ値にして連結する() {
+		// 請求番号の組み立て（SummaryDb.CalcSummaryUriSei）。SQLite の printf は NULL を %d で '0'、%s で空文字にする
+		Assert.AreEqual("(COALESCE((c.Id)::text,'0') || '-' || COALESCE((@1)::text,'') || '-' || lpad((r)::text,2,'0'))",
+			SqlDialects.Postgre.Translate("printf('%d-%s-%02d', c.Id, @1, r)"));
+		Assert.AreEqual("CONCAT(COALESCE(c.Id,0), '-', COALESCE(@1,''), '-', LPAD(r,2,'0'))",
+			SqlDialects.Maria.Translate("printf('%d-%s-%02d', c.Id, @1, r)"));
+	}
+
+	[TestMethod]
+	public void B06_B07_入金予定日の式が両方言で変換し残しなく変換できる() {
+		// SummaryDb.CalcSummaryUriSei / CalcSummaryKaiShi の NyukinYoteiDay / ShiharaiYoteiDay と同じ形。
+		// 修飾子は連結形（'+' || 式 || ' months'）で書く（printf で作った修飾子は B07 が読めないため）
+		const string sql = """
+			select strftime('%Y%m%d', CASE
+				WHEN (CASE WHEN t.PayDay = 0 THEN @7 ELSE t.PayDay END) = 99 THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', '+' || (t.PayMonth + 1) || ' months', '-1 day')
+				ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', '+' || t.PayMonth || ' months', '+' || (MIN(CASE WHEN t.PayDay = 0 THEN @7 ELSE t.PayDay END, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', '+' || (t.PayMonth + 1) || ' months', '-1 day')) AS INTEGER)) - 1) || ' days')
+			END) AS NyukinYoteiDay from T t
+			""";
+		SqlDialectOptions.Mode = SqlDialectMode.Strict;
+		try {
+			var pg = SqlDialects.Postgre.Translate(sql);
+			var maria = SqlDialects.Maria.Translate(sql);
+			StringAssert.Contains(pg, "(((t.PayMonth + 1)) || ' MONTH')::interval");
+			StringAssert.Contains(maria, "DATE_ADD(");
+			Assert.IsFalse(maria.Contains("date(", System.StringComparison.Ordinal), maria);
+		}
+		finally {
+			SqlDialectOptions.Mode = SqlDialectMode.Auto;
 		}
 	}
 

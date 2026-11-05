@@ -44,6 +44,14 @@ public sealed class JsonRenameRule : ISqlRewriteRule {
 	public static JsonRenameRule ObjectForPostgre() =>
 		new("B04-JsonObject", "json_object", "jsonb_build_object");
 
+	/// <summary>
+	/// A06 length → MariaDB CHAR_LENGTH。MariaDB の LENGTH はバイト数を返すため、
+	/// 文字数を返す SQLite / PostgreSQL の length と合わせる（全角1文字の判定などで差が出る）。
+	/// JSON関数ではないが、関数名だけを置き換える同じ処理のためこのクラスを使う。
+	/// </summary>
+	public static JsonRenameRule LengthForMaria() =>
+		new("A06-Length", "length", "CHAR_LENGTH");
+
 	public string Id { get; }
 
 	public bool Apply(SqlRewriteContext context, int index) {

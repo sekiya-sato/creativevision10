@@ -43,6 +43,7 @@ public sealed class MariaSqlDialect : SqlDialectBase {
 		JsonEachRule.ForMaria(),
 		new JsonEachKeyRule(),
 		JsonFunctionRule.JsonCastForMaria(),
+		JsonFunctionRule.JsonTypeForMaria(),
 		JsonRenameRule.GroupArrayForMaria(),
 		new UpsertHeaderRule(),
 		new ExcludedColumnRule(),
@@ -51,6 +52,7 @@ public sealed class MariaSqlDialect : SqlDialectBase {
 		DateModifierRule.ForMaria(),
 		JuliandayDiffRule.ForMaria(),
 		CastTypeRule.ForMaria(),
+		JsonRenameRule.LengthForMaria(),
 		ReservedIdentifierRule.ForMaria(),
 	];
 
@@ -75,6 +77,8 @@ public sealed class MariaSqlDialect : SqlDialectBase {
 			"B03-JsonValid",
 			"B04-JsonObject",
 			"B04-JsonSet",
+			// json_type は LOWER(JSON_TYPE(x)) へ変換するが、変換後も同名関数が残る（ifnull と同じ扱い）
+			"B09-JsonType",
 		], StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>

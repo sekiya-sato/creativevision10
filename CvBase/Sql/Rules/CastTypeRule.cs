@@ -35,6 +35,7 @@ public sealed class CastTypeRule : ISqlRewriteRule {
 		["REAL"] = "DOUBLE",
 		["INTEGER"] = "SIGNED",
 		["INT"] = "SIGNED",
+		["BIGINT"] = "SIGNED",
 		["NUMERIC"] = "DECIMAL",
 		["BLOB"] = "BINARY",
 	});

@@ -151,6 +151,19 @@ public sealed class CategoryBJsonRuleTests {
 			SqlDialects.Maria.Translate("select json(X.value2) from T"));
 	}
 
+	// ---- B09 json_type ----
+
+	[TestMethod]
+	public void B09_json_typeの配列判定を両方言で同じ値にする() {
+		const string sql = "where json_type(t.Jmeisai) = 'array'";
+		Assert.AreEqual("where (CASE WHEN (t.Jmeisai) IS JSON ARRAY THEN 'array' WHEN (t.Jmeisai) IS JSON OBJECT THEN 'object' WHEN (t.Jmeisai) IS JSON THEN jsonb_typeof((t.Jmeisai)::jsonb) END) = 'array'",
+			SqlDialects.Postgre.Translate(sql));
+		// MariaDB の JSON_TYPE は 'ARRAY' を返すので小文字へ揃える
+		Assert.AreEqual("where LOWER(JSON_TYPE(t.Jmeisai)) = 'array'", SqlDialects.Maria.Translate(sql));
+		Assert.AreEqual(0, SqlDialects.Postgre.Inspect(sql).Count);
+		Assert.AreEqual(0, SqlDialects.Maria.Inspect(sql).Count);
+	}
+
 	// ---- B04 JSON配列の再構築（MariaDB は派生表を外す）----
 
 	[TestMethod]

@@ -120,12 +120,22 @@ public class SummaryDb {
 	/// <paramref name="valueExpr"/> は「課税対象額×税率」の合計(100で割る前・符号付き・丸め前の値)。
 	/// SQLiteの整数除算はゼロ方向切り捨てなので、絶対値化してから割ることで「切捨」をそのまま表現できる
 	/// (負値のCAST/除算はゼロ方向、つまり切り捨てではなく手前に丸まるため、符号を先に外す必要がある)。
+	/// <para>
+	/// 割り算は <see cref="IntDiv100"/> で書く。MariaDB の <c>/</c> は常に小数を返し、PostgreSQL も SUM(bigint) が numeric に
+	/// なるため、そのまま <c>/ 100</c> と書くと小数のまま整数列へ格納されて四捨五入され、SQLite と1円ずれる。
+	/// </para>
 	/// </summary>
 	private static string RoundDivSql(string valueExpr, string roundingExpr) => $@"((CASE WHEN ({valueExpr}) < 0 THEN -1 ELSE 1 END) * (CASE {roundingExpr}
-		WHEN {(int)EnumRounding.Ceiling} THEN (ABS({valueExpr}) + 99) / 100
-		WHEN {(int)EnumRounding.Floor} THEN ABS({valueExpr}) / 100
-		ELSE (ABS({valueExpr}) + 50) / 100
+		WHEN {(int)EnumRounding.Ceiling} THEN {IntDiv100($"ABS({valueExpr}) + 99")}
+		WHEN {(int)EnumRounding.Floor} THEN {IntDiv100($"ABS({valueExpr})")}
+		ELSE {IntDiv100($"ABS({valueExpr}) + 50")}
 	END))";
+
+	/// <summary>
+	/// 0以上の整数式を100で割った整数商（切り捨て）。<c>(a - a % 100) / 100</c> は割り切れる値の除算なので、
+	/// 整数除算の SQLite・小数除算の MariaDB / PostgreSQL のどれでも同じ整数になる。
+	/// </summary>
+	private static string IntDiv100(string nonNegativeExpr) => $"((({nonNegativeExpr}) - ({nonNegativeExpr}) % 100) / 100)";
 
 	/// <summary>
 	/// 消費税額・課税対象額の最終列(Tax1/2/3相当)を作る式。伝票単位ぶん(<paramref name="slipExpr"/>、既に丸め済み)は
@@ -224,15 +234,15 @@ public class SummaryDb {
 			_db.BeginTransaction(System.Data.IsolationLevel.Serializable);
 			transactionStarted = true;
 			var prepareSql = $@"
-CREATE TEMP TABLE IF NOT EXISTS {tempTableName} (
-  SumMonth TEXT NOT NULL,
+CREATE TEMPORARY TABLE IF NOT EXISTS {tempTableName} (
+  SumMonth varchar(6) NOT NULL,
   Id_Soko INTEGER NOT NULL,
   Id_Shohin INTEGER NOT NULL,
   Id_Col INTEGER NOT NULL,
   Id_Siz INTEGER NOT NULL,
   CumulativeSu INTEGER NOT NULL,
   AdjustQty INTEGER NOT NULL,
-  StocktakeDdate TEXT,
+  StocktakeDdate varchar(8),
   ActualQty INTEGER NOT NULL,
   PRIMARY KEY (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz)
 );
@@ -263,15 +273,10 @@ WHERE SumMonth BETWEEN @0 AND @1;
 			// CumulativeSu / StocktakeDdate / ActualQty は伝票から導出できない非Tran列なので復元する
 			var restoreSql = $@"
 UPDATE SummaryStock
-SET (CumulativeSu, StocktakeDdate, ActualQty) = (
-  SELECT Old.CumulativeSu, Old.StocktakeDdate, Old.ActualQty
-  FROM {tempTableName} AS Old
-  WHERE Old.SumMonth = SummaryStock.SumMonth
-    AND Old.Id_Soko = SummaryStock.Id_Soko
-    AND Old.Id_Shohin = SummaryStock.Id_Shohin
-    AND Old.Id_Col = SummaryStock.Id_Col
-    AND Old.Id_Siz = SummaryStock.Id_Siz
-)
+-- 複数列を1つの行値副問合せで代入する形は MariaDB に無いため、列ごとのスカラー副問合せで書く
+SET CumulativeSu = (SELECT Old.CumulativeSu FROM {tempTableName} AS Old WHERE Old.SumMonth = SummaryStock.SumMonth AND Old.Id_Soko = SummaryStock.Id_Soko AND Old.Id_Shohin = SummaryStock.Id_Shohin AND Old.Id_Col = SummaryStock.Id_Col AND Old.Id_Siz = SummaryStock.Id_Siz),
+    StocktakeDdate = (SELECT Old.StocktakeDdate FROM {tempTableName} AS Old WHERE Old.SumMonth = SummaryStock.SumMonth AND Old.Id_Soko = SummaryStock.Id_Soko AND Old.Id_Shohin = SummaryStock.Id_Shohin AND Old.Id_Col = SummaryStock.Id_Col AND Old.Id_Siz = SummaryStock.Id_Siz),
+    ActualQty = (SELECT Old.ActualQty FROM {tempTableName} AS Old WHERE Old.SumMonth = SummaryStock.SumMonth AND Old.Id_Soko = SummaryStock.Id_Soko AND Old.Id_Shohin = SummaryStock.Id_Shohin AND Old.Id_Col = SummaryStock.Id_Col AND Old.Id_Siz = SummaryStock.Id_Siz)
 WHERE SumMonth BETWEEN @0 AND @1
   AND EXISTS (
     SELECT 1
@@ -532,20 +537,20 @@ INSERT INTO SummaryStock (SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc,
 SELECT
 	  {CreateKakeMonthSql("t.DenDay", shime)} AS SumMonth,
   t.{idSoko} AS Id_Soko,
-  json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
-  json_extract(j.value, '$.Id_Col')    AS Id_Col,
-  json_extract(j.value, '$.Id_Siz')    AS Id_Siz,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item1})   AS Su,
+  cast(json_extract(j.value, '$.Id_Shohin') as integer) AS Id_Shohin,
+  cast(json_extract(j.value, '$.Id_Col') as integer)    AS Id_Col,
+  cast(json_extract(j.value, '$.Id_Siz') as integer)    AS Id_Siz,
+  SUM(cast(json_extract(j.value, '$.Su') as integer)*t.CalcFlag*{calcFlag.Item1})   AS Su,
   {vdate} vdc,
   {vdate} vdu,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item2})   AS InQty,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item3})   AS OutQty,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item4})   AS TransitQty,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{adjustFlag})       AS AdjustQty
+  SUM(cast(json_extract(j.value, '$.Su') as integer)*t.CalcFlag*{calcFlag.Item2})   AS InQty,
+  SUM(cast(json_extract(j.value, '$.Su') as integer)*t.CalcFlag*{calcFlag.Item3})   AS OutQty,
+  SUM(cast(json_extract(j.value, '$.Su') as integer)*t.CalcFlag*{calcFlag.Item4})   AS TransitQty,
+  SUM(cast(json_extract(j.value, '$.Su') as integer)*t.CalcFlag*{adjustFlag})       AS AdjustQty
 FROM {tableName} AS t
      CROSS JOIN json_each(t.Jmeisai) AS j
      LEFT JOIN MasterTokui AS mt ON mt.Id = t.{idSoko}
-     LEFT JOIN MasterShohin AS ms ON ms.Id = json_extract(j.value, '$.Id_Shohin')
+     LEFT JOIN MasterShohin AS ms ON ms.Id = cast(json_extract(j.value, '$.Id_Shohin') as integer)
 WHERE {whereClause}
   AND json_type(t.Jmeisai) = 'array'
   AND COALESCE(mt.IsZaiko, 1) = 1
@@ -558,11 +563,12 @@ GROUP BY
   Id_Col,
   Id_Siz
 ON CONFLICT(SumMonth, Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
-SET Su = Su + excluded.Su, vdu = {vdate},
-    InQty = InQty + excluded.InQty,
-    OutQty = OutQty + excluded.OutQty,
-    TransitQty = TransitQty + excluded.TransitQty,
-    AdjustQty = AdjustQty + excluded.AdjustQty
+-- 加算元の列は表名で修飾する（PostgreSQL は非修飾の列名を excluded と曖昧とみなす）
+SET Su = SummaryStock.Su + excluded.Su, vdu = {vdate},
+    InQty = SummaryStock.InQty + excluded.InQty,
+    OutQty = SummaryStock.OutQty + excluded.OutQty,
+    TransitQty = SummaryStock.TransitQty + excluded.TransitQty,
+    AdjustQty = SummaryStock.AdjustQty + excluded.AdjustQty
 ;
 ";
 	}
@@ -576,16 +582,16 @@ SET Su = Su + excluded.Su, vdu = {vdate},
 INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
 SELECT
   t.{idSoko} AS Id_Soko,
-  json_extract(j.value, '$.Id_Shohin') AS Id_Shohin,
-  json_extract(j.value, '$.Id_Col')    AS Id_Col,
-  json_extract(j.value, '$.Id_Siz')    AS Id_Siz,
-  SUM(json_extract(j.value, '$.Su')*t.CalcFlag*{calcFlag.Item1})   AS Su,
+  cast(json_extract(j.value, '$.Id_Shohin') as integer) AS Id_Shohin,
+  cast(json_extract(j.value, '$.Id_Col') as integer)    AS Id_Col,
+  cast(json_extract(j.value, '$.Id_Siz') as integer)    AS Id_Siz,
+  SUM(cast(json_extract(j.value, '$.Su') as integer)*t.CalcFlag*{calcFlag.Item1})   AS Su,
   {vdate} vdc,
   {vdate} vdu
 FROM {tableName} AS t
      CROSS JOIN json_each(t.Jmeisai) AS j
      LEFT JOIN MasterTokui AS mt ON mt.Id = t.{idSoko}
-     LEFT JOIN MasterShohin AS ms ON ms.Id = json_extract(j.value, '$.Id_Shohin')
+     LEFT JOIN MasterShohin AS ms ON ms.Id = cast(json_extract(j.value, '$.Id_Shohin') as integer)
 WHERE {whereClause}
   AND json_type(t.Jmeisai) = 'array'
   AND COALESCE(mt.IsZaiko, 1) = 1
@@ -597,7 +603,7 @@ GROUP BY
   Id_Col,
   Id_Siz
 ON CONFLICT(Id_Soko, Id_Shohin, Id_Col, Id_Siz) DO UPDATE
-SET Su = Su + excluded.Su, vdu = {vdate}
+SET Su = SummaryRealStock.Su + excluded.Su, vdu = {vdate}
 ;
 ";
 	}
@@ -684,10 +690,10 @@ WHERE EXISTS (
     AND Target.Id_Siz = SummaryRealStock.Id_Siz
 );
 
+INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
 WITH TargetKeys AS (
   {targetKeysSql}
 )
-INSERT INTO SummaryRealStock (Id_Soko, Id_Shohin, Id_Col, Id_Siz, Su, Vdc, Vdu)
 SELECT
   s.Id_Soko,
   s.Id_Shohin,
@@ -947,6 +953,11 @@ WHERE SumMonth <= @0;
 		var tax2 = FinalTaxExprSql("m.SlipTax2", "m.BillingRaw2", "IFNULL(mt.TaxRounding, 0)");
 		var tax3 = FinalTaxExprSql("m.SlipTax3", "m.BillingRaw3", "IFNULL(mt.TaxRounding, 0)");
 		var sql = @$"
+INSERT INTO SummaryUriKake (
+	Id_Tokui, DenMonth, Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Sonota,
+	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
+	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
+)
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = '{MasterMeisho.KubunKin}'
 ),
@@ -978,7 +989,7 @@ movements AS (
 		{KinBucket("04")} AS Offset,
 		{KinBucket("99")} AS Other
 	FROM Tran06Nyukin AS t, {KinMeisaiFrom}
-	LEFT JOIN kinmap AS k ON k.Id = json_extract(m.value, '$.Id_Kin')
+	LEFT JOIN kinmap AS k ON k.Id = cast(json_extract(m.value, '$.Id_Kin') as integer)
 	WHERE t.KakeDay BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Torisaki
 ),
@@ -1028,11 +1039,6 @@ totals AS (
 		c.Uriage - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3) AS TotalSales,
 		c.Cash + c.Fee + c.Densai + c.Offset + c.Other AS TotalIn
 	FROM calculated AS c
-)
-INSERT INTO SummaryUriKake (
-	Id_Tokui, DenMonth, Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Sonota,
-	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
-	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
 	c.Id_Tokui,
@@ -1180,7 +1186,7 @@ FROM totals AS c;
 				var patternWhere = BuildShimePatternWhereSql(parameters, "t", groupPatterns);
 
 				var prepareSql = $@"
-CREATE TEMP TABLE IF NOT EXISTS {tempTableName} AS
+CREATE TEMPORARY TABLE IF NOT EXISTS {tempTableName} AS
 SELECT Id_Tokui, DenDay, SeikyuNo, Renban
 FROM SummaryUriSei
 WHERE 1 = 0;
@@ -1203,6 +1209,12 @@ WHERE DenDay = @1
 	);
 ";
 				var sql = $@"
+INSERT INTO SummaryUriSei (
+	Id_Tokui, DenDay, DayFrom, DayTo, SeikyuNo, Renban, NyukinYoteiDay,
+	Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Sonota,
+	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
+	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
+)
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = '{MasterMeisho.KubunKin}'
 ),
@@ -1229,7 +1241,7 @@ payments AS (
 		{KinBucket("04")} AS Offset,
 		{KinBucket("99")} AS Other
 	FROM Tran06Nyukin AS t, {KinMeisaiFrom}
-	LEFT JOIN kinmap AS k ON k.Id = json_extract(m.value, '$.Id_Kin')
+	LEFT JOIN kinmap AS k ON k.Id = cast(json_extract(m.value, '$.Id_Kin') as integer)
 	WHERE t.KakeDay BETWEEN @0 AND @1
 	GROUP BY t.Id_Torisaki
 ),
@@ -1260,18 +1272,12 @@ calculated AS (
 		IFNULL(p.Offset, 0) AS Offset,
 		IFNULL(p.Other, 0) AS Other,
 		strftime('%Y%m%d', CASE
-			WHEN (CASE WHEN t.PayDay = 0 THEN @7 ELSE t.PayDay END) = 99 THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')
-			ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth), printf('+%d days', MIN(CASE WHEN t.PayDay = 0 THEN @7 ELSE t.PayDay END, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')) AS INTEGER)) - 1))
+			WHEN (CASE WHEN t.PayDay = 0 THEN @7 ELSE t.PayDay END) = 99 THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', '+' || (t.PayMonth + 1) || ' months', '-1 day')
+			ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', '+' || t.PayMonth || ' months', '+' || (MIN(CASE WHEN t.PayDay = 0 THEN @7 ELSE t.PayDay END, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', '+' || (t.PayMonth + 1) || ' months', '-1 day')) AS INTEGER)) - 1) || ' days')
 		END) AS NyukinYoteiDay
 	FROM targets AS t
 	LEFT JOIN sales AS s ON s.Id_Tokui = t.Id
 	LEFT JOIN payments AS p ON p.Id_Tokui = t.Id
-)
-INSERT INTO SummaryUriSei (
-	Id_Tokui, DenDay, DayFrom, DayTo, SeikyuNo, Renban, NyukinYoteiDay,
-	Balance, TotalIn, TotalSales, Uriage, Henpin, Nebiki, Sonota,
-	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
-	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
 	c.Id_Tokui,
@@ -1380,6 +1386,12 @@ WHERE DenDay = @1
 		  AND (@4 = '' OR t.Code <= @4)
 	);";
 				var sql = $@"
+INSERT INTO SummaryKaiShi (
+	Id_Shiire, DenDay, DayFrom, DayTo, ShiharaiYoteiDay,
+	Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Sonota,
+	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
+	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
+)
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = '{MasterMeisho.KubunKin}'
 ),
@@ -1419,7 +1431,7 @@ purchases AS (
 			CASE WHEN t.Kubun = 99 THEN ABS(t.KingakuTotal) ELSE 0 END AS Sonota99
 		FROM Tran02Material AS t
 		WHERE {KakeDenWhere} AND t.KakeDay BETWEEN @0 AND @1
-	)
+	) AS src -- 派生表の別名は MariaDB で必須
 	GROUP BY Id_Shiire
 ),
 payments AS (
@@ -1431,7 +1443,7 @@ payments AS (
 		{KinBucket("04")} AS Offset,
 		{KinBucket("99")} AS Other
 	FROM Tran07Shiharai AS t, {KinMeisaiFrom}
-	LEFT JOIN kinmap AS k ON k.Id = json_extract(m.value, '$.Id_Kin')
+	LEFT JOIN kinmap AS k ON k.Id = cast(json_extract(m.value, '$.Id_Kin') as integer)
 	WHERE t.KakeDay BETWEEN @0 AND @1
 	GROUP BY t.Id_Torisaki
 ),
@@ -1462,18 +1474,12 @@ calculated AS (
 		IFNULL(p.Offset, 0) AS Offset,
 		IFNULL(p.Other, 0) AS Other,
 		strftime('%Y%m%d', CASE
-			WHEN (CASE WHEN t.PayDay = 0 THEN @6 ELSE t.PayDay END) = 99 THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')
-			ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth), printf('+%d days', MIN(CASE WHEN t.PayDay = 0 THEN @6 ELSE t.PayDay END, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', printf('+%d months', t.PayMonth + 1), '-1 day')) AS INTEGER)) - 1))
+			WHEN (CASE WHEN t.PayDay = 0 THEN @6 ELSE t.PayDay END) = 99 THEN date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', '+' || (t.PayMonth + 1) || ' months', '-1 day')
+			ELSE date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', '+' || t.PayMonth || ' months', '+' || (MIN(CASE WHEN t.PayDay = 0 THEN @6 ELSE t.PayDay END, CAST(strftime('%d', date(substr(@5, 1, 4) || '-' || substr(@5, 5, 2) || '-01', '+' || (t.PayMonth + 1) || ' months', '-1 day')) AS INTEGER)) - 1) || ' days')
 		END) AS ShiharaiYoteiDay
 	FROM targets AS t
 	LEFT JOIN purchases AS s ON s.Id_Shiire = t.Id
 	LEFT JOIN payments AS p ON p.Id_Shiire = t.Id
-)
-INSERT INTO SummaryKaiShi (
-	Id_Shiire, DenDay, DayFrom, DayTo, ShiharaiYoteiDay,
-	Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Sonota,
-	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
-	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
 	c.Id_Shiire,
@@ -1552,6 +1558,11 @@ FROM calculated AS c;
 		var tax2 = FinalTaxExprSql("m.SlipTax2", "m.BillingRaw2", "IFNULL(ms.TaxRounding, 0)");
 		var tax3 = FinalTaxExprSql("m.SlipTax3", "m.BillingRaw3", "IFNULL(ms.TaxRounding, 0)");
 		var sql = @$"
+INSERT INTO SummaryKaiKake (
+	Id_Shiire, DenMonth, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Sonota,
+	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
+	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
+)
 WITH kinmap AS (
 	SELECT Id, Code FROM MasterMeisho WHERE Kubun = '{MasterMeisho.KubunKin}'
 ),
@@ -1605,7 +1616,7 @@ movements AS (
 		{KinBucket("04")} AS Offset,
 		{KinBucket("99")} AS Other
 	FROM Tran07Shiharai AS t, {KinMeisaiFrom}
-	LEFT JOIN kinmap AS k ON k.Id = json_extract(m.value, '$.Id_Kin')
+	LEFT JOIN kinmap AS k ON k.Id = cast(json_extract(m.value, '$.Id_Kin') as integer)
 	WHERE t.KakeDay BETWEEN @0 AND @1
 	GROUP BY DenMonth, t.Id_Torisaki
 ),
@@ -1656,11 +1667,6 @@ totals AS (
 		c.Shiire - c.Henpin - c.Nebiki + c.Sonota + (c.Tax1 + c.Tax2 + c.Tax3) AS TotalShiire,
 		c.Cash + c.Fee + c.Densai + c.Offset + c.Other AS TotalOut
 	FROM calculated AS c
-)
-INSERT INTO SummaryKaiKake (
-	Id_Shiire, DenMonth, Balance, TotalOut, TotalShiire, Shiire, Henpin, Nebiki, Sonota,
-	Tax1, Tax2, Tax3, TaxableAmount1, TaxableAmount2, TaxableAmount3,
-	Cash, Fee, Densai, Offset, Other, Vdc, Vdu
 )
 SELECT
 	c.Id_Shiire,
