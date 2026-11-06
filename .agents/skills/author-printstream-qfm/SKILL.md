@@ -33,7 +33,7 @@ ViewModel 側の印刷配線（`FormFile` / `PrintBySqlParam` / `PrintByCsvParam
 5. `datarecord/item` の定義順・CSV 列順・各フィールドの `data @datasrc="itemN"` を必ず一致させる。
 6. `recordtype` / `breaktype` / `groupcontrol` / `barcode type` / `font style` などの**数値属性は前例からコピー**する。CHM に数値対応表がないため推測で入れない（仕様 md §3〜§4 参照）。
 7. `decode/format` は仕様 md §5 のチートシートと既存例から流用する。新書式を発明しない。
-8. ユーザーが生成結果を否定・中止・差し戻しを指示したら、追加検討を止め、触った qfm と一時出力を即時に戻す（→ ロールバック）。
+8. 中止・差し戻し時は既存のユーザー変更を保持し、今回の変更だけ扱う（→ ロールバック）。
 
 ## 雛形の選び方
 
@@ -64,7 +64,7 @@ ViewModel 側の印刷配線（`FormFile` / `PrintBySqlParam` / `PrintByCsvParam
 
 旧 CRS は帳票要件の根拠として読む。`SatooDialog.Title`、範囲指定・選択肢、`OnTouch` の条件、切替先 qfm を対応表にしてから、WPF 画面側の実装へ渡す。`OnTouch` の SELECT 列順は qfm の `item1..itemN` と CSV 列順に対応させ、同名列は必ず一意の別名にする。サーバの CSV 化は重複列名を扱えないためである。
 
-旧 qfm をそのまま採用する指定では、cp932 と CRLF を保ったバイト単位コピーを優先する。カード型など意図的に標準 A4 位置と異なる帳票は、validator の位置警告だけで変更せず、XML 構造・`itemN` 対応・PDF 結果を分けて確認する。
+旧 qfm を採用する指定では内容を保ち、`printform/*.qfm` は cp932・LF で保存する。カード型など意図的に標準 A4 位置と異なる帳票は、validator の位置警告だけで変更せず、XML 構造・`itemN` 対応・PDF 結果を分けて確認する。
 
 ## 検証
 
@@ -127,12 +127,12 @@ Copy-Item refer\printdll\printstream.license $bin -Force
 #    iconv -f UTF-8 -t CP932 data.utf8.txt > <workdir>\data.txt
 
 # 4) 実行（form の絶対パス, data.txt を置いた workdir）
-& "$bin\qfmprint.exe" "C:\gitroot\new2022\cv10\printform\Xxx.qfm" "C:\path\to\workdir"
+& "$bin\qfmprint.exe" (Resolve-Path 'printform\Xxx.qfm').Path '<workdirの絶対パス>'
 ```
 
 - 成功すると `IsSuccess=True` と `workdir\outfile.pdf` が出る。`CheckLicense` の各 product が `status=True` であること。
-- 生成 PDF は **Read ツールで開くとテキスト層が読める**ので、列見出し・各行の値・書式（負値、日付、空欄）を突合できる。
-- 注意: このローカルハーネスはフォント埋め込みが本番サーバ環境と異なり、ラスタ画像で一部 CJK グリフが欠けて見えることがある。**PDF テキスト層が正しければ qfm 構造・データ束縛・書式は妥当**と判断してよい（グリフ埋め込みは実サーバ側の別問題）。
+- 生成 PDF のテキスト層を対応ツールで確認し、列見出し・各行の値・書式（負値、日付、空欄）を突合できる。
+- 注意: このローカルハーネスはフォント埋め込みが本番サーバ環境と異なり、ラスタ画像で一部 CJK グリフが欠けて見えることがある。テキスト層だけで見切れ・配置・改ページの妥当性を判断せず、画像と実サーバでの表示も確認する。
 - `data.txt` の列順は SQL の SELECT 列順であり、それが qfm の `item1..itemN` に対応する。ズレると全列が横にずれる。
 
 ### 文法の再抽出（仕様 md を更新するとき）
@@ -181,9 +181,8 @@ public partial class XxxReportViewModel : Helpers.BaseReportViewModel {
 
 ## ロールバック
 
-- ユーザーが「中止」「想定と違う」「すぐ戻す」と指示したら、追加編集や再提案を挟まず rollback を先に行う。
-- Git 操作が `.git/index.lock` 等で失敗する場合は、`git cat-file blob HEAD:<path>` や `git checkout-index -f -- <path>` で対象 qfm を HEAD から復元する。
-- `tmp/pdfs/`、`printform/data.txt`、preview PDF など検証で作った一時成果物も片付ける。
+- ユーザーが中止・差し戻しを指示した場合、今回の変更のみ戻す。事前からあった変更は保持し、不明な場合は確認する。
+- 検証で自分が作成した一時成果物を片付ける。
 
 ## 参照優先度
 

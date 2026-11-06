@@ -35,12 +35,12 @@ cmd /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient\CvWpfclient.csproj"
 git diff --check -- <changed-files>
 ```
 
-`Access to the path 'C:\Users\sekiya\AppData\Local\Microsoft SDKs' is denied` が出た場合は、同じ build を権限付きで再実行する。AGENTS.md でこの SDK 参照は許可されている。
+SDK ディレクトリへのアクセス拒否が出た場合は、環境・権限を確認して同じ build を再試行する。
 
 ## 後片付け
 
-- 製品コードへ変更を加えた場合は、確認後に必ず元へ戻す。
+- 確認用の一時変更だけを元に戻し、既存のユーザー変更と依頼された製品変更を保持する。
 - 確認用に作った `.ps1` やスクリーンショットを削除する。
 - `Get-Process -Name CreativeVision10,CvServer -ErrorAction SilentlyContinue` で残プロセスを確認し、確認用に起動したものは停止する。
 - 触った `.cs` / `.xaml` / `.md` は UTF-8 CRLF に戻す。
-- `git status --short` で、製品変更・skill・ログだけが残っていることを確認する。
+- `git status --short` で、依頼に関係する変更だけが残っていることを確認する。

@@ -7,7 +7,7 @@ description: Investigate and fix cv10 CvServer/CvBaseSqlite database lifetime an
 
 ## Overview
 
-このスキルは `C:\gitroot\new2022\cv10` の `CvServer` / `CvBaseSqlite` 周辺で、`ExDatabase` の DI lifetime、`SchedulerService` の DB 利用、SQLite の WAL/SHM cleanup を変更するときの調査・実装・検証手順です。
+このスキルは リポジトリの `CvServer` / `CvBaseSqlite` 周辺で、`ExDatabase` の DI lifetime、`SchedulerService` の DB 利用、SQLite の WAL/SHM cleanup を変更するときの調査・実装・検証手順です。
 
 ## 基本方針
 
@@ -69,8 +69,8 @@ dotnet run --project Tests/TestServer/TestServer.csproj --no-build
 `CvBaseSqlite.dll` の copy で `MSB3026` / `MSB3027` / `MSB3021` が出た場合は、実行中の `CvServer` が lock している可能性を先に疑う。検証を続ける必要がある場合は alternate output を使う。
 
 ```powershell
-C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Tests/TestServer/TestServer.csproj -p:OutputPath=obj\CodexBuildOutput\"
-dotnet Tests/TestServer/obj/CodexBuildOutput/TestServer.dll
+C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Tests/TestServer/TestServer.csproj -p:OutputPath=obj\AgentBuildOutput\"
+dotnet Tests/TestServer/obj/AgentBuildOutput/TestServer.dll
 ```
 
 ## 報告

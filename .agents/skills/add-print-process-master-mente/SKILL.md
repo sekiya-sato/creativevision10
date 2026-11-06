@@ -124,15 +124,7 @@ python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py pri
 python3 .agents/skills/add-print-process-master-mente/scripts/validate_qfm.py printform/MasterXxxMente.qfm
 ```
 
-複数ファイルもまとめて確認できる。
-
-```powershell
-python .agents\skills\add-print-process-master-mente\scripts\validate_qfm.py printform\MasterShainMente.qfm printform\MasterMeishoMente.qfm
-```
-
-```bash
-python3 .agents/skills/add-print-process-master-mente/scripts/validate_qfm.py printform/MasterShainMente.qfm printform/MasterMeishoMente.qfm
-```
+複数ファイルは引数に続けて指定できる。
 
 validator の position warning は、legacy 帳票との差分を示すだけの場合がある。文字コード、XML構造、`itemN` と `datasrc`、SELECT/CSV列数が正しいかを分けて判断する。
 

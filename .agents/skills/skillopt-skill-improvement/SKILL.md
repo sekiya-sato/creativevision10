@@ -1,11 +1,11 @@
 ---
 name: skillopt-skill-improvement
-description: Improve cv10 repo-local agent skills under .agents/skills using the SkillOpt method: rollout evidence, separate success/failure reflection, bounded add/delete/replace edits, held-out validation gates, rejected-edit buffers, and compact best-skill export. Use when the user asks to incorporate SkillOpt, create or update skills, optimize agent skills from prior work, or fix repeated skill-driven failures.
+description: Improve cv10 repo-local agent skills under .agents/skills using the SkillOpt method including rollout evidence, separate success/failure reflection, bounded add/delete/replace edits, held-out validation gates, rejected-edit buffers, and compact best-skill export. Use when the user asks to incorporate SkillOpt, create or update skills, optimize agent skills from prior work, or fix repeated skill-driven failures.
 ---
 
 # SkillOpt Skill Improvement
 
-このスキルは、SkillOpt の考え方を `C:\gitroot\new2022\cv10` の `.agents/skills` 運用へ適用するための手順です。外部 SkillOpt 本体を導入するのではなく、repo-local skill を証拠ベースで小さく改善します。
+このスキルは、SkillOpt の考え方をリポジトリの `.agents/skills` 運用へ適用するための手順です。外部 SkillOpt 本体を導入するのではなく、repo-local skill を証拠ベースで小さく改善します。
 
 ## 原則
 

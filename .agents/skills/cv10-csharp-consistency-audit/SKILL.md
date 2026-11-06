@@ -5,7 +5,7 @@ description: Audit cv10 C# subprojects such as CvBase, CvDomainLogic, CvServer, 
 
 # cv10 C# Consistency Audit
 
-このスキルは `C:\gitroot\new2022\cv10` の C# サブプロジェクトを、修正前に監査し、人間が作業できる `.omo` 文書へ落とすための手順です。
+このスキルは リポジトリの C# サブプロジェクトを、修正前に監査し、人間が作業できる `.omo` 文書へ落とすための手順です。
 
 ## 原則
 
@@ -136,10 +136,10 @@ C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build <Project
 dotnet run --project Tests/TestServer/TestServer.csproj
 ```
 
-`CvServer` build で DLL copy lock が出た場合は、実行中サーバのロックを疑い、検証用に `-p:OutputPath=obj\CodexBuildOutput\` を使う。
+`CvServer` build で DLL copy lock が出た場合は、実行中サーバのロックを疑い、検証用に `-p:OutputPath=obj\AgentBuildOutput\` を使う。
 
 ## 仕上げ
 
 - `.omo` 文書の CRLF / UTF-8 No BOM を整える。
 - `git status --short` で、ソース修正が混ざっていないか確認する。
-- ユーザーが log / commit 不要とした場合、最終回答では「未実施」と明記する。
+- 未実施の検証は理由を含め報告する。

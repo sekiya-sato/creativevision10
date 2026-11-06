@@ -70,11 +70,11 @@ if(dtitem26=="19010101") { fdTxt53.visible = 0; fdTxt51.visible = 0; }
 1. 対象 ViewModel の `FormFileName` / 印刷SQL / パラメーター / 並び順を読む。
 2. 旧CRS から `col_list`（伝票列）/ `col_list2`（明細列）と `OnQueryPrint` / `OnQueryDetailPrint` を読み、列順の組み立てを把握する。
 3. `d_sql.txt` の列名を数える。`data.txt` は引用符を含むので単純なカンマ分割で数えない。
-4. `data.pdf` を Read ツールで開く。**テキスト層に見出しと値が出る**ので、これが移植の受け入れ基準になる。ラスタ画像では日本語グリフが落ちるため ASCII 断片（`No` `CD` `FLG`）しか見えないが、テキスト層は正しい。
+4. `data.pdf` のテキスト層と画像を対応ツールで確認する。**テキスト層に見出しと値が出る**ので、これが移植の受け入れ基準になる。ラスタ画像では日本語グリフが落ちるため ASCII 断片（`No` `CD` `FLG`）しか見えないが、テキスト層は正しい。
 
 ### Step 1. プローブ描画でスロット→列の対応を実測する
 
-推測でマッピングしない。旧qfmを**そのまま**、識別可能なダミーデータで描画して対応表を作る。
+推測でマッピングしない。旧qfmを**そのまま**、識別可能なダミーデータで描画して対応表を作る。以下は Windows の Git Bash（`cygpath` あり）から実行する例。
 
 ```bash
 # ハーネスをビルド（初回のみ）
@@ -89,7 +89,7 @@ perl .agents/skills/upgrade-cvnet-print-form/scripts/make_probe_data.pl 68 > "$W
 "$BIN/qfmprint.exe" "C:\path\to\legacy.qfm" "$(cygpath -w "$WD")"
 ```
 
-生成された `outfile.pdf` を Read すると、見出しセルに `H3 H4 H5 ...`、値セルに `A01 A06 A07 ...` が並ぶ。これを `data.pdf` の同じ位置の見出し・値と突き合わせれば、
+生成された `outfile.pdf` のテキスト層を確認すると、見出しセルに `H3 H4 H5 ...`、値セルに `A01 A06 A07 ...` が並ぶ。これを `data.pdf` の同じ位置の見出し・値と突き合わせれば、
 
 - `HEADn` → 実際の見出し文字列
 - `itemN` → そのスロットが本来出すべき `d_sql.txt` の列
@@ -104,7 +104,6 @@ perl .agents/skills/upgrade-cvnet-print-form/scripts/make_probe_data.pl 68 > "$W
 cp refer/.../legacy_header.qfm printform/Xxx_header.qfm
 T="$TMP/x.utf8"; iconv -f CP932 -t UTF-8 printform/Xxx_header.qfm > "$T"
 # ここで $T を編集
-iconv -f UTF-8 -t CP932 "$T" | perl -pe 's/\r?\n$/\r\n/' > printform/Xxx_header.qfm
 ```
 
 編集内容:
@@ -112,15 +111,16 @@ iconv -f UTF-8 -t CP932 "$T" | perl -pe 's/\r?\n$/\r\n/' > printform/Xxx_header.
 - `datasrc="HEADn"` → `<data calctype="static">見出し</data>`（タイトルだけ `datasrc="item4"` 等へ）
 - ズレている `datasrc="itemN"` の修正。**必ず `<text id="TxtNN">` でスコープして置換する。** 素の `datasrc="item29"` を置換すると別要素を巻き込む。
 
-```perl
+```bash
 perl -0777 -i -pe 's{(<text id="Txt46">.*?datasrc=")item29(")}{$1item30$2}s;' "$T"
+iconv -f UTF-8 -t CP932 "$T" | perl -pe 's/\r?\n$/\n/' > printform/Xxx_header.qfm
 ```
 
 - `HEAD*` の `<item>` 定義や `<prefix id="HEAD" rectype="H"/>` は**残してよい**（Hレコードが来ないだけで無害）。minimal diff を優先する。
 
 注意点:
 
-- **`sed` / `perl` は CR を落とす。** cp932 へ戻したあと必ず `perl -pe 's/\r?\n$/\r\n/'` で CRLF を復元し、`file -b` で `with CRLF line terminators` を確認する（`.gitattributes` は `*.qfm text eol=crlf`）。
+- `printform/*.qfm` は cp932・LF で保存する（`.gitattributes` は `*.qfm text eol=lf`）。
 - 静的文字列が**日本語1文字だけ**だと PrintStream が描画しないことがある。2文字以上にする（例: `色` → `色CD`）。
 - 置換後に `grep -c 'datasrc="HEAD'` が 0 であることと、`<data calctype="static">` の件数が想定どおりであることを確認する。
 
@@ -130,7 +130,7 @@ CV10 のSQLが出す予定の値（日本語・負値・空欄・改ページ対
 
 ```bash
 iconv -f UTF-8 -t CP932 probe.utf8.txt | perl -pe 's/\r?\n$/\r\n/' > "$WD/data.txt"
-"$BIN/qfmprint.exe" "C:\gitroot\new2022\cv10\printform\Xxx_header.qfm" "$(cygpath -w "$WD")"
+"$BIN/qfmprint.exe" "$(cygpath -w "$(pwd)/printform/Xxx_header.qfm")" "$(cygpath -w "$WD")"
 ```
 
 ### Step 4. ViewModel の印刷SQLを書き換える
@@ -147,7 +147,7 @@ iconv -f UTF-8 -t CP932 probe.utf8.txt | perl -pe 's/\r?\n$/\r\n/' > "$WD/data.t
 ### Step 5. 検証
 
 1. `git diff --check`。qfm の trailing whitespace は差し替え元由来なら残し、由来を報告で区別する。
-2. 改行コード: 触った全ファイルを `file -b` で確認。**`.cs` は作業ツリーが LF のリポジトリがある**ので、挿入したブロックを周囲へ合わせる（混在させない）。`git diff --stat` が想定行数かで検算する。
+2. 改行コード: `printform/*.qfm` は LF、`.cs` 等は CRLF を確認し、`git diff --stat` で意図しない全行変更がないか確認する。
 3. cv-sqlite MCP で帳票SQLを実データへ実行し、**列数・列名の一意性・値**を確認する。`data.pdf` と同じ伝票が取れるなら値を直接突合する。
 4. 対象プロジェクトをビルドする。
 5. Step 3 の要領で最終 qfm を実PDF描画し、`data.pdf` と突合する。
