@@ -157,7 +157,7 @@ grep -Ln 'ScrollViewer' CvWpfclient/Views/**/*.xaml
    /mnt/c/Windows/System32/cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"
    ```
 7. **目視確認**: 代表画面は `verify-wpf-screen-runtime` に従い実画面で確認する（下端・右端・余白・見切れ）。
-8. **後片付けとログ**: CRLF/UTF-8 を保ち、`git diff --check` を確認し、`Doc/aicoding_log.md` に記録する。
+8. **後片付け**: CRLF/UTF-8 を保ち、`git diff --check` を確認する。
 
 ## 修正方針の原則
 

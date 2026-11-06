@@ -14,8 +14,8 @@ description: Investigate and fix cv10 CvServer/CvBaseSqlite database lifetime an
 - まず影響度調査を行い、実装計画を出してから変更する。
 - architecture / dependency / impact-scope を扱うため、最初に `graphify-out/GRAPH_REPORT.md` を読む。built commit が HEAD とずれている場合は参考扱いにし、実ファイル確認を優先する。
 - `Program.cs`、`SchedulerService.cs`、`Tests/TestServer` の直接構築経路を一緒に確認する。DI 登録だけを変えて完了扱いにしない。
-- `.omo` は調査メモ置き場、`Doc/aicoding_log.md` は正式ログ。`.omo` と `.sisyphus` は commit 対象にしない。
-- ユーザーが `commitまで` または AGENTS.md の通常 workflow を求めている場合は、検証・ログ・commit まで行う。
+- `.omo` は調査メモ置き場。`.omo` と `.sisyphus` は commit 対象にしない。
+- commit はユーザーが明示した場合のみ行う。
 
 ## 調査手順
 
@@ -73,6 +73,6 @@ C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build Tests/Te
 dotnet Tests/TestServer/obj/CodexBuildOutput/TestServer.dll
 ```
 
-## ログ
+## 報告
 
-`Doc/aicoding_log.md` には、影響度調査、変更した lifetime / cleanup の理由、build と `Tests/TestServer` 実行結果を記録する。ログ追記後はファイル先頭または指定位置が崩れていないことを確認する。
+影響度調査、変更した lifetime / cleanup の理由、build と `Tests/TestServer` の実行結果を報告する。

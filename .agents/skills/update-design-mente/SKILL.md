@@ -25,7 +25,6 @@ description: Guides CvWpfclient master maintenance screen design unification usi
 2. 支払情報タブでは `RowDefinitions` を再計算し、支払フラグ／支払方法／仕入先ブロックを1つずつ明確な行へ移動。仕入先検索は DockPanel や SearchTextBox を使い文言を統一する
 3. 詳細内容タブの下部に `登録日/修正日` 表示を追加するには `MultiBinding` などで `InfoLabel` を構成し、`Row3` あたりに新しい `TextBlock` を配置してタイムスタンプを `FormTextBox` 風に見せる
 4. 更新後は `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` でビルド確認（可能な限り）
-5. `Doc/aicoding_log.md` に作業履歴とスキル利用の説明を記録する
 
 ## 設計のポイント
 
@@ -34,25 +33,9 @@ description: Guides CvWpfclient master maintenance screen design unification usi
 - DataGrid には `materialDesign:DataGridAssist.CellPadding` / `ColumnHeaderPadding` と `DynamicResource PrimaryHueMidBrush` を使う。`DataGridAssist` は `materialDesign` 名前空間である
 - 支払フラグなどのチェックボックスは `MaterialDesignCheckBox` か `CheckBox` の `Style` を MaterialDesign 風に揃える
 
-## 報告/ログ
+## 報告
 
-作業完了後は以下の形式で `Doc/aicoding_log.md` に記録します：
-
-```
-## [YYYY-MM-DD] hh:mm 作業タイトル
-### Agent
-- [使用モデル : 提供者]
-### Editor
-- OpenCode
-### 目的
-- ...
-### 実施内容
-- 変更ファイルと要点
-### 技術決定 Why
-- 判断理由
-### 確認
-- dotnet build ... 成功 / 未実行
-```
+変更内容、判断理由、ビルド結果を報告する。
 
 ## よくある質問
 
@@ -63,7 +46,7 @@ A: TabItem 内の Grid 構造を壊さず、`Grid.Row` 属性だけを調整す�
 A: `MasterShohinMenteView` で使われている `ColorZone` や `Card` の URIs を参照し、同じリソースキー（例: `PrimaryHueMidBrush`）を利用することでテーマ連携できます。
 
 ### Q: 新しい skill で必ずビルドする必要がある？
-A: 可能な限り `dotnet build` を実行してください。時間的制約がある場合、代わりに `dotnet build` を実行した旨をログで報告し、未実行理由を記載します。
+A: 可能な限り `dotnet build` を実行してください。実行できない場合は、その理由を報告します。
 
 ## 更新履歴
 

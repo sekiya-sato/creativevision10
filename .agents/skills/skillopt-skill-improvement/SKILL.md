@@ -34,7 +34,7 @@ description: Improve cv10 repo-local agent skills under .agents/skills using the
 
 - 同じ失敗が複数回起きるか。
 - skill が曖昧で agent の自由度が高すぎるか。
-- 検証手順、ステージ対象、互換性確認、文字コード、ログ追記位置のどれが欠けているか。
+- 検証手順、ステージ対象、互換性確認、文字コードのどれが欠けているか。
 
 成功 minibatch:
 
@@ -68,7 +68,7 @@ frontmatter の `description` は trigger 判定に使われるため、適用�
 - 採用した内容だけを `SKILL.md` に残す。
 - optimizer 側の長い反省、候補一覧、失敗ログは skill 本体に入れない。
 - `.sisyphus/` や `.omo/` の scratch memo は、ユーザーが明示しない限り commit 対象にしない。
-- `Doc/aicoding_log.md` には、変更した skill、採用理由、検証結果を簡潔に記録する。
+- 変更した skill、採用理由、検証結果を簡潔に報告する。
 
 ## 確認コマンド
 

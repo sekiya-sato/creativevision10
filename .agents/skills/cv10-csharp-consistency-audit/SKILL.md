@@ -11,7 +11,7 @@ description: Audit cv10 C# subprojects such as CvBase, CvDomainLogic, CvServer, 
 
 - まず監査。ユーザーが実装を明示するまでソース修正しない。
 - 説明、計画、文書は日本語で書く。
-- `Doc/aicoding_log.md` と commit は、ユーザーが明示した時だけ行う。
+- commit はユーザーが明示した時だけ行う。
 - `.omo` は作業メモ・計画の置き場。`.sisyphus` と `.omo` は commit 対象にしない前提で扱う。
 - 共有契約・DB列・既存DTOの名前を変える時は、旧名を `[Obsolete]` alias として残すことを第一候補にする。
 - DB物理列・DDL・シリアライズ名の変更は、既存DBと呼び出し側を確認してから別段階に分ける。
@@ -25,7 +25,6 @@ git rev-parse HEAD
 
 - `graphify-out/graph.json` がある場合は、最初に `graphify query "<対象プロジェクトと調査観点>"` を試す。コマンドが使えない、結果が不足する、または graph の built commit が HEAD と一致しない場合は、graph を探索の補助に留め、対象ソースを `rg` と直接読取りで裏付ける。`GRAPH_REPORT.md` は広域の構成把握が必要なときだけ読む。
 - 未コミット変更がある場合、ユーザー変更を戻さない。対象外なら無視し、対象内なら内容を読んで作業する。
-- ユーザーが「log, commit不要」と言った場合、`Doc/aicoding_log.md` 追記と commit は行わない。
 
 ## 調査観点
 

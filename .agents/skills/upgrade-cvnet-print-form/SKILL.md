@@ -165,7 +165,7 @@ iconv -f UTF-8 -t CP932 probe.utf8.txt | perl -pe 's/\r?\n$/\r\n/' > "$WD/data.t
 
 ## 記録
 
-- `Doc/aicoding_log.md` の先頭へ追記する。qfmのどの `datasrc` をどう直したか、どの列を空欄にしたか、対応付けの根拠を残す。
+- qfm の `datasrc` の変更、空欄にした列、対応付けの根拠を報告する。
 - commit / push はユーザーの明示指示があるときだけ行う。
 
 ## 関連

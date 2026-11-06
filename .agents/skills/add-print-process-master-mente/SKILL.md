@@ -149,8 +149,8 @@ validator の position warning は、legacy 帳票との差分を示すだけの
 C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfclient/CvWpfclient.csproj"
 ```
 
-7. 印刷サーバー環境が使える場合は、画面で F6 または印刷ボタンを押し、PDF表示画面が開くことを確認する。実行できない場合は理由を作業ログへ記録する。
+7. 印刷サーバー環境が使える場合は、画面で F6 または印刷ボタンを押し、PDF表示画面が開くことを確認する。実行できない場合は理由を報告する。
 
-## ログ
+## 報告
 
-作業完了後は `Doc/aicoding_log.md` に、対象 View / ViewModel / qfm、qfm 検証、ビルド結果を記録する。
+作業完了後は対象 View / ViewModel / qfm、qfm 検証、ビルド結果を報告する。

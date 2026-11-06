@@ -134,9 +134,9 @@ C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfcli
 
 `ISchedulerService`、サービス名、メソッド名は作業時点の `CodeShare/ISchedulerService.cs`、`CvServer/Services/SchedulerService.cs`、対象 ViewModel で再確認する。設計メモやこの例だけから契約を固定しない。
 
-## ログ
+## 報告
 
-作業完了後は `Doc/aicoding_log.md` に、DI登録削除、ViewModel直接生成、サブパス維持、ビルド結果を記録する。
+作業完了後は DI 登録削除、ViewModel 直接生成、サブパス維持、ビルド結果を報告する。
 
 ## 更新履歴
 

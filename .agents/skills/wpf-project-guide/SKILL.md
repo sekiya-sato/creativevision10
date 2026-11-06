@@ -83,7 +83,7 @@ description: Provides the shared CvWpfclient project conventions, resource usage
 2. XAML変更がある場合は、XML整形式・xmlns・resource・Converter・Bindingを確認する。可能なら `dotnet build Doc/test/UatVm/UatVm.csproj` と対象シナリオを先に実行する
 3. 可能なら `dotnet build "CvWpfclient/CvWpfclient.csproj" /p:EnableWindowsTargeting=true /p:UseAppHost=false` を実行する
 4. 形式崩れが疑われる場合は `dotnet format "CvWpfclient/CvWpfclient.csproj" --verify-no-changes` を使う
-5. 実装・設定・運用文書変更で、軽微/文書のみを除く場合は `Doc/aicoding_log.md` 先頭へ記録する。commit/rebase/merge/push はユーザー明示時のみ行う
+5. commit/rebase/merge/push はユーザー明示時のみ行う
 
 ## 更新履歴
 

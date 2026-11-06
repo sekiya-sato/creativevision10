@@ -86,10 +86,9 @@ C:\Windows\System32\cmd.exe /d /c "C:\gitroot\UT\vscmd.bat dotnet build CvWpfcli
 
 5. 形式確認が必要なら `dotnet format "CvWpfclient/CvWpfclient.csproj" --verify-no-changes` を使う
 
-## ログとコミット
+## コミット
 
-- DocログはAGENTS条件（軽微/文書のみを除く実装・設定・運用文書変更）に従い、commit/rebase/merge/pushはユーザー明示時のみ行う。
-- `Doc/aicoding_log.md` は先頭へ追記し、追記位置が既存ログの途中でないことを確認する。
+- commit/rebase/merge/push はユーザー明示時のみ行う。
 - `.omo` と `.sisyphus` は scratch として扱い、ユーザーが明示しない限り commit 対象に含めない。
 
 ## 関連スキル
