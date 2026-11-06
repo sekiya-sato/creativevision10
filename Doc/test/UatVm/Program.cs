@@ -64,6 +64,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["pointmigration"] = PointMigrationScreenScenario.RunAsync,
 	["customerprofile"] = CustomerProfileScenario.RunAsync,
 	["aiquery"] = AiQueryScenario.RunAsync,
+	["aiquerydb"] = AiQueryDbScenario.RunAsync,
 	["oplog"] = OperationLogScenario.RunAsync,
 	["pointsummary"] = PointSummaryLayoutScenario.RunAsync,
 	["rfm"] = RfmCrossAnalysisScenario.RunAsync,

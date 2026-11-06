@@ -37,8 +37,8 @@ public sealed class SqlSubsetCheckTests {
 		"CvDomainLogic/MasterCascadeDb.cs",
 		// ExDatabase のメタデータ参照(sqlite_master)。プロバイダー側で override 済み。
 		"CvBase/ExDatabase.cs",
-		// AI照会のスキーマ説明(sqlite_master / pragma_table_info)。AI照会はSQLite接続だけで利用する設計で、
-		// 他DBでは実行前に失敗応答を返す（Doc/spec/2026-10-19_AI-query_最小変更設計案.md §12 A5）。
+		// AI照会のスキーマ説明(sqlite_master / pragma_table_info)。SQLite接続だけで実行し、
+		// PostgreSQL / MariaDB は information_schema の個別SQLへ分岐する（AiQuerySchemaCatalog）。
 		"CvDomainLogic/AiQuery/AiQuerySchemaCatalog.cs",
 	};
 

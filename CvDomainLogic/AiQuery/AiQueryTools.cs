@@ -77,6 +77,12 @@ public sealed class AiQueryTools(ExDatabase db) {
 		sb.AppendLine("- 要求だけでは決まらない点（対象の伝票、日付の基準、税込/税抜、返品・値引の扱い、集計単位など）は推測で決めず質問する。回答済みの事項は繰り返し質問しない。");
 		sb.AppendLine("- 期間は下の基準日から具体的な開始日・終了日（yyyyMMdd）に確定し、要約に書く。");
 		sb.AppendLine("- 更新系SQL、PRAGMA、Sys で始まる表は使わない。");
+		if (!AiQuerySqlGuard.IsSqlite(db)) {
+			// 接続先がSQLite以外でも、SQLはSQLite方言で書かせてサーバが変換する（保存SQLをDB間で共通にするため）
+			var dbName = AiQuerySqlGuard.DisplayName(db);
+			sb.AppendLine($"- 接続先DBは {dbName} だが、SQLはSQLite方言で書く（サーバが {dbName} へ変換して実行する）。変換できない構文はエラーで返るので別の書き方にする。");
+			sb.AppendLine("- 識別子は引用符で囲まない。バックスラッシュ・コメントは使わない。");
+		}
 		sb.AppendLine("- 利用者への応答は必ずツール（" + (param.Mode == EnumAiQueryMode.Chat ? Reply : SubmitSql) + "）で返す。");
 		sb.AppendLine();
 		sb.AppendLine("# 基準日");

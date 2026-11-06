@@ -52,8 +52,8 @@ public partial class CoreService {
 		if (!options.Enabled || _aiQueryLlm == null) {
 			return Fail("AI照会は設定されていません（サーバ設定 AiQuery:Enabled）。保存済みSQLの実行は利用できます。");
 		}
-		if (!AiQuerySqlGuard.IsSqlite(_db)) {
-			return Fail("AI照会はSQLite接続のサーバだけで利用できます。");
+		if (!AiQuerySqlGuard.IsSupported(_db)) {
+			return Fail(AiQuerySqlGuard.UnsupportedMessage);
 		}
 		if (param.Mode == EnumAiQueryMode.Generate && param.Spec?.Unresolved.Count > 0) {
 			return Fail("未確定の事項があるためSQLを作成できません。会話で条件を確定してください。", param.Spec.Unresolved);

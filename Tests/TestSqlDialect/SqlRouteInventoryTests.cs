@@ -140,8 +140,8 @@ public sealed partial class SqlRouteInventoryTests {
 	/// </summary>
 	static readonly (string File, string? Contains, string Reason)[] _rawExecutionAllowList = [
 		("CvBase/ExDatabase.cs", "sqlite_master", "DatabaseType==SQLite の分岐でだけ実行し、MariaDB / PostgreSQL はプロバイダーで override している"),
-		("CvDomainLogic/AiQuery/AiQuerySchemaCatalog.cs", null, "AI照会は SQLite 専用（AiQueryHandler が SQLite 以外を拒否する）"),
-		("CvDomainLogic/AiQuery/AiQuerySqlGuard.cs", null, "AI照会は SQLite 専用（Validate が SQLite 以外で CheckPlan へ進まない）"),
+		("CvDomainLogic/AiQuery/AiQuerySchemaCatalog.cs", null, "AI照会のスキーマ取得。sqlite_master / pragma_table_info は SQLite 接続だけで実行し、PostgreSQL / MariaDB は information_schema の個別SQLを使う"),
+		("CvDomainLogic/AiQuery/AiQuerySqlGuard.cs", null, "AI照会のSQL検査。EXPLAIN の命令列・sqlite_master は SQLite 接続だけで使い、PostgreSQL / MariaDB は TranslateDialect で変換したSQLを EXPLAIN する"),
 		("CvServer/Services/SchedulerService.cs", "PRAGMA", "WAL checkpoint タスクは Program.cs が isSqlite のときだけ登録する"),
 	];
 
