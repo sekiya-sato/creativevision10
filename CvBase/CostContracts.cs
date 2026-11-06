@@ -135,7 +135,9 @@ public sealed class CostPreviewRow {
 	/// 対象商品か（設計書§6.5「2026-09-06改訂」）。総平均原価更新のみ<see langword="false"/>になりうる
 	/// （負在庫／前月在庫があるが原価0円）。<see cref="RevaluationDetailRow.IsTarget"/>と同じ名前・同じ意味。
 	/// 最終仕入原価更新は§6.5の対象外の対象ではないため常に既定値<see langword="true"/>のまま。
+	/// <para>既定値がtrueのため、共通JSON設定(DefaultValueHandling.Ignore)ではfalseが省略され、gRPC往復でtrueに戻る。falseを必ず出力する。</para>
 	/// </summary>
+	[Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Include)]
 	public bool IsTarget { get; set; } = true;
 	/// <summary>
 	/// 対象外の理由（前月在庫が負／前月在庫があるが原価が未設定）。<see cref="IsTarget"/>=falseの

@@ -1409,6 +1409,8 @@ public sealed partial class Tran03Shiire : TranAllHeader, ITranSoko, ITranTax {
 	[ObservableProperty]
 	[ForeignKey(nameof(EnumYesNo))]
 	[Comment("在庫加算対象か 0=在庫加算しない、1=在庫加算する")]
+	// 初期値が1のため、共通JSON設定(DefaultValueHandling.Ignore)では0が省略され、gRPC往復で1に戻る。0を必ず出力する。
+	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
 	public partial int IsStock { get; set; } = 1;
 	/// <summary>
 	/// 仕入の生成区分 0=手動・通常、1=消化仕入更新による自動生成（）

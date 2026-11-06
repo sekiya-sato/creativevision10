@@ -565,6 +565,88 @@ public class CostUpdateDbCostTests {
 	}
 
 	[TestMethod]
+	public void PreviewTotalAverageCost_RerunFirstMonth_DoesNotUseLaterCurrentCost() {
+		// 初期原価0の商品を後続月の計算後に初回月から再計算しても、前原価に現在原価(後続月の結果)を使わない。
+		// 2026-11-06 原価3か月UAT 要判断事項Dの回帰。
+		CreateCostTables((int)EnumCostMethod.TotalAverage);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 0);
+		InsertPurchase("20260910", 10, idShohin, su: 3, kingaku: 1000);
+		var costUpdateDb = new CostUpdateDb(Db);
+		Assert.IsTrue(costUpdateDb.ApplyTotalAverageCost(NewParam("202609", idShain)).IsSuccess);
+		InsertOpeningStock("202609", idShohin, su: 3);
+		InsertPurchase("20261010", 10, idShohin, su: 2, kingaku: 1003);
+		Assert.IsTrue(costUpdateDb.ApplyTotalAverageCost(NewParam("202610", idShain)).IsSuccess);
+		Assert.AreEqual(400, TankaGenkaOf(idShohin)); // (3×333+1003)/5=400.4
+
+		var row609 = costUpdateDb.PreviewTotalAverageCost(NewParam("202609", idShain)).Rows
+			.Single(r => r.SumMonth == "202609" && r.Id_Shohin == idShohin);
+
+		Assert.AreEqual(0, row609.BeforeCost);
+		Assert.AreEqual(333, row609.AfterCost);
+	}
+
+	[TestMethod]
+	public void PreviewTotalAverageCost_BaselineOnlyZero_UsesCostSetInMaster() {
+		// 履歴が基準行(原価0)だけなら、商品マスタに設定した原価を前原価に使う(設計書§6.5「原価を設定してから再実行する」)。
+		CreateCostTables((int)EnumCostMethod.TotalAverage);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 0);
+		var costUpdateDb = new CostUpdateDb(Db);
+		costUpdateDb.EnsureBaselineCostRows([idShohin], "baseline", idShain);
+		InsertOpeningStock("202608", idShohin, su: 10);
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+
+		var excluded = costUpdateDb.PreviewTotalAverageCost(NewParam("202609", idShain)).Rows.Single(r => r.Id_Shohin == idShohin);
+		Assert.IsFalse(excluded.IsTarget); // 前月在庫ありで原価0円は対象外
+
+		Db.Execute($"UPDATE {nameof(MasterShohin)} SET TankaGenka=100 WHERE Id=@0", idShohin);
+		var row = costUpdateDb.PreviewTotalAverageCost(NewParam("202609", idShain)).Rows.Single(r => r.Id_Shohin == idShohin);
+
+		Assert.IsTrue(row.IsTarget);
+		Assert.AreEqual(100, row.BeforeCost);
+		Assert.AreEqual(100, row.AfterCost); // (10×100+1000)/20
+	}
+
+	[TestMethod]
+	public void PreviewTotalAverageCost_FollowingMonthAfterReval_MatchesApply() {
+		// 後続月再計算のプレビューは、前月に評価替え行があればその原価を翌月の前原価に使う(更新と同じ値になる)。
+		// 2026-11-06 原価3か月UATで、プレビューだけ前月の月次結果を使い更新後の値と食い違った不具合の回帰。
+		CreateCostTables((int)EnumCostMethod.TotalAverage);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1", tankaGenka: 100);
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000);
+		var costUpdateDb = new CostUpdateDb(Db);
+		Assert.IsTrue(costUpdateDb.ApplyTotalAverageCost(NewParam("202609", idShain)).IsSuccess);
+
+		// 202609の月末に評価替え(100→80)。評価替え本体の画面処理は対象外のため行を直接挿入する
+		var period = costUpdateDb.ResolvePeriod("202609");
+		Db.Insert(new TranGenka {
+			BatchId = "reval1", SumMonth = "202609", EffectiveDay = period.DayTo,
+			CostMethod = (int)EnumCostMethod.TotalAverage, ChangeKind = (int)EnumCostChangeKind.Reval,
+			SourceRevalId = 1, Id_Shohin = idShohin, BeforeCost = 100, AfterCost = 80, Vdc = 2, Vdu = 2,
+		});
+		InsertOpeningStock("202609", idShohin, su: 10);
+		InsertPurchase("20261010", 10, idShohin, su: 10, kingaku: 2000);
+		Assert.IsTrue(costUpdateDb.ApplyTotalAverageCost(NewParam("202610", idShain)).IsSuccess);
+		// 202610: 前原価80(評価替え)・前月在庫10個=800、当月仕入2000 → 2800/20=140
+		Assert.AreEqual(140, FetchGenka(idShohin, "202610", (int)EnumCostMethod.TotalAverage)!.AfterCost);
+
+		// 202609の仕入を修正(1000→2000)して202609から再計算する。202609の月次は200になるが、評価替え行(80)が優先される
+		Db.Execute($"DELETE FROM {nameof(Tran03Shiire)} WHERE DenDay=@0", "20260910");
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 2000);
+
+		var preview = costUpdateDb.PreviewTotalAverageCost(NewParam("202609", idShain)).Rows;
+		var row610 = preview.Single(r => r.SumMonth == "202610" && r.Id_Shohin == idShohin);
+		Assert.AreEqual(80, row610.BeforeCost);
+		Assert.AreEqual(140, row610.AfterCost);
+
+		Assert.IsTrue(costUpdateDb.ApplyTotalAverageCost(NewParam("202609", idShain)).IsSuccess);
+		Assert.AreEqual(200, FetchGenka(idShohin, "202609", (int)EnumCostMethod.TotalAverage)!.AfterCost);
+		Assert.AreEqual(row610.AfterCost, FetchGenka(idShohin, "202610", (int)EnumCostMethod.TotalAverage)!.AfterCost);
+	}
+
+	[TestMethod]
 	public void ApplyTotalAverageCost_CostMethodFixed_IsBlocked() {
 		CreateCostTables((int)EnumCostMethod.Fixed);
 		var idShain = InsertShain();

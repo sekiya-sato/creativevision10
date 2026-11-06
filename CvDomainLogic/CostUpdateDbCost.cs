@@ -164,6 +164,7 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 
 		var shohinById = FetchShohinByIds([.. candidates.Select(c => c.Id_Shohin).Distinct()]);
 		var beforeAsOf = PreviousDay(period.DayFrom);
+		var computedIds = FetchIdsWithComputedCostHistory(shohinById.Keys);
 
 		foreach (var group in candidates.GroupBy(c => c.Id_Shohin)) {
 			if (!shohinById.TryGetValue(group.Key, out var shohin)) {
@@ -181,7 +182,7 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
 			// 初回基準行の原価(=現在のMasterShohin.TankaGenka)とする。実際の基準行はApply側で
 			// EnsureBaselineCostRowsが作るため、Previewではその値をここで模擬する。
 			var beforeCost = ResolveCostAsOf(group.Key, beforeAsOf, EnumCostMethod.LastPurchase);
-			if (beforeCost <= 0) {
+			if (beforeCost <= 0 && !computedIds.Contains(group.Key)) {
 				beforeCost = shohin.TankaGenka;
 			}
 
@@ -436,6 +437,7 @@ ORDER BY SumMonth ASC
 		// 諸掛の商品別集計(§3.5)もStep6のSumSundryChargesByShohinを再利用する。
 		var sundry = SumSundryChargesByShohin(period);
 		var beforeAsOf = PreviousDay(period.DayFrom);
+		var computedIds = FetchIdsWithComputedCostHistory(targetIds);
 
 		foreach (var idShohin in targetIds) {
 			if (!shohinById.TryGetValue(idShohin, out var shohin)) {
@@ -451,7 +453,7 @@ ORDER BY SumMonth ASC
 				// 履歴が無ければ初回基準行の原価(=現在のMasterShohin.TankaGenka)とする。
 				beforeCost = ResolveCostAsOf(idShohin, beforeAsOf, EnumCostMethod.TotalAverage);
 			}
-			if (beforeCost <= 0) {
+			if (beforeCost <= 0 && !computedIds.Contains(idShohin)) {
 				beforeCost = shohin.TankaGenka;
 			}
 
@@ -552,8 +554,51 @@ ORDER BY SumMonth ASC
 			foreach (var (idShohin, plan) in plans) {
 				overrides[idShohin] = plan.AfterCost;
 			}
+			// 同月に評価替え行がある商品は、更新(Apply)ではResolveCostAsOfが評価替え行(EffectiveDay=月末)を
+			// 月次行(EffectiveDay=月初)より優先して翌月のBeforeCostに使う(§7「評価替えは月次原価計算を無効化しない」)。
+			// プレビューも同じ値にするため上書きを外し、DBの解決結果(評価替え後の原価)を使わせる。
+			foreach (var idShohin in FetchRevaluedIds(month)) {
+				overrides.Remove(idShohin);
+			}
 		}
 		return new CostPreviewResult { Rows = rows, Confirmed = confirmed };
+	}
+
+	/// <summary>
+	/// 基準行(<c>SumMonth=190101</c>)以外の原価履歴(月次原価計算・評価替え。方式を問わない)を持つ商品Id。
+	/// <para>
+	/// 前原価が0円以下に解決されたとき、現在原価(<c>MasterShohin.TankaGenka</c>)を代わりに使うのは
+	/// この集合に含まれない商品だけにする。履歴が基準行だけなら現在原価は利用者が商品マスタで設定した値であり、
+	/// 設計書§6.5の「原価を設定してから再実行する」を有効にするため使う。計算済みの履歴がある商品の現在原価は
+	/// 後続月の計算結果になり得るため、過去月の再計算に持ち込まない（2026-11-06 原価3か月UAT 要判断事項D）。
+	/// </para>
+	/// </summary>
+	private HashSet<long> FetchIdsWithComputedCostHistory(IReadOnlyCollection<long> idShohins) {
+		var result = new HashSet<long>();
+		foreach (var chunk in ChunkIds(idShohins)) {
+			if (chunk.Count == 0) {
+				continue;
+			}
+			var sql = $@"
+SELECT DISTINCT Id_Shohin
+FROM {nameof(TranGenka)}
+WHERE Id_Shohin IN ({string.Join(",", chunk)})
+  AND SumMonth <> '190101'
+";
+			result.UnionWith(_db.FetchDialect<long>(sql));
+		}
+		return result;
+	}
+
+	/// <summary>指定計上月に総平均原価方式の評価替え行(<c>ChangeKind=Reval</c>)を持つ商品Id。</summary>
+	private List<long> FetchRevaluedIds(string sumMonth) {
+		var sql = $@"
+SELECT DISTINCT Id_Shohin
+FROM {nameof(TranGenka)}
+WHERE CostMethod = {(int)EnumCostMethod.TotalAverage} AND ChangeKind = {(int)EnumCostChangeKind.Reval}
+  AND SumMonth = @0
+";
+		return _db.FetchDialect<long>(sql, sumMonth);
 	}
 
 	/// <summary>
