@@ -157,6 +157,49 @@ public class CostUpdateDbCostTests {
 	}
 
 	[TestMethod]
+	public void ApplyLastPurchaseCost_ZeroAmountLineAfterNormal_UsesNormalLine() {
+		// 0円明細(打ち消し伝票等)は最終仕入の採用対象にしない。2026-11-06 2022年実データ試算で月全体の更新が止まった件の回帰
+		CreateCostTables((int)EnumCostMethod.LastPurchase);
+		var idShain = InsertShain();
+		var idShohin = InsertShohin("A1");
+		InsertPurchase("20260910", 10, idShohin, su: 10, kingaku: 1000); // 単価100
+		InsertPurchase("20260920", 10, idShohin, su: 5, kingaku: 0);     // 後日の0円仕入
+		InsertPurchase("20260920", 20, idShohin, su: 5, kingaku: 0);     // 同数量の0円返品
+
+		var result = new CostUpdateDb(Db).ApplyLastPurchaseCost(NewParam("202609", idShain));
+
+		Assert.IsTrue(result.IsSuccess, result.Message);
+		var genka = FetchGenka(idShohin, "202609", (int)EnumCostMethod.LastPurchase)!;
+		Assert.AreEqual(100, genka.AfterCost);
+		Assert.AreEqual("20260910", genka.EffectiveDay);
+	}
+
+	[TestMethod]
+	public void ApplyLastPurchaseCost_OnlyZeroAmountLines_NoRowCreated_StatusCompleted() {
+		// 0円明細しか無い商品は当月仕入なしと同じく更新しない。月次状態の件数比較でも対象に数えない(再実行要と誤判定しない)
+		CreateCostTables((int)EnumCostMethod.LastPurchase);
+		var idShain = InsertShain();
+		var idZero = InsertShohin("Z1", tankaGenka: 300);
+		var idNormal = InsertShohin("N1");
+		InsertPurchase("20260910", 10, idZero, su: 5, kingaku: 0);
+		InsertPurchase("20260910", 10, idNormal, su: 10, kingaku: 1000);
+		var costUpdateDb = new CostUpdateDb(Db);
+
+		var preview = costUpdateDb.PreviewLastPurchaseCost(NewParam("202609", idShain)).Rows;
+		Assert.IsFalse(preview.Any(r => r.Id_Shohin == idZero));
+		Assert.IsTrue(costUpdateDb.ApplyLastPurchaseCost(NewParam("202609", idShain)).IsSuccess);
+
+		Assert.IsNull(FetchGenka(idZero, "202609", (int)EnumCostMethod.LastPurchase));
+		Assert.AreEqual(300, TankaGenkaOf(idZero));
+		Assert.AreEqual(100, TankaGenkaOf(idNormal));
+		// 月次状態は消化仕入の状態も参照するため、その表を用意する(CostUpdateDbConsumptionTestsと同じ表)
+		foreach (var t in new[] { typeof(MasterTokui), typeof(Tran00Uriage), typeof(Tran01Tenuri), typeof(SummaryKaiShi), typeof(TranConsumptionPurchaseLink) }) {
+			Db.CreateTable(t, true, false);
+		}
+		Assert.AreEqual(EnumCostProcessStatus.Completed, costUpdateDb.FetchCostMonthStatus("202609", EnumCostProcessKind.CostUpdate).Status);
+	}
+
+	[TestMethod]
 	public void ComputeLastPurchase_SameDay_DifferentShiireId_LaterIdWins() {
 		// DenDay、Tran03Shiire.Idの降順で最終行を決定する
 		CreateCostTables((int)EnumCostMethod.LastPurchase);

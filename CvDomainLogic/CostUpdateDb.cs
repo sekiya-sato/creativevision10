@@ -569,7 +569,7 @@ ON CONFLICT(SumMonth, Id_Shohin, CostMethod, ChangeKind) DO UPDATE SET
 	/// <b>「その月の最終成功実行が<c>TranGenka</c>へ書いた商品数（＝<c>TranGenka</c>の行数）」</b>を
 	/// <c>CostMonthStatus.SourceCount</c>として保存済みの指紋に使い、これを
 	/// <b>「現時点で同じ抽出条件を満たす対象商品数」</b>（最終仕入原価は
-	/// <c>IsStock=1 AND Kubun=10</c>、総平均原価は<c>IsStock=1 AND IsPay=1 AND Kubun IN (10,20)</c>の
+	/// <c>IsStock=1 AND Kubun=10</c>で明細数量・金額が正、総平均原価は<c>IsStock=1 AND IsPay=1 AND Kubun IN (10,20)</c>の
 	/// 仕入がある<c>IsZaiko=1</c>商品の数）と比較する。両者が一致しなければ状態2とする。
 	/// 対象商品の仕入明細が丸ごと削除されればこの対象商品数が減るため、Vduの前進が無くても検出できる。
 	/// 逆に新規仕入行の追加は通常Vduの前進でも検出されるため、件数比較は主に削除検出の保険として働く。
@@ -647,7 +647,9 @@ SELECT COUNT(*) FROM (
 	/// </summary>
 	private long FetchEligibleProductCount(ClosingMonthCalculator.KakeMonthPeriod period, int costMethod) {
 		var where = costMethod switch {
-			(int)EnumCostMethod.LastPurchase => "h.IsStock = 1 AND h.Kubun = 10",
+			// 最終仕入原価は採用条件(ComputeLastPurchaseForMonth)と同じく、数量>0・金額>0の明細がある商品だけを数える
+			(int)EnumCostMethod.LastPurchase => "h.IsStock = 1 AND h.Kubun = 10"
+				+ " AND CAST(json_extract(j.value, '$.Su') AS INTEGER) > 0 AND CAST(json_extract(j.value, '$.Kingaku') AS INTEGER) > 0",
 			(int)EnumCostMethod.TotalAverage => "h.IsStock = 1 AND h.IsPay = 1 AND h.Kubun IN (10, 20)",
 			// 固定原価等、原価更新の対象になり得ないMがTranGenkaへ月次原価計算行として残っていた場合の保険。
 			// 在庫加算仕入の総数で代用する（想定外の状態であり、そもそもRerunRequiredになりやすい方へ倒す）。

@@ -139,8 +139,10 @@ public partial class CostUpdateDb {
 		var rows = new List<CostPreviewRow>();
 		var plans = new Dictionary<long, LastPurchasePlan>();
 
-		// 対象(設計書§5.1): IsStock=1、Kubun=10、明細数量>0、商品ID>0、MasterShohin.IsZaiko=1。
+		// 対象(設計書§5.1): IsStock=1、Kubun=10、明細数量>0、明細金額>0、商品ID>0、MasterShohin.IsZaiko=1。
 		// 仕入返品(20)・値引(30)・消費税(99)は対象外。消化仕入(15/25)はIsStock=0のため本条件に到達しない。
+		// 明細金額0円以下の明細(打ち消し伝票・無償入荷等)は原価の根拠にならないため採用しない(利用者判断 2026-11-06、
+		// 2022年実データ試算で0円明細が最後の仕入になり月全体の更新が止まった)。0円明細しか無い商品は当月仕入なしと同じく更新しない。
 		var sql = $@"
 SELECT CAST(json_extract(j.value, '$.Id_Shohin') AS INTEGER) AS Id_Shohin,
        h.Id AS ShiireId, h.DenDay,
@@ -153,6 +155,7 @@ WHERE h.IsStock = 1 AND h.Kubun = 10
   AND h.DenDay BETWEEN @0 AND @1
   AND json_type(h.Jmeisai) = 'array'
   AND CAST(json_extract(j.value, '$.Su') AS INTEGER) > 0
+  AND CAST(json_extract(j.value, '$.Kingaku') AS INTEGER) > 0
   AND CAST(json_extract(j.value, '$.Id_Shohin') AS INTEGER) > 0
   AND ms.IsZaiko = 1
 ";
