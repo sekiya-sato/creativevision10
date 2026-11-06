@@ -16,7 +16,7 @@ public partial class CoreService {
 	/// <summary>
 	/// Msg091: AI照会の対話1往復（§6.2）。
 	/// <para>
-	/// サーバは会話状態を持たない。LLMを tools + tool_choice=required で呼び、情報取得ツール（list_tables / describe_table）は
+	/// サーバは会話状態を持たない。LLMを tools 付きで呼び、情報取得ツール（list_tables / describe_table）は
 	/// サーバが実行して結果を返し、終端ツール（Chat: reply / Generate: submit_sql）の引数で応答を確定する。
 	/// submit_sql は §7 の検査を通し、エラーはLLMへ返して最大 MaxRepair 回修正させる。
 	/// AIの失敗・設定不備は例外応答ではなく <see cref="EnumAiQueryStatus.Failed"/> の業務応答で返し、確定条件を保持させる。

@@ -247,6 +247,40 @@ public class AiQueryTests {
 		StringAssert.Contains(catalog.DescribeTable("x' OR '1'='1"), "存在しません");
 	}
 
+	[TestMethod]
+	public async Task LlmRequest_UsesAnthropicCompatibleOptionsAndPreservesLocalDefaults() {
+		foreach (var (endpoint, choice, temperature) in new[] {
+			("https://api.anthropic.com/v1", "auto", (double?)null),
+			("http://localhost:1234/v1", "required", (double?)0.1),
+		}) {
+			var handler = new CaptureLlmRequest();
+			var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
+				["AiQuery:Endpoint"] = endpoint, ["AiQuery:Model"] = "claude-sonnet-5-5", ["AiQuery:ApiKey"] = "test-key",
+			}).Build();
+			using var client = new HttpClient(handler);
+			var llm = new OpenAiCompatibleLlm(client, config, NullLogger<OpenAiCompatibleLlm>.Instance);
+			await llm.ChatAsync(new JArray(), new JArray(), CancellationToken.None);
+			Assert.AreEqual(endpoint + "/chat/completions", handler.Uri);
+			Assert.AreEqual("Bearer test-key", handler.Authorization);
+			Assert.AreEqual(choice, handler.Body!["tool_choice"]!.Value<string>());
+			Assert.AreEqual(temperature, handler.Body.Value<double?>("temperature"));
+		}
+	}
+
+	sealed class CaptureLlmRequest : HttpMessageHandler {
+		public string? Uri { get; private set; }
+		public string? Authorization { get; private set; }
+		public JObject? Body { get; private set; }
+		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) {
+			Uri = request.RequestUri?.ToString();
+			Authorization = request.Headers.Authorization?.ToString();
+			Body = JObject.Parse(await request.Content!.ReadAsStringAsync(ct));
+			return new HttpResponseMessage(System.Net.HttpStatusCode.OK) {
+				Content = new StringContent("{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"ok\"}}]}")
+			};
+		}
+	}
+
 	/// <summary>
 	/// 社内LLM（appsettings の AiQuery:Endpoint）への実接続確認。通常のテストでは実行しない。
 	/// 環境変数 CV_AIQUERY_LIVE=1 のときだけ動かす（例: http://127.0.0.1:1234/v1 / ornith-1.5-9b）。

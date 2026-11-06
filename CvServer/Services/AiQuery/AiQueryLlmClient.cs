@@ -43,21 +43,25 @@ public interface IAiQueryLlm {
 
 /// <summary>
 /// OpenAI互換 Chat Completions（LM Studio・Ollama・llama.cpp server・vLLM 等）への接続。
-/// 構造化応答は tools + tool_choice=required のツール引数で受け取る
+/// 構造化応答はツール引数で受け取る。Anthropic はツールの自動選択を使う
 /// （LM Studio は tools と response_format の同時指定を受け付けないため）。
 /// </summary>
 public sealed class OpenAiCompatibleLlm(HttpClient httpClient, IConfiguration configuration, ILogger<OpenAiCompatibleLlm> logger) : IAiQueryLlm {
 
 	public async Task<JObject> ChatAsync(JArray messages, JArray tools, CancellationToken ct) {
 		var options = AiQueryOptions.From(configuration);
+		var isAnthropic = Uri.TryCreate(options.Endpoint, UriKind.Absolute, out var endpoint)
+			&& string.Equals(endpoint.Host, "api.anthropic.com", StringComparison.OrdinalIgnoreCase);
 		var body = new JObject {
 			["model"] = options.Model,
 			["messages"] = messages,
 			["tools"] = tools,
-			["tool_choice"] = "required",
-			["temperature"] = 0.1,
+			["tool_choice"] = isAnthropic ? "auto" : "required",
 			["stream"] = false,
 		};
+		if (!isAnthropic) {
+			body["temperature"] = 0.1;
+		}
 		using var request = new HttpRequestMessage(HttpMethod.Post, options.Endpoint.TrimEnd('/') + "/chat/completions") {
 			Content = new StringContent(body.ToString(Formatting.None), Encoding.UTF8, "application/json"),
 		};
