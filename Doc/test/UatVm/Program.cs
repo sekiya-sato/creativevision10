@@ -73,6 +73,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["menuperm"] = MenuPermissionScenario.RunAsync,
 	["switchdb"] = SwitchDbScenario.RunAsync,
 	["mastercrud"] = MasterCrudScenario.RunAsync,
+	["democapture"] = DemoCaptureScenario.RunAsync,
 };
 
 // シナリオが網羅データを必要とする場合の投入処理。CvServer起動前に呼ばれる。
@@ -116,9 +117,30 @@ var seeders = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnor
 };
 
 var name = args.FirstOrDefault(x => !x.StartsWith('-'));
+
+// デモ用DBの作成。CvServer・Viewを使わず、空のDBファイルへ直接投入する（Doc/test/UatVm/DemoSeeder.cs）。
+//   UatVm demoseed --sqlite <demo-*.db> [--recreate]
+if (string.Equals(name, "demoseed", StringComparison.OrdinalIgnoreCase)) {
+	if (Option("--sqlite") is not { } demoPath) {
+		Console.Error.WriteLine("demoseed には --sqlite <demo-*.db> を指定してください。");
+		return 2;
+	}
+	try {
+		UatVm.Seed.DemoSeeder.Run(demoPath, Flag("--recreate"), Console.WriteLine);
+		Console.WriteLine("VERDICT: PASS");
+		return 0;
+	}
+	catch (Exception ex) {
+		Console.Error.WriteLine(ex);
+		Console.WriteLine("VERDICT: FAIL (demoseed)");
+		return 1;
+	}
+}
+
 if (string.IsNullOrEmpty(name) || !scenarios.TryGetValue(name, out var scenario)) {
 	Console.Error.WriteLine($"使い方: UatVm <scenario> [options]");
 	Console.Error.WriteLine($"  scenario : {string.Join(" | ", scenarios.Keys)}");
+	Console.Error.WriteLine("  demoseed           デモ用DBを作成する（--sqlite <demo-*.db> 必須、--recreate で同名DBを削除して作り直す）");
 	Console.Error.WriteLine("  --url <url>        接続先CvServer（既定: appsettings.jsonの値）");
 	Console.Error.WriteLine("  --manage-server    CvServerの起動と終了(Ctrl+C相当)をハーネスが行う");
 	Console.Error.WriteLine("  --month <yyyy/MM>  請求月（billing）");
@@ -154,6 +176,9 @@ if (Option("--filter") is { } filter) MenuLayoutScenario.Filter = filter;
 if (Flag("--search")) MenuLayoutScenario.RunSearch = true;
 if (Option("--switch-to") is { } switchTo) SwitchDbScenario.ToConnection = switchTo;
 if (Flag("--verify-only")) SwitchDbScenario.VerifyOnly = true;
+// democapture: デモ動画の画面録画（--cuts menu,input_hachu など、--capture-out 出力先）
+if (Option("--cuts") is { } cutList) DemoCaptureScenario.Cuts = cutList;
+if (Option("--capture-out") is { } captureOut) DemoCaptureScenario.OutputDirectory = Path.GetFullPath(captureOut);
 
 // manuallockrace: 2プロセスを同一の壁時計時刻で発火させるための同期パラメータ（Run-ManualLockRace.ps1が渡す）。
 if (Option("--race-label") is { } raceLabel) ManualLockRaceScenario.RaceLabel = raceLabel;

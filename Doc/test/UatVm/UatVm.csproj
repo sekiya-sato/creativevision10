@@ -20,4 +20,8 @@
     <ProjectReference Include="..\..\..\CvBaseMariadb\CvBaseMariadb.csproj" />
     <ProjectReference Include="..\..\..\CvBasePostgre\CvBasePostgre.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- pack://application:,,,/cv10-default.ico は起動アセンブリ（UatVm）から引かれるため、メインメニュー（democapture）用に同じアイコンを持つ。 -->
+    <Resource Include="..\..\..\CvWpfclient\cv10-default.ico" Link="cv10-default.ico" />
+  </ItemGroup>
 </Project>
