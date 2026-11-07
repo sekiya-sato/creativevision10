@@ -1244,10 +1244,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("SQLite WAL checkpoint タスクの表示名")]
 	public const string AutoExecTaskNameWalCheckpoint = "SQLite WAL checkpoint データベースにWAL履歴を反映させるタスク";
 	/// <summary>
-	/// SQLite WAL checkpoint タスクの既定cron式
+	/// SQLite WAL checkpoint タスクの既定cron式（毎日1:55。夜間の更新系タスクの最後にWALを本体へ反映する。所要 数秒〜数分）
 	/// </summary>
 	[Comment("SQLite WAL checkpoint タスクの既定cron式")]
-	public const string AutoExecCronWalCheckpoint = "0 2 * * *";
+	public const string AutoExecCronWalCheckpoint = "55 1 * * *";
 	/// <summary>
 	/// SQLite WAL checkpoint タスクの既定の実行フラグ
 	/// </summary>
@@ -1264,10 +1264,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("ワークファイル削除タスクの表示名")]
 	public const string AutoExecTaskNameWorkFileCleanup = "Work file cleanup ワークフォルダにある古いファイルを削除するタスク";
 	/// <summary>
-	/// ワークファイル削除タスクの既定cron式
+	/// ワークファイル削除タスクの既定cron式（毎日0:00・12:00。夜間タスク(5分単位)・マニュアル排他制御監視(毎時2分起点)と重ねない。所要 1秒未満）
 	/// </summary>
 	[Comment("ワークファイル削除タスクの既定cron式")]
-	public const string AutoExecCronWorkFileCleanup = "30 0,12 * * *";
+	public const string AutoExecCronWorkFileCleanup = "0 0,12 * * *";
 	/// <summary>
 	/// ワークファイル削除タスクの既定の実行フラグ
 	/// </summary>
@@ -1284,10 +1284,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("在庫/売掛/買掛 再集計タスクの表示名")]
 	public const string AutoExecTaskNameMonthlyResummary = "在庫 売掛 買掛 ポイント の当月と前月 を再集計するタスク";
 	/// <summary>
-	/// 在庫/売掛/買掛 再集計タスクの既定cron式
+	/// 在庫/売掛/買掛 再集計タスクの既定cron式（毎日1:05。取置取消(0:05)・伝票税額再更新(0:40)の結果を集計する。開発DB実測20秒、想定〜30分）
 	/// </summary>
 	[Comment("在庫/売掛/買掛 再集計タスクの既定cron式")]
-	public const string AutoExecCronMonthlyResummary = "10 1 * * *";
+	public const string AutoExecCronMonthlyResummary = "5 1 * * *";
 	/// <summary>
 	/// 在庫/売掛/買掛 再集計タスクの既定の実行フラグ
 	/// </summary>
@@ -1304,10 +1304,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("適用上代の期限切れ削除タスクの表示名")]
 	public const string AutoExecTaskNameJodaiPurge = "上代 適用期間が過ぎた適用上代(DerivedJodai)を削除するタスク";
 	/// <summary>
-	/// 適用上代の期限切れ削除タスクの既定cron式
+	/// 適用上代の期限切れ削除タスクの既定cron式（毎日0:10。他の更新系と依存なし。所要 数秒）
 	/// </summary>
 	[Comment("適用上代の期限切れ削除タスクの既定cron式")]
-	public const string AutoExecCronJodaiPurge = "40 1 * * *";
+	public const string AutoExecCronJodaiPurge = "10 0 * * *";
 	/// <summary>
 	/// 適用上代の期限切れ削除タスクの既定の実行フラグ
 	/// </summary>
@@ -1324,10 +1324,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("商品名称再構築タスクの表示名")]
 	public const string AutoExecTaskNameMasterShohinMeishoRebuild = "商品名称再構築 MasterShohinのId_Col/Id_Sizが0のデータから名称マスタを再構築するタスク";
 	/// <summary>
-	/// 商品名称再構築タスクの既定cron式
+	/// 商品名称再構築タスクの既定cron式（毎日0:15。V*列再同期(0:25)より前に名称マスタを確定させる。想定〜10分）
 	/// </summary>
 	[Comment("商品名称再構築タスクの既定cron式")]
-	public const string AutoExecCronMasterShohinMeishoRebuild = "20 3 * * *";
+	public const string AutoExecCronMasterShohinMeishoRebuild = "15 0 * * *";
 	/// <summary>
 	/// 商品名称再構築タスクの既定の実行フラグ
 	/// </summary>
@@ -1344,10 +1344,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("V*列再同期タスクの表示名")]
 	public const string AutoExecTaskNameMasterVColumnResync = "V*列再同期 マスタ名称の複製列(V*列)を現在のマスタ内容で再同期するタスク";
 	/// <summary>
-	/// V*列再同期タスクの既定cron式
+	/// V*列再同期タスクの既定cron式（毎日0:25。商品名称再構築の後に名称を複製する。想定〜15分）
 	/// </summary>
 	[Comment("V*列再同期タスクの既定cron式")]
-	public const string AutoExecCronMasterVColumnResync = "40 3 * * *";
+	public const string AutoExecCronMasterVColumnResync = "25 0 * * *";
 	/// <summary>
 	/// V*列再同期タスクの既定の実行フラグ
 	/// </summary>
@@ -1364,10 +1364,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("伝票税額再更新タスクの表示名")]
 	public const string AutoExecTaskNameTranTaxRebuild = "伝票税額再更新 対象6伝票の期首日以降を取引先マスタの現在の税設定で再計算するタスク";
 	/// <summary>
-	/// 伝票税額再更新タスクの既定cron式
+	/// 伝票税額再更新タスクの既定cron式（毎日0:40。売掛・買掛の再集計(1:05)より前に税額を確定させる。想定〜25分）
 	/// </summary>
 	[Comment("伝票税額再更新タスクの既定cron式")]
-	public const string AutoExecCronTranTaxRebuild = "0 4 * * *";
+	public const string AutoExecCronTranTaxRebuild = "40 0 * * *";
 	/// <summary>
 	/// 伝票税額再更新タスクの既定の実行フラグ
 	/// </summary>
@@ -1384,10 +1384,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("マニュアル排他制御監視タスクの表示名")]
 	public const string AutoExecTaskNameManualLockMonitor = "マニュアル排他制御監視 実行中の排他行の生存を確認し長時間更新の無い行を解放するタスク";
 	/// <summary>
-	/// マニュアル排他制御監視タスクの既定cron式
+	/// マニュアル排他制御監視タスクの既定cron式（5分毎・毎時2分起点。5分単位の夜間タスク・0分のワーク削除と同時刻にしない。所要 1秒未満）
 	/// </summary>
 	[Comment("マニュアル排他制御監視タスクの既定cron式")]
-	public const string AutoExecCronManualLockMonitor = "*/5 * * * *";
+	public const string AutoExecCronManualLockMonitor = "2-59/5 * * * *";
 	/// <summary>
 	/// マニュアル排他制御監視タスクの既定の実行フラグ
 	/// </summary>
@@ -1404,10 +1404,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("取置期限切れ自動取消タスクの表示名")]
 	public const string AutoExecTaskNameReservationExpire = "取置期限切れ自動取消 期限日を過ぎた取置配分を取り消して引当を解除するタスク";
 	/// <summary>
-	/// 取置期限切れ自動取消タスクの既定cron式（毎日0:50。期限日の翌日に取り消す）
+	/// 取置期限切れ自動取消タスクの既定cron式（毎日0:05。期限日の翌日に取り消す。引当を解除してから再集計(1:05)する。所要 数秒）
 	/// </summary>
 	[Comment("取置期限切れ自動取消タスクの既定cron式")]
-	public const string AutoExecCronReservationExpire = "50 0 * * *";
+	public const string AutoExecCronReservationExpire = "5 0 * * *";
 	/// <summary>
 	/// 取置期限切れ自動取消タスクの既定の実行フラグ（決定 D5 の自動取消のため既定で有効）
 	/// </summary>
@@ -1424,10 +1424,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("ポイント失効タスクの表示名")]
 	public const string AutoExecTaskNamePointExpire = "ポイント失効 前日を基準日に最終購入日から失効月数経過・退会した顧客の残高を失効するタスク";
 	/// <summary>
-	/// ポイント失効タスクの既定cron式（毎日3:40。基準日=前日。月次再集計(1:10)とマニュアル排他を取り合わないようずらす）
+	/// ポイント失効タスクの既定cron式（毎日1:40。基準日=前日。月次再集計(1:05)のポイント再計算の後に失効させ、マニュアル排他も取り合わない。想定〜10分）
 	/// </summary>
 	[Comment("ポイント失効タスクの既定cron式")]
-	public const string AutoExecCronPointExpire = "40 3 * * *";
+	public const string AutoExecCronPointExpire = "40 1 * * *";
 	/// <summary>
 	/// ポイント失効タスクの既定の実行フラグ（失効月数の設定・運用確認後に有効化するため既定で無効）
 	/// </summary>
@@ -1444,10 +1444,10 @@ public sealed partial class MasterConfig : BaseDbClass {
 	[Comment("操作履歴の期間削除タスクの表示名")]
 	public const string AutoExecTaskNameOperationLogPurge = "操作履歴 保持月数(サーバ設定 OperationLog:KeepMonths)より古い操作履歴(SysHistOperation)を削除するタスク";
 	/// <summary>
-	/// 操作履歴の期間削除タスクの既定cron式（毎日2:20）
+	/// 操作履歴の期間削除タスクの既定cron式（毎日1:50。他の更新系と依存なし。所要 数秒）
 	/// </summary>
 	[Comment("操作履歴の期間削除タスクの既定cron式")]
-	public const string AutoExecCronOperationLogPurge = "20 2 * * *";
+	public const string AutoExecCronOperationLogPurge = "50 1 * * *";
 	/// <summary>
 	/// 操作履歴の期間削除タスクの既定の実行フラグ（設計判断 H4 の13か月保持のため既定で有効）
 	/// </summary>

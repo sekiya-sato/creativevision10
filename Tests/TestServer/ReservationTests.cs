@@ -424,7 +424,7 @@ public class ReservationTests {
 	public void SchedulerDefinition_ReservationExpireIsEnabledDaily() {
 		var def = SchedulerService.SystemJobDefinitions.Single(d => d.JobKey == SchedulerService.JobKeyReservationExpire);
 		Assert.IsTrue(def.DefaultEnabled);
-		Assert.AreEqual("50 0 * * *", def.DefaultCronExpression);
+		Assert.AreEqual("5 0 * * *", def.DefaultCronExpression);
 		Assert.IsFalse(def.CheckMinInterval);
 	}
 }
