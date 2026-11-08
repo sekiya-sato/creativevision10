@@ -1093,7 +1093,8 @@ public partial class CoreService {
 
 	private CvMsg HandleQueryListSql(CvFlag flag, QueryListSqlParam querySql) {
 		if (SqlCapture.Enabled) SqlCapture.Record("client:QueryListSql", querySql.Sql ?? string.Empty, querySql.Parameters, querySql.ItemType);
-		var sql = TranslateClientSql(querySql.Sql ?? string.Empty, querySql.QueryKey);
+		// WITH 句は NPoco の自動SELECT補完で壊れるため、方言変換後に補完を止める
+		var sql = ExDatabase.SuppressAutoSelectForWith(TranslateClientSql(querySql.Sql ?? string.Empty, querySql.QueryKey));
 		var listType = typeof(List<>).MakeGenericType(querySql.ItemType);
 
 		LogDetailedRequest("パラメータ QueryListSqlParam.ItemType={ItemType} 内容={Payload} SQL={Sql}", () => [querySql.ItemType, Common.SerializeObject(querySql), sql]);

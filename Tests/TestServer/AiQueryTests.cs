@@ -87,6 +87,31 @@ public class AiQueryTests {
 		Assert.AreEqual("20260901", rows[1]["P"]);
 	}
 
+	/// <summary>
+	/// Msg101 + QueryListSqlParam は WITH 句（先頭の空白・コメント・小文字・RECURSIVE、クライアントの「;」前置を含む）をそのまま実行できる。
+	/// NPoco は SELECT で始まらないSQLへ「SELECT 列 FROM 表」を補うため、サーバで補完を止める。
+	/// </summary>
+	[TestMethod]
+	[DataRow("WITH s AS (SELECT 1 AS a UNION ALL SELECT 2) SELECT a FROM s ORDER BY a")]
+	[DataRow("  with s as (select 1 as a union all select 2) select a from s order by a")]
+	[DataRow("-- 件数\nWITH s AS (SELECT 1 AS a UNION ALL SELECT 2) SELECT a FROM s ORDER BY a")]
+	[DataRow("/* 件数 */ WITH\ns AS (SELECT 1 AS a UNION ALL SELECT 2) SELECT a FROM s ORDER BY a")]
+	[DataRow("WITH RECURSIVE r(a) AS (SELECT 1 UNION ALL SELECT a + 1 FROM r WHERE a < 2) SELECT a FROM r ORDER BY a")]
+	[DataRow(";WITH s AS (SELECT 1 AS a UNION ALL SELECT 2) SELECT a FROM s ORDER BY a")]
+	[DataRow("SELECT a FROM (SELECT 1 AS a UNION ALL SELECT 2) ORDER BY a")]
+	public async Task QueryListSql_WithClause_Runs(string sql) {
+		var request = new CvMsg {
+			Flag = CvFlag.Msg101_Op_Query,
+			DataType = typeof(QueryListSqlParam),
+			DataMsg = Common.SerializeObject(new QueryListSqlParam(typeof(object), sql, []))
+		};
+		var result = await Service.QueryMsgAsync(request);
+		Assert.AreEqual(0, result.Code, result.DataMsg);
+		var rows = Common.DeserializeObject<List<Dictionary<string, object?>>>(result.DataMsg ?? "[]");
+		Assert.IsNotNull(rows);
+		CollectionAssert.AreEqual(new object[] { 1L, 2L }, rows.Select(r => r["a"]).ToArray());
+	}
+
 	void SetLogin(long loginId) {
 		var identity = new System.Security.Claims.ClaimsIdentity([new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.SerialNumber, loginId.ToString())]);
 		_httpContextAccessor.HttpContext = new DefaultHttpContext { User = new System.Security.Claims.ClaimsPrincipal(identity) };

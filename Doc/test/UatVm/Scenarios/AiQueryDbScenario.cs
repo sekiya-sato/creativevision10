@@ -70,6 +70,16 @@ public static class AiQueryDbScenario {
 			  FROM s JOIN MasterTokui t ON t.Id = s.Id_Tenpo
 			 ORDER BY 1
 			""", [Date("from", "期間開始", "20000101"), Date("to", "期間終了", "20991231")], ["MasterTokui", "Tran01Tenuri"]),
+		("先頭コメント付きWITH（小文字）", """
+			-- 区分別の件数
+			with k as (
+			  select h.Kubun, count(*) as cnt from Tran01Tenuri h where h.DenDay >= @0 group by h.Kubun)
+			select k.Kubun as 区分, k.cnt as 件数 from k order by 1
+			""", [Date("from", "期間開始", "20000101")], ["Tran01Tenuri"]),
+		("WITH RECURSIVE", """
+			/* 1〜3の連番と伝票数 */ WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 3)
+			SELECT n.i AS 連番, (SELECT COUNT(*) FROM Tran01Tenuri) AS 伝票数 FROM n ORDER BY 1
+			""", [], ["Tran01Tenuri"]),
 	];
 
 	/// <summary>検査で拒否されるべきSQL（3DB共通）</summary>

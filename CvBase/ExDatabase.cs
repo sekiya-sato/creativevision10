@@ -70,6 +70,39 @@ public partial class ExDatabase : Database {
 	/// </summary>
 	public string TranslateDialect(string sql) =>
 		Dialect.TranslatesSql ? Dialect.Translate(sql) : sql;
+
+	/// <summary>
+	/// NPoco の自動SELECT補完を WITH 句のSQLで止める。
+	/// <para>
+	/// NPoco（6.4.0 時点）は SELECT で始まらないSQLへ「SELECT 列 FROM 表」を補うため、
+	/// <c>WITH ... SELECT</c> は構文エラーになる。先頭の空白・コメントを除いた最初の語が WITH のときだけ
+	/// 先頭へ「;」を付ける（NPoco は「;」で始まるSQLを補完せず、「;」を取り除いて実行する）。
+	/// それ以外のSQL（WHERE 句だけの断片を含む）は参照をそのまま返す。
+	/// </para>
+	/// </summary>
+	public static string SuppressAutoSelectForWith(string sql) {
+		var i = 0;
+		while (i < sql.Length) {
+			if (char.IsWhiteSpace(sql[i])) {
+				i++;
+			}
+			else if (string.CompareOrdinal(sql, i, "--", 0, 2) == 0) {
+				var end = sql.IndexOf('\n', i);
+				i = end < 0 ? sql.Length : end + 1;
+			}
+			else if (string.CompareOrdinal(sql, i, "/*", 0, 2) == 0) {
+				var end = sql.IndexOf("*/", i + 2, StringComparison.Ordinal);
+				i = end < 0 ? sql.Length : end + 2;
+			}
+			else {
+				break;
+			}
+		}
+		var isWith = i + 4 <= sql.Length
+			&& string.Compare(sql, i, "WITH", 0, 4, StringComparison.OrdinalIgnoreCase) == 0
+			&& (i + 4 == sql.Length || !(char.IsLetterOrDigit(sql[i + 4]) || sql[i + 4] == '_'));
+		return isWith ? ";" + sql : sql;
+	}
 	public virtual void Open() {
 		Connection?.Open();
 	}

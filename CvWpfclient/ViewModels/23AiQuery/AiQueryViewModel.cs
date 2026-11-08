@@ -406,7 +406,7 @@ public partial class AiQueryViewModel : BaseViewModel {
 				return;
 			}
 			var values = Parameters.Select(x => x.Value.Trim()).ToArray();
-			var reply = await SendAsync(CvFlag.Msg101_Op_Query, new QueryListSqlParam(typeof(object), ToFetchSql(SqlText), values), AppGlobal.GetDefaultCallContext(ct), allowNotFound: true);
+			var reply = await SendAsync(CvFlag.Msg101_Op_Query, new QueryListSqlParam(typeof(object), SqlText.Trim(), values), AppGlobal.GetDefaultCallContext(ct), allowNotFound: true);
 			var rows = reply.Code == CvMsgErrorCode.NotFound ? [] : Common.DeserializeObject<List<Dictionary<string, object>>>(reply.DataMsg ?? "[]") ?? [];
 			if (revision != conditionRevision) return;
 			resultRows = rows;
@@ -424,15 +424,6 @@ public partial class AiQueryViewModel : BaseViewModel {
 	}
 
 	bool CanRun() => IsIdle && IsSqlCurrent;
-
-	/// <summary>
-	/// 汎用照会（Msg101）へ渡すSQL。サーバの NPoco は SELECT で始まらないSQLへ「SELECT 列 FROM 表」を補うため、
-	/// WITH ... SELECT はそのままでは構文エラーになる。先頭の「;」は NPoco が補完を省いて取り除く。
-	/// </summary>
-	public static string ToFetchSql(string sql) {
-		var text = sql.Trim();
-		return text.StartsWith("WITH", StringComparison.OrdinalIgnoreCase) && text.Length > 4 && char.IsWhiteSpace(text[4]) ? ";" + text : text;
-	}
 
 	static DataView BuildPreview(List<Dictionary<string, object>> rows) {
 		var table = new DataTable();
