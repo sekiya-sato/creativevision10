@@ -116,7 +116,7 @@ session.CheckEqual("進捗", 100, d.Vm.ProgressValue);
 ### 5.1.1 条件指定ダイアログのテスト専用ルート
 
 一覧取得の前や初期化時に `ClientLib.ShowDialogView` で開く条件指定ダイアログ（`RangeParamView` / `RangeInputParamView` /
-`PointMasterSearchParamView` / `IdDateRangeParamView` / `RangeParamMiniView` など）は、
+`PointMasterSearchParamView` / `SimpleRangeParamView` など）は、
 `CvWpfclient/Helpers/DialogTestRoute.cs` を有効化すると、実ダイアログを表示したうえで描画・初期化の完了後に応答関数を呼んで閉じる。
 既定の応答は「既定条件のまま OK」（ViewModel の `OkCommand` を実行）。条件を入れたい場合は応答関数で ViewModel を設定してから
 `DialogTestRoute.DefaultResponder(window)` を返す。開いたダイアログと結果は `DialogTestRoute.Records` に残る。

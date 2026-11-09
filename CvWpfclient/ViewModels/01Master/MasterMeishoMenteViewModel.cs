@@ -15,7 +15,7 @@ public partial class MasterMeishoMenteViewModel : Helpers.BaseCodeNameLightMente
 	protected override string[] AdditionalLightweightColumns => ["Kubun", "Odr", "KubunName"];
 
 	List<MasterMeisho>? kubunListCache;
-	CategoryRangeParameter? listCondition;
+	SimpleRangeParameter? listCondition;
 
 	protected override string? ListOrder => "Kubun,Code";
 	protected override string? FormFile => "MasterMeishoMente.qfm";
@@ -39,7 +39,7 @@ from MasterMeisho where Kubun=@0
 
 	protected override int? ListMaxCount => listCondition == null ? AppGlobal.Limit : listCondition.MaxCount;
 
-	string? BuildListConditionWhere(CategoryRangeParameter? condition) {
+	string? BuildListConditionWhere(SimpleRangeParameter? condition) {
 		if (condition == null) {
 			return null;
 		}
@@ -76,8 +76,9 @@ from MasterMeisho where Kubun=@0
 		}
 
 		var defaultKubun = kubunListCache.FirstOrDefault(c => c.Code == MasterMeisho.KubunBrand) ?? kubunListCache.FirstOrDefault();
-		listCondition = new CategoryRangeParameter {
+		listCondition = new SimpleRangeParameter {
 			DisplayName = "区分",
+			CategoryLabel = "区分",
 			SelectedCategory = defaultKubun == null ? null : FormatKubun(defaultKubun),
 			MaxCount = AppGlobal.Limit
 		};
@@ -91,14 +92,15 @@ from MasterMeisho where Kubun=@0
 			return;
 		}
 
-		var dlg = new Views.Sub.CategoryRangeView();
-		if (dlg.DataContext is not CategoryRangeViewModel vm) {
+		var dlg = new Views.Sub.SimpleRangeParamView();
+		if (dlg.DataContext is not SimpleRangeParamViewModel vm) {
 			return;
 		}
 
-		vm.Initialize(listCondition ?? new CategoryRangeParameter { DisplayName = "区分", MaxCount = AppGlobal.Limit });
+		vm.Initialize(listCondition ?? new SimpleRangeParameter { DisplayName = "区分", MaxCount = AppGlobal.Limit });
 		vm.Parameter = vm.Parameter with {
 			DisplayName = "区分",
+			CategoryLabel = "区分",
 			CategoryList = [.. kubunListCache.Select(FormatKubun)]
 		};
 

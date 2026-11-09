@@ -12,7 +12,7 @@ internal partial class SysAutoExecHistoryViewModel : Helpers.BaseMenteViewModel<
 	[ObservableProperty]
 	public partial string Title { get; set; } = "自動実行履歴";
 
-	IdDateRangeParameter? selectParam;
+	SimpleRangeParameter? selectParam;
 
 	/// <summary>最新順に取得</summary>
 	protected override string? ListOrder => "Id DESC";
@@ -28,10 +28,10 @@ internal partial class SysAutoExecHistoryViewModel : Helpers.BaseMenteViewModel<
 
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
-		var selWin = new Views.Sub.IdDateRangeParamView();
-		if (selWin.DataContext is not IdDateRangeParamViewModel vm)
+		var selWin = new Views.Sub.SimpleRangeParamView();
+		if (selWin.DataContext is not SimpleRangeParamViewModel vm)
 			return new ValueTask<bool>(true);
-		vm.Initialize(selectParam ?? new IdDateRangeParameter { DisplayName = "自動実行履歴", DateLabel = "開始日", MaxCount = AppGlobal.Limit });
+		vm.Initialize(selectParam ?? new SimpleRangeParameter { DisplayName = "自動実行履歴", DateLabel = "開始日", IsDateVisible = true, MaxCount = AppGlobal.Limit });
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			selectParam = vm.Parameter;
 			return new ValueTask<bool>(false);
@@ -50,7 +50,7 @@ internal partial class SysAutoExecHistoryViewModel : Helpers.BaseMenteViewModel<
 		Message = $"リスト取得しました (件数={list.Count}, 取得時間 {StartTime.ToDtStrTime()} // {GetListTime.ToStrSpan()})";
 	}
 
-	static string? BuildWhereClause(IdDateRangeParameter? param) {
+	static string? BuildWhereClause(SimpleRangeParameter? param) {
 		if (param == null) return null;
 
 		List<string> clauses = [];
@@ -70,15 +70,16 @@ internal partial class SysAutoExecHistoryViewModel : Helpers.BaseMenteViewModel<
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 	}
 
-	static IdDateRangeParameter NormalizeParameter(IdDateRangeParameter? param) {
-		var normalized = new IdDateRangeParameter {
+	static SimpleRangeParameter NormalizeParameter(SimpleRangeParameter? param) {
+		var normalized = new SimpleRangeParameter {
 			FromId = param?.FromId,
 			ToId = param?.ToId,
 			FromDate = string.IsNullOrWhiteSpace(param?.FromDate) ? null : param.FromDate,
 			ToDate = string.IsNullOrWhiteSpace(param?.ToDate) ? null : param.ToDate,
 			MaxCount = param?.MaxCount,
 			DisplayName = string.IsNullOrWhiteSpace(param?.DisplayName) ? "自動実行履歴" : param.DisplayName,
-			DateLabel = "開始日"
+			DateLabel = "開始日",
+			IsDateVisible = true
 		};
 		return normalized;
 	}

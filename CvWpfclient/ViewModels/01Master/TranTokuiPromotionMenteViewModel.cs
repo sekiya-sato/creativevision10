@@ -14,7 +14,7 @@ public partial class TranTokuiPromotionMenteViewModel : Helpers.BaseMenteViewMod
 	[ObservableProperty]
 	public partial string Title { get; set; } = "得意先イベントメンテ";
 
-	IdDateRangeParameter? selectParam;
+	SimpleRangeParameter? selectParam;
 
 	public IReadOnlyList<EnumPromotionRank> RankOptions { get; } = Enum.GetValues<EnumPromotionRank>();
 
@@ -53,12 +53,12 @@ left join MasterTokui T on T.Id = P.Id_Tokui
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
 
-		var selWin = new Views.Sub.IdDateRangeParamView();
-		if (selWin.DataContext is not IdDateRangeParamViewModel vm) {
+		var selWin = new Views.Sub.SimpleRangeParamView();
+		if (selWin.DataContext is not SimpleRangeParamViewModel vm) {
 			return new ValueTask<bool>(true);
 		}
 
-		vm.Initialize(selectParam ?? new IdDateRangeParameter { DisplayName = "得意先イベント", IdLabel = "得意先Id", MaxCount = AppGlobal.Limit });
+		vm.Initialize(selectParam ?? new SimpleRangeParameter { DisplayName = "得意先イベント", IdLabel = "得意先Id", IsDateVisible = true, MaxCount = AppGlobal.Limit });
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			selectParam = vm.Parameter;
 			return new ValueTask<bool>(false);
@@ -136,7 +136,7 @@ left join MasterTokui T on T.Id = P.Id_Tokui
 		CurrentEdit.Mame = (CurrentEdit.Mame ?? string.Empty).Trim();
 	}
 
-	static string? BuildWhereClause(IdDateRangeParameter? param) {
+	static string? BuildWhereClause(SimpleRangeParameter? param) {
 		if (param == null) return null;
 
 		List<string> clauses = [];
@@ -156,7 +156,7 @@ left join MasterTokui T on T.Id = P.Id_Tokui
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 	}
 
-	static IdDateRangeParameter NormalizeSearchParameter(IdDateRangeParameter? param) =>
+	static SimpleRangeParameter NormalizeSearchParameter(SimpleRangeParameter? param) =>
 		new() {
 			FromId = param?.FromId,
 			ToId = param?.ToId,
@@ -164,6 +164,7 @@ left join MasterTokui T on T.Id = P.Id_Tokui
 			ToDate = string.IsNullOrWhiteSpace(param?.ToDate) ? null : param.ToDate,
 			MaxCount = param?.MaxCount,
 			DisplayName = string.IsNullOrWhiteSpace(param?.DisplayName) ? "得意先イベント" : param.DisplayName,
-			IdLabel = "得意先Id"
+			IdLabel = "得意先Id",
+			IsDateVisible = true
 		};
 }

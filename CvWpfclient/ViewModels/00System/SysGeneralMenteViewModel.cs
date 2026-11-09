@@ -19,7 +19,7 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 	Type? targetType;
 	string targetName = string.Empty;
 	int? maxCount;
-	SelectParameter? selectMiniParam;
+	SimpleRangeParameter? selectMiniParam;
 
 	[ObservableProperty]
 	public partial string Title { get; set; } = "汎用マスタメンテ";
@@ -291,18 +291,16 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 	}
 
 	bool TryShowListConditionDialog() {
-		var selWin = new Views.Sub.RangeParamMiniView();
-		if (selWin.DataContext is not RangeParamMiniViewModel vm) {
+		var selWin = new Views.Sub.SimpleRangeParamView();
+		if (selWin.DataContext is not SimpleRangeParamViewModel vm) {
 			return true;
 		}
 
-		vm.Initialize(selectMiniParam ?? new SelectParameter {
+		vm.Initialize(selectMiniParam ?? new SimpleRangeParameter {
 			DisplayName = targetName,
-			MaxCount = maxCount,
-			IsNameVisible = false
+			MaxCount = maxCount
 		});
 		vm.Parameter.DisplayName = targetName;
-		vm.Parameter.IsNameVisible = false;
 
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			selectMiniParam = vm.Parameter;
@@ -313,12 +311,11 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 		return true;
 	}
 
-	SelectParameter NormalizeListParameter(SelectParameter parameter) =>
+	SimpleRangeParameter NormalizeListParameter(SimpleRangeParameter parameter) =>
 		new() {
 			FromId = parameter.FromId,
 			ToId = parameter.ToId,
 			DisplayName = targetName,
-			IsNameVisible = false,
 			MaxCount = parameter.MaxCount
 		};
 

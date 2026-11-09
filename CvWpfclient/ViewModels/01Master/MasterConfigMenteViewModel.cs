@@ -10,7 +10,7 @@ public partial class MasterConfigMenteViewModel : Helpers.BaseMenteViewModel<Mas
 	[ObservableProperty]
 	public partial string Title { get; set; } = "設定フラグマスタメンテ";
 
-	CategoryRangeParameter? listCondition;
+	SimpleRangeParameter? listCondition;
 	List<string>? categoryListCache;
 
 	protected override string? ListOrder => "Category,Name";
@@ -29,12 +29,12 @@ public partial class MasterConfigMenteViewModel : Helpers.BaseMenteViewModel<Mas
 			categoryListCache = [.. categoryList.Select(x => x.Category).Where(c => !string.IsNullOrWhiteSpace(c)).Distinct().OrderBy(c => c)];
 		}
 
-		var dlg = new Views.Sub.CategoryRangeView();
-		if (dlg.DataContext is not CategoryRangeViewModel vm) {
+		var dlg = new Views.Sub.SimpleRangeParamView();
+		if (dlg.DataContext is not SimpleRangeParamViewModel vm) {
 			return;
 		}
 
-		vm.Initialize(listCondition ?? new CategoryRangeParameter { DisplayName = "設定フラグ", MaxCount = AppGlobal.Limit });
+		vm.Initialize(listCondition ?? new SimpleRangeParameter { DisplayName = "設定フラグ", MaxCount = AppGlobal.Limit });
 		vm.Parameter = vm.Parameter with {
 			DisplayName = "設定フラグ",
 			CategoryList = categoryListCache
@@ -48,7 +48,7 @@ public partial class MasterConfigMenteViewModel : Helpers.BaseMenteViewModel<Mas
 		await DoList(ct);
 	}
 
-	string? BuildListConditionWhere(CategoryRangeParameter? condition) {
+	string? BuildListConditionWhere(SimpleRangeParameter? condition) {
 		if (condition == null) {
 			return null;
 		}

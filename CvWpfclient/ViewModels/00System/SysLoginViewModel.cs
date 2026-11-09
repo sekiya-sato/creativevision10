@@ -26,11 +26,11 @@ internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<
 		new((long)EnumLoginRole.Warehouse, "2:倉庫担当")
 	];
 
-	SelectParameter? selectMiniParam;
+	SimpleRangeParameter? selectMiniParam;
 
 	protected override string LightweightSelectColumns => "Id,Vdc,Vdu,LoginId,CryptPassword,ExpDate,LastDate,Id_Shain,Id_Role";
 
-	protected override string? ListWhere => BuildSelectCodeWhere(selectMiniParam);
+	protected override string? ListWhere => BuildLoginWhere(selectMiniParam);
 
 	// SysLogin はCode列を持たないので、初期値のCodeを上書きする必要がある
 	protected override string? ListOrder => "Id";
@@ -48,17 +48,24 @@ internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<
 
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
-		var selWin = new Views.Sub.RangeParamMiniView();
-		if (selWin.DataContext is not RangeParamMiniViewModel vm)
+		var selWin = new Views.Sub.SimpleRangeParamView();
+		if (selWin.DataContext is not SimpleRangeParamViewModel vm)
 			return new ValueTask<bool>(true);
-		vm.Initialize(selectMiniParam ?? new SelectParameter { DisplayName = "ログインID", MaxCount = 400 });
+		vm.Initialize(selectMiniParam ?? CreateListParameter(400));
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			selectMiniParam = vm.Parameter;
 			return new ValueTask<bool>(false);
 		}
-		selectMiniParam = NormalizeSelectParameter(vm.Parameter, "ログインマスタ");
+		selectMiniParam = CreateListParameter(vm.Parameter.MaxCount) with {
+			FromId = vm.Parameter.FromId,
+			ToId = vm.Parameter.ToId,
+			Name = string.IsNullOrWhiteSpace(vm.Parameter.Name) ? null : vm.Parameter.Name.Trim(),
+		};
 		return new ValueTask<bool>(true);
 	}
+
+	static SimpleRangeParameter CreateListParameter(int? maxCount) =>
+		new() { DisplayName = "ログインID", IsNameVisible = true, NameLabel = "ログインID", MaxCount = maxCount };
 
 	protected override bool ConfirmAction(string message) =>
 		MessageEx.ShowQuestionDialog(message, owner: ClientLib.GetActiveView(this)) == MsgBoxResult.Yes;
@@ -121,7 +128,7 @@ internal partial class SysLoginViewModel : Helpers.BasePlainLightMenteViewModel<
 		if (!string.IsNullOrEmpty(newPass))
 			cur.CryptPassword = newPass;
 	}
-	protected override string? BuildSelectCodeWhere(SelectParameter? parameter) {
+	string? BuildLoginWhere(SimpleRangeParameter? parameter) {
 		if (parameter == null) {
 			return null;
 		}

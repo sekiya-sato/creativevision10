@@ -5,12 +5,12 @@ using System.Globalization;
 
 namespace CvWpfclient.ViewModels.Sub;
 
-public partial class IdDateRangeParamViewModel : Helpers.BaseViewModel {
+public partial class SimpleRangeParamViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	public partial IdDateRangeParameter Parameter { get; set; } = new();
+	public partial SimpleRangeParameter Parameter { get; set; } = new();
 
-	public void Initialize(IdDateRangeParameter? param) {
-		Parameter = param ?? new IdDateRangeParameter { MaxCount = AppGlobal.Limit };
+	public void Initialize(SimpleRangeParameter? param) {
+		Parameter = param ?? new SimpleRangeParameter { MaxCount = AppGlobal.Limit };
 	}
 
 	[RelayCommand]
