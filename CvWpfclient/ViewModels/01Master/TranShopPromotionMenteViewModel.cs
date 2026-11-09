@@ -14,7 +14,7 @@ public partial class TranShopPromotionMenteViewModel : Helpers.BaseMenteViewMode
 	[ObservableProperty]
 	public partial string Title { get; set; } = "店舗イベントメンテ";
 
-	TranPromotionSearchParameter? selectParam;
+	IdDateRangeParameter? selectParam;
 
 	public IReadOnlyList<EnumPromotionRank> RankOptions { get; } = Enum.GetValues<EnumPromotionRank>();
 
@@ -53,12 +53,12 @@ left join MasterTokui T on T.Id = P.Id_Shop
 	protected override ValueTask<bool> BeforeListAsync(CancellationToken ct) {
 		ct.ThrowIfCancellationRequested();
 
-		var selWin = new Views.Sub.TranPromotionSearchParamView();
-		if (selWin.DataContext is not TranPromotionSearchParamViewModel vm) {
+		var selWin = new Views.Sub.IdDateRangeParamView();
+		if (selWin.DataContext is not IdDateRangeParamViewModel vm) {
 			return new ValueTask<bool>(true);
 		}
 
-		vm.Initialize(selectParam ?? new TranPromotionSearchParameter { DisplayName = "店舗イベント", TargetIdLabel = "店舗Id", MaxCount = AppGlobal.Limit });
+		vm.Initialize(selectParam ?? new IdDateRangeParameter { DisplayName = "店舗イベント", IdLabel = "店舗Id", MaxCount = AppGlobal.Limit });
 		if (ClientLib.ShowDialogView(selWin, this, true) != true) {
 			selectParam = vm.Parameter;
 			return new ValueTask<bool>(false);
@@ -136,15 +136,15 @@ left join MasterTokui T on T.Id = P.Id_Shop
 		CurrentEdit.Mame = (CurrentEdit.Mame ?? string.Empty).Trim();
 	}
 
-	static string? BuildWhereClause(TranPromotionSearchParameter? param) {
+	static string? BuildWhereClause(IdDateRangeParameter? param) {
 		if (param == null) return null;
 
 		List<string> clauses = [];
-		if (param.FromTargetId.HasValue) {
-			clauses.Add($"P.Id_Shop >= {param.FromTargetId.Value}");
+		if (param.FromId.HasValue) {
+			clauses.Add($"P.Id_Shop >= {param.FromId.Value}");
 		}
-		if (param.ToTargetId.HasValue) {
-			clauses.Add($"P.Id_Shop <= {param.ToTargetId.Value}");
+		if (param.ToId.HasValue) {
+			clauses.Add($"P.Id_Shop <= {param.ToId.Value}");
 		}
 		if (!string.IsNullOrWhiteSpace(param.FromDate)) {
 			clauses.Add($"P.DenDay >= '{EscapeSqlLiteral(param.FromDate)}'");
@@ -156,14 +156,14 @@ left join MasterTokui T on T.Id = P.Id_Shop
 		return clauses.Count == 0 ? null : string.Join(" AND ", clauses);
 	}
 
-	static TranPromotionSearchParameter NormalizeSearchParameter(TranPromotionSearchParameter? param) =>
+	static IdDateRangeParameter NormalizeSearchParameter(IdDateRangeParameter? param) =>
 		new() {
-			FromTargetId = param?.FromTargetId,
-			ToTargetId = param?.ToTargetId,
+			FromId = param?.FromId,
+			ToId = param?.ToId,
 			FromDate = string.IsNullOrWhiteSpace(param?.FromDate) ? null : param.FromDate,
 			ToDate = string.IsNullOrWhiteSpace(param?.ToDate) ? null : param.ToDate,
 			MaxCount = param?.MaxCount,
 			DisplayName = string.IsNullOrWhiteSpace(param?.DisplayName) ? "店舗イベント" : param.DisplayName,
-			TargetIdLabel = "店舗Id"
+			IdLabel = "店舗Id"
 		};
 }

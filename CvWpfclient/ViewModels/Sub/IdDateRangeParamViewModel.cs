@@ -5,12 +5,12 @@ using System.Globalization;
 
 namespace CvWpfclient.ViewModels.Sub;
 
-public partial class TranPromotionSearchParamViewModel : Helpers.BaseViewModel {
+public partial class IdDateRangeParamViewModel : Helpers.BaseViewModel {
 	[ObservableProperty]
-	public partial TranPromotionSearchParameter Parameter { get; set; } = new();
+	public partial IdDateRangeParameter Parameter { get; set; } = new();
 
-	public void Initialize(TranPromotionSearchParameter? param) {
-		Parameter = param ?? new TranPromotionSearchParameter { DisplayName = "イベント", MaxCount = AppGlobal.Limit };
+	public void Initialize(IdDateRangeParameter? param) {
+		Parameter = param ?? new IdDateRangeParameter { MaxCount = AppGlobal.Limit };
 	}
 
 	[RelayCommand]
@@ -21,22 +21,22 @@ public partial class TranPromotionSearchParamViewModel : Helpers.BaseViewModel {
 	}
 
 	bool ValidateParameter() {
-		if (Parameter.FromTargetId.HasValue && Parameter.ToTargetId.HasValue && Parameter.FromTargetId.Value > Parameter.ToTargetId.Value) {
-			MessageEx.ShowWarningDialog($"{Parameter.TargetIdLabel}の開始は終了以下で入力してください", owner: ClientLib.GetActiveView(this));
+		if (Parameter.FromId.HasValue && Parameter.ToId.HasValue && Parameter.FromId.Value > Parameter.ToId.Value) {
+			MessageEx.ShowWarningDialog($"{Parameter.IdLabel}の開始は終了以下で入力してください", owner: ClientLib.GetActiveView(this));
 			return false;
 		}
 		if (!IsValidDate(Parameter.FromDate)) {
-			MessageEx.ShowWarningDialog("日付(開始)は yyyyMMdd の8桁で入力してください", owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowWarningDialog($"{Parameter.DateLabel}(開始)は yyyyMMdd の8桁で入力してください", owner: ClientLib.GetActiveView(this));
 			return false;
 		}
 		if (!IsValidDate(Parameter.ToDate)) {
-			MessageEx.ShowWarningDialog("日付(終了)は yyyyMMdd の8桁で入力してください", owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowWarningDialog($"{Parameter.DateLabel}(終了)は yyyyMMdd の8桁で入力してください", owner: ClientLib.GetActiveView(this));
 			return false;
 		}
 		if (!string.IsNullOrWhiteSpace(Parameter.FromDate)
 			&& !string.IsNullOrWhiteSpace(Parameter.ToDate)
 			&& string.CompareOrdinal(Parameter.FromDate, Parameter.ToDate) > 0) {
-			MessageEx.ShowWarningDialog("日付の開始は終了以下で入力してください", owner: ClientLib.GetActiveView(this));
+			MessageEx.ShowWarningDialog($"{Parameter.DateLabel}の開始は終了以下で入力してください", owner: ClientLib.GetActiveView(this));
 			return false;
 		}
 		if (Parameter.MaxCount.HasValue && Parameter.MaxCount.Value <= 0) {
