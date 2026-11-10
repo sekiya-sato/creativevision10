@@ -11,6 +11,8 @@
   <ItemGroup>
     <PackageReference Include="ModelContextProtocol.Core" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" />
+    <!-- 脆弱性対応: Oracle.ManagedDataAccess.Core の推移的依存 8.0.1 を引き上げる。解除条件は Directory.Packages.props を参照 -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
   <ItemGroup>
