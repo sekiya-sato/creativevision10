@@ -1,14 +1,10 @@
-﻿using Newtonsoft.Json;
-
-namespace CvAsset;
+﻿namespace CvAsset;
 
 public sealed partial class Common {
 	/// <summary>
 	/// 4世代バックアップ処理(現行ファイル+当日を含む過去3世代)
 	/// </summary>
-	/// <param name="targetFile"></param>
-	/// <returns></returns>
-	public static async Task Backup4GeneAsync(string targetFile, CancellationToken cancellationToken = default) {
+	static async Task Backup4GeneAsync(string targetFile, CancellationToken cancellationToken = default) {
 		if (string.IsNullOrWhiteSpace(targetFile))
 			return;
 		if (!File.Exists(targetFile))
@@ -39,11 +35,6 @@ public sealed partial class Common {
 	/// <summary>
 	/// ファイルからの読込
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <param name="myObj"></param>
-	/// <param name="fname"></param>
-	/// <param name="fbackup"></param>
-	/// <returns></returns>
 	public static async Task<(bool Success, T? Obj)> LoadAsync<T>(string fname, CancellationToken cancellationToken = default) where T : new() {
 		try {
 			if (string.IsNullOrWhiteSpace(fname) || !File.Exists(fname))
@@ -65,11 +56,6 @@ public sealed partial class Common {
 	/// <summary>
 	/// ファイルへの保存
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <param name="myObj"></param>
-	/// <param name="fname"></param>
-	/// <param name="fbackup"></param>
-	/// <returns></returns>
 	public static async Task<bool> SaveAsync<T>(T myObj, string fname, bool isFlush = false, CancellationToken cancellationToken = default) where T : new() {
 		try {
 			if (string.IsNullOrWhiteSpace(fname) || myObj is null)
