@@ -18,8 +18,8 @@ public sealed class PrintOperation {
 	[DataMember(Order = 2)]
 	public string DataMsg { get; set; } = string.Empty;
 	/// <summary>
-	/// 処理ステータス -1 はエラー
-	/// [Processing status, -1 indicates an error]
+	/// 処理ステータス。値は <see cref="PrintOperationStatus"/> を参照
+	/// [Processing status, see PrintOperationStatus]
 	/// </summary>
 	[DataMember(Order = 3)]
 	public int Status { get; set; }
@@ -64,4 +64,24 @@ public sealed class PrintOperation {
 	[IgnoreDataMember]
 	public string TempDataFullPath { get; set; } = string.Empty;
 	#endregion
+}
+
+/// <summary>
+/// <see cref="PrintOperation.Status"/> の値
+/// </summary>
+public static class PrintOperationStatus {
+	/// <summary>
+	/// 正常
+	/// </summary>
+	public const int Success = 0;
+
+	/// <summary>
+	/// エラー（PDF出力失敗）
+	/// </summary>
+	public const int Error = -1;
+
+	/// <summary>
+	/// 印刷対象データが0件。エラーではなく警告として扱う
+	/// </summary>
+	public const int NoData = -2;
 }

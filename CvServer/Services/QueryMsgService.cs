@@ -85,7 +85,7 @@ public partial class CoreService : ICoreService {
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 			CvMsg result;
 			try {
-				result = await handler(request, context) ?? new CvMsg() { Flag = CvFlag.Msg800_Error_Start, Code = -1, DataType = typeof(string), DataMsg = "Handler returned null." };
+				result = await handler(request, context) ?? new CvMsg() { Flag = CvFlag.Msg800_Error_Start, Code = CvMsgErrorCode.HandlerReturnedNull, DataType = typeof(string), DataMsg = "Handler returned null." };
 			}
 			catch (Exception ex) {
 				_logger.LogError(ex, "QueryMsgAsync handler error Flag:{Flag}", request.Flag);
@@ -103,7 +103,7 @@ public partial class CoreService : ICoreService {
 		// 未実装フラグ
 		var defaultErr = new CvMsg {
 			Flag = CvFlag.Msg800_Error_Start,
-			Code = -1,
+			Code = CvMsgErrorCode.UnimplementedFlag,
 			DataType = typeof(string),
 			DataMsg = "Unimplemented function."
 		};

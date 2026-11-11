@@ -69,6 +69,16 @@ public static class CvMsgErrorCode {
 	/// </para>
 	/// </summary>
 	public const int NotFound = -1;
+
+	/// <summary>
+	/// サーバに処理が登録されていないフラグを受信した（未実装フラグ）
+	/// </summary>
+	public const int UnimplementedFlag = -11;
+
+	/// <summary>
+	/// サーバのハンドラが応答を返さなかった（null）
+	/// </summary>
+	public const int HandlerReturnedNull = -12;
 }
 
 /// <summary>
@@ -355,8 +365,9 @@ public enum CvFlag {
 	[EnumMember]
 	Msg710_StreamingTest = 7710,
 	/// <summary>
-	/// Abs()がこの値より大きいものはエラー
-	/// [Values where Abs() exceeds this value are errors]
+	/// サーバ共通のエラー応答で返すフラグ（未実装フラグの受信、ハンドラが null を返した場合）。
+	/// 原因は Code（<see cref="CvMsgErrorCode"/>）で区別する
+	/// [Flag for common server error responses; the cause is given by Code (CvMsgErrorCode)]
 	/// </summary>
 	[EnumMember]
 	Msg800_Error_Start = 9800,

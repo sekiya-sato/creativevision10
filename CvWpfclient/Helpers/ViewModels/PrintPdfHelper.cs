@@ -70,7 +70,7 @@ internal static class PrintPdfHelper {
 			await foreach (var streamMsg in coreService.PrintPdfAsync(msg, AppGlobal.GetDefaultCallContext(ct))) {
 				ct.ThrowIfCancellationRequested();
 				setMessage(string.Join(" ", new[] { streamMsg.StatusString, streamMsg.DataMsg }.Where(s => !string.IsNullOrWhiteSpace(s))));
-				if (streamMsg.Status == -2) {
+				if (streamMsg.Status == PrintOperationStatus.NoData) {
 					Warn(setMessage, ownerWindow, streamMsg.DataMsg);
 					return false;
 				}

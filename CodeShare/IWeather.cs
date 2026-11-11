@@ -30,10 +30,6 @@ public sealed record class WeatherInfo {
 	[DataMember(Order = 2)]
 	public double Temperature { get; init; }
 
-	/// <summary>天気の概要 (例: "Clear", "Rain")</summary>
-	[DataMember(Order = 3)]
-	public string Condition { get; init; } = string.Empty;
-
 	/// <summary>天気の詳細説明 (例: "clear sky")</summary>
 	[DataMember(Order = 4)]
 	public string Description { get; init; } = string.Empty;

@@ -93,7 +93,6 @@ public partial class WeatherService : IWeatherService {
 		return new WeatherInfo {
 			Location = json.GetProperty("name").GetString() ?? "",
 			Temperature = main.GetProperty("temp").GetDouble(),
-			Condition = weather.GetProperty("main").GetString() ?? "",
 			Description = weather.GetProperty("description").GetString() ?? "",
 			Humidity = main.GetProperty("humidity").GetInt32(),
 			WindSpeed = wind.GetProperty("speed").GetDouble(),

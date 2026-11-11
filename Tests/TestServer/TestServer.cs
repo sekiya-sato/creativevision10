@@ -96,6 +96,17 @@ public class CoreServiceTests {
 	}
 
 	[TestMethod]
+	public async Task UnregisteredFlag_ReturnsUnimplementedFlagCode() {
+		var service = _service ?? throw new AssertFailedException("Service not initialized");
+		// Msg710 はストリーミング専用で、単発要求のハンドラには登録されていない
+		var result = await service.QueryMsgAsync(new CvMsg { Flag = CvFlag.Msg710_StreamingTest, DataType = typeof(string), DataMsg = string.Empty });
+
+		Assert.AreEqual(CvFlag.Msg800_Error_Start, result.Flag);
+		Assert.AreEqual(CvMsgErrorCode.UnimplementedFlag, result.Code);
+		Assert.AreNotEqual(CvMsgErrorCode.NotFound, result.Code, "未実装は0件と区別できること");
+	}
+
+	[TestMethod]
 	public async Task GetVersion_ReturnsVersionInfoSerialized() {
 		var request = new CvMsg {
 			Flag = CvFlag.Msg002_GetVersion,

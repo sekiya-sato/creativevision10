@@ -11,6 +11,10 @@ namespace CvServer.Services;
 public partial class CoreService {
 	private const int PrintPostCheckIntervalMilliseconds = 500;
 	private static readonly TimeSpan PrintPostCheckTimeout = TimeSpan.FromMinutes(30);
+	/// <summary>
+	/// 印刷対象0件のメッセージ。このメッセージの失敗は <see cref="PrintOperationStatus.NoData"/> で返す
+	/// </summary>
+	private const string PrintNoDataMessage = "印刷対象データが0件です";
 
 	[UatChangeable]
 	[Authorize]
@@ -44,7 +48,9 @@ public partial class CoreService {
 			int progress = (int)((i + 1) / (double)totalSteps * 100);
 
 			// PrintOperation を返す
-			int status = result.IsSuccess ? 0 : (result.Message == "印刷対象データが0件です" ? -2 : -1);
+			int status = result.IsSuccess ? PrintOperationStatus.Success
+				: result.Message == PrintNoDataMessage ? PrintOperationStatus.NoData
+				: PrintOperationStatus.Error;
 			yield return new PrintOperation {
 				DataType = typeof(string),
 				DataMsg = result.Message,
@@ -128,7 +134,7 @@ public partial class CoreService {
 
 		if (param is PrintByCsvParam printParam) {
 			if (string.IsNullOrWhiteSpace(printParam.CsvData)) {
-				return new PrintResult(false, "印刷対象データが0件です");
+				return new PrintResult(false, PrintNoDataMessage);
 			}
 			File.WriteAllText(request.TempDataFullPath, printParam.CsvData, Sjis);
 		}
@@ -143,7 +149,7 @@ public partial class CoreService {
 				return new PrintResult(false, $"印刷データの取得に失敗しました: {_db.RawLastError}");
 			}
 			if (dataList.Count == 0) {
-				return new PrintResult(false, "印刷対象データが0件です");
+				return new PrintResult(false, PrintNoDataMessage);
 			}
 			using (var writer = new StreamWriter(request.TempDataFullPath, false, Sjis)) {
 				dataList.WriteDynamicCsv(writer);
