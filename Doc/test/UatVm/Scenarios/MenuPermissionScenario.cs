@@ -122,7 +122,7 @@ public static class MenuPermissionScenario {
 		await d.WaitAsync("読込", vm => vm.EditProfile?.Id == SysPermissionProfile.FullAccessId && !vm.IsBusy);
 		session.Check("FullAccessはメニュー権限を編集できない", d.Vm.IsFullAccess && !d.Vm.CanEditRules);
 		var reply = await AppGlobal.GetGrpcService<ICoreService>().QueryMsgAsync(new CvMsg {
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(PermissionProfileSaveParam),
 			DataMsg = CvAsset.Common.SerializeObject(new PermissionProfileSaveParam(d.Vm.EditProfile!,
 				[new SysPermissionProfileDetail { FunctionId = ZaikoQuery, IsAllowed = false }])),

@@ -52,11 +52,8 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg041_ConvertList] = (req, ctx) => Task.FromResult(HandlerGetConvertTaskList(req, ctx)),
 			[CvFlag.Msg042_GetTableList] = (req, ctx) => Task.FromResult(HandlerGetTableList(req, ctx)),
 			[CvFlag.Msg101_Op_Query] = (req, ctx) => Task.FromResult(HandleOpQuery(req, ctx)),
-			[CvFlag.Msg201_Op_Execute] = (req, ctx) => Task.FromResult(HandleOpExecute(req, ctx)),
-			[CvFlag.Msg300_Op_OutData] = (req, ctx) => Task.FromResult(HandleOutData(req, ctx)),
-			[CvFlag.Msg700_Test_Start] = (req, ctx) => Task.FromResult(NotImplementedTask(req, ctx)),
-			[CvFlag.Msg701_TestCase001] = (req, ctx) => Task.FromResult(NotImplementedTask(req, ctx)),
-			[CvFlag.Msg702_TestCase002] = (req, ctx) => Task.FromResult(NotImplementedTask(req, ctx)),
+			[CvFlag.Msg111_Op_Execute] = (req, ctx) => Task.FromResult(HandleOpExecute(req, ctx)),
+			[CvFlag.Msg121_Op_OutData] = (req, ctx) => Task.FromResult(HandleOutData(req, ctx)),
 			[CvFlag.Msg046_MasterShohinMeishoRebuild] = (req, ctx) => Task.FromResult(HandleConvertMasterShohin(req, ctx)),
 			[CvFlag.Msg047_MasterVColumnResync] = (req, ctx) => Task.FromResult(HandleMasterVColumnResync(req, ctx)),
 			[CvFlag.Msg059_TranTaxRebuild] = (req, ctx) => Task.FromResult(HandleTranTaxRebuild(req, ctx)),
@@ -92,7 +89,7 @@ public partial class CoreService : ICoreService {
 			}
 			catch (Exception ex) {
 				_logger.LogError(ex, "QueryMsgAsync handler error Flag:{Flag}", request.Flag);
-				result = new CvMsg() { Flag = request.Flag, Code = -9902, Option = ex.Message, DataType = typeof(string), DataMsg = ex.Message };
+				result = new CvMsg() { Flag = request.Flag, Code = CvMsgErrorCode.Unexpected, Option = ex.Message, DataType = typeof(string), DataMsg = ex.Message };
 			}
 			// 操作履歴（業務処理の後に別途記録し、失敗しても応答は変えない）
 			var kind = CvDomainLogic.OperationLogDb.ClassifyKind(request.Flag);
@@ -109,21 +106,6 @@ public partial class CoreService : ICoreService {
 			Code = -1,
 			DataType = typeof(string),
 			DataMsg = "Unimplemented function."
-		};
-		return defaultErr;
-	}
-	/// <summary>
-	/// 未実装タスクの共通ハンドラ
-	/// </summary>
-	/// <param name="request"></param>
-	/// <param name="context"></param>
-	/// <returns></returns>
-	public CvMsg NotImplementedTask(CvMsg request, CallContext context = default) {
-		var defaultErr = new CvMsg {
-			Flag = CvFlag.Msg800_Error_Start,
-			Code = -1,
-			DataType = typeof(string),
-			DataMsg = $"Unimplemented function. QueryFlag: {request.Flag}"
 		};
 		return defaultErr;
 	}

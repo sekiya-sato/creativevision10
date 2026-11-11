@@ -9,7 +9,7 @@ namespace UatVm.Scenarios;
 /// <summary>
 /// マスター系CRUDの確認（DB切替後の MariaDB / PostgreSQL を想定、SQLiteでも動く）。
 /// <para>
-/// 画面（BaseMenteViewModel）と同じ gRPC 経路（Msg201_Op_Execute の InsertParam / UpdateParam / DeleteParam、
+/// 画面（BaseMenteViewModel）と同じ gRPC 経路（Msg111_Op_Execute の InsertParam / UpdateParam / DeleteParam、
 /// Msg101_Op_Query）で、主要マスタの 登録→読戻し→更新→読戻し→削除→消えたことの確認 を行う。
 /// 併せて、DBごとにSQLが変わる副作用を確認する。
 /// <list type="bullet">
@@ -215,7 +215,7 @@ public static class MasterCrudScenario {
 		var coreService = AppGlobal.GetGrpcService<ICoreService>();
 		var message = new CvMsg {
 			Code = 0,
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(DeleteParam),
 			DataMsg = Common.SerializeObject(new DeleteParam(typeof(T), Common.SerializeObject(item))),
 		};

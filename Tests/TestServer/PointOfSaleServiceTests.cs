@@ -18,7 +18,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Tests.CvServer;
 
 /// <summary>
-/// POS端末の売上・返品・取消・精算が、標準CRUD（Msg201_Op_Execute の InsertParam）経由で
+/// POS端末の売上・返品・取消・精算が、標準CRUD（Msg111_Op_Execute の InsertParam）経由で
 /// <see cref="PointOfSaleService.PrepareInsert"/> のサーバ補正（単価・税・採番）を通ることを検証する。
 /// 価格付き商品検索は Msg101_Op_Query の <see cref="PosBarcodeLookupRequest"/> で行う（設計判断記録 §2.18）。
 /// </summary>
@@ -372,7 +372,7 @@ public class PointOfSaleServiceTests {
 	public async Task InsertBulk_POS伝票は一括追加できない() {
 		var productId = InsertProduct("BULK", 1000, idTax: 1);
 		var reply = await CoreService.QueryMsgAsync(new CvMsg {
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(InsertBulkParam),
 			DataMsg = Common.SerializeObject(new InsertBulkParam(typeof(Tran01Tenuri), Common.SerializeObject(new List<Tran01Tenuri> { Sale("bulk", 1100, Line(productId)) }))),
 		});
@@ -503,7 +503,7 @@ public class PointOfSaleServiceTests {
 	};
 
 	private Task<CvMsg> InsertAsync<T>(T item) => CoreService.QueryMsgAsync(new CvMsg {
-		Flag = CvFlag.Msg201_Op_Execute,
+		Flag = CvFlag.Msg111_Op_Execute,
 		DataType = typeof(InsertParam),
 		DataMsg = Common.SerializeObject(new InsertParam(typeof(T), Common.SerializeObject(item!))),
 	});

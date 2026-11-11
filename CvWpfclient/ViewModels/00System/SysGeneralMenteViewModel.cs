@@ -321,7 +321,7 @@ public partial class SysGeneralMenteViewModel : Helpers.BaseViewModel {
 
 	CvMsg CreateExecuteMessage(object parameter, Type dataType) => new() {
 		Code = 0,
-		Flag = CvFlag.Msg201_Op_Execute,
+		Flag = CvFlag.Msg111_Op_Execute,
 		DataType = dataType,
 		DataMsg = Common.SerializeObject(parameter)
 	};

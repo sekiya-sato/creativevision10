@@ -341,7 +341,7 @@ public abstract partial class BaseStockSheetInputViewModel<TDen> : BaseQueryView
 		var coreService = AppGlobal.GetGrpcService<ICoreService>();
 		var msg = new CvMsg {
 			Code = 0,
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(InsertParam),
 			DataMsg = Common.SerializeObject(new InsertParam(typeof(TDen), Common.SerializeObject(den))),
 		};

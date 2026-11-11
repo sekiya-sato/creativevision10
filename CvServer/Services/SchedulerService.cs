@@ -248,17 +248,6 @@ public class SchedulerService : ISchedulerService {
 		});
 	}
 
-	/// <summary>
-	/// すべてのタスクを削除する
-	/// </summary>
-	[UatChangeable]
-	[Authorize]
-	public Task<SchedulerResult> RemoveAllTasksAsync(CallContext context = default) {
-		_scheduler.RemoveAllTasks();
-		_logger.LogInformation("スケジュール全削除を実行しました。");
-		return Task.FromResult(new SchedulerResult { Result = Success, Detail = "正常終了" });
-	}
-
 	public SchedulerResult RegisterDailySqliteWalCheckpointTask() {
 		var def = FindDefinition(JobKeyWalCheckpoint);
 		return RegisterSystemJob(def, (db, ct) => ExecuteSqliteWalCheckpointCoreAsync(db, def.TaskName, ct));

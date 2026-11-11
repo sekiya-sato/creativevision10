@@ -122,7 +122,7 @@ sealed class CoreClient(string url) : IDisposable {
 	}
 
 	public Task<CvMsg> ExecuteAsync(object param) => Core.QueryMsgAsync(new CvMsg {
-		Flag = CvFlag.Msg201_Op_Execute,
+		Flag = CvFlag.Msg111_Op_Execute,
 		DataType = param.GetType(),
 		DataMsg = Common.SerializeObject(param),
 	});

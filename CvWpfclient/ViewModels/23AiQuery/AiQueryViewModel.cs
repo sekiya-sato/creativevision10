@@ -550,8 +550,8 @@ public partial class AiQueryViewModel : BaseViewModel {
 		IsBusy = true;
 		try {
 			var msg = update
-				? new CvMsg { Flag = CvFlag.Msg201_Op_Execute, DataType = typeof(UpdateParam), DataMsg = Common.SerializeObject(new UpdateParam(typeof(SysAiQuery), Common.SerializeObject(item))) }
-				: new CvMsg { Flag = CvFlag.Msg201_Op_Execute, DataType = typeof(InsertParam), DataMsg = Common.SerializeObject(new InsertParam(typeof(SysAiQuery), Common.SerializeObject(item))) };
+				? new CvMsg { Flag = CvFlag.Msg111_Op_Execute, DataType = typeof(UpdateParam), DataMsg = Common.SerializeObject(new UpdateParam(typeof(SysAiQuery), Common.SerializeObject(item))) }
+				: new CvMsg { Flag = CvFlag.Msg111_Op_Execute, DataType = typeof(InsertParam), DataMsg = Common.SerializeObject(new InsertParam(typeof(SysAiQuery), Common.SerializeObject(item))) };
 			var reply = await AppGlobal.GetGrpcService<ICoreService>().QueryMsgAsync(msg, AppGlobal.GetDefaultCallContext(ct));
 			if (reply.Code == CvMsgErrorCode.ConcurrentUpdate) {
 				Warn("他の端末で更新・削除されています。保存一覧を再読込してから保存し直してください。");
@@ -680,7 +680,7 @@ public partial class AiQueryViewModel : BaseViewModel {
 		IsBusy = true;
 		try {
 			var reply = await AppGlobal.GetGrpcService<ICoreService>().QueryMsgAsync(new CvMsg {
-				Flag = CvFlag.Msg201_Op_Execute, DataType = typeof(DeleteParam), DataMsg = Common.SerializeObject(new DeleteParam(typeof(SysAiQuery), Common.SerializeObject(target))),
+				Flag = CvFlag.Msg111_Op_Execute, DataType = typeof(DeleteParam), DataMsg = Common.SerializeObject(new DeleteParam(typeof(SysAiQuery), Common.SerializeObject(target))),
 			}, AppGlobal.GetDefaultCallContext(ct));
 			if (reply.Code == CvMsgErrorCode.ConcurrentUpdate) Warn("他の端末で更新・削除されています。再読込します。");
 			else if (reply.Code < 0) throw new InvalidOperationException(reply.Option ?? reply.DataMsg);

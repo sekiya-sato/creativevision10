@@ -118,7 +118,7 @@ public class AiQueryTests {
 	}
 
 	Task<CvMsg> Execute(object param) => Service.QueryMsgAsync(new CvMsg {
-		Flag = CvFlag.Msg201_Op_Execute, DataType = param.GetType(), DataMsg = Common.SerializeObject(param)
+		Flag = CvFlag.Msg111_Op_Execute, DataType = param.GetType(), DataMsg = Common.SerializeObject(param)
 	});
 
 	static SysAiQuery NewSaved() => new() {

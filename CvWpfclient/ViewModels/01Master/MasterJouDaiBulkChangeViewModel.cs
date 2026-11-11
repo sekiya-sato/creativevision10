@@ -2086,7 +2086,7 @@ ORDER BY DayFrom";
 		var isNew = den.Id <= 0;
 		var msg = new CvMsg {
 			Code = 0,
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = isNew ? typeof(InsertParam) : typeof(UpdateParam),
 			DataMsg = isNew
 				? Common.SerializeObject(new InsertParam(typeof(TranJodai), JsonConvert.SerializeObject(den)))

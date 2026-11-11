@@ -72,7 +72,7 @@ public class PermissionProfileSaveTests {
 		var param = new PermissionProfileSaveParam(profile,
 			[.. rows.Select(r => new SysPermissionProfileDetail { FunctionId = r.FunctionId, IsAllowed = r.IsAllowed })]);
 		return await Service.QueryMsgAsync(new CvMsg {
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(PermissionProfileSaveParam),
 			DataMsg = Common.SerializeObject(param),
 		});
@@ -163,7 +163,7 @@ public class PermissionProfileSaveTests {
 
 		// 正規の画面からは来ない null 明細も、例外ではなく入力違反で返す
 		var nullRow = await Service.QueryMsgAsync(new CvMsg {
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(PermissionProfileSaveParam),
 			DataMsg = Common.SerializeObject(new PermissionProfileSaveParam(Profile(2), [null!])),
 		});

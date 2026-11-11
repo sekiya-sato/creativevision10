@@ -41,7 +41,7 @@ public sealed class PointMasterHandlerTests {
 
 	[TestCleanup]
 	public void Cleanup() { _db.Close(); _connection.Dispose(); _anchor.Dispose(); _provider.Dispose(); }
-	private Task<CvMsg> Send(object param) => _service.QueryMsgAsync(new CvMsg { Flag = CvFlag.Msg201_Op_Execute, DataType = param.GetType(), DataMsg = Common.SerializeObject(param) });
+	private Task<CvMsg> Send(object param) => _service.QueryMsgAsync(new CvMsg { Flag = CvFlag.Msg111_Op_Execute, DataType = param.GetType(), DataMsg = Common.SerializeObject(param) });
 	private Task<CvMsg> Insert(BaseDbClass item) => Send(new InsertParam(item.GetType(), Common.SerializeObject(item)));
 	private Task<CvMsg> Update(BaseDbClass item) => Send(new UpdateParam(item.GetType(), Common.SerializeObject(item)));
 	private T Row<T>(long id) => _db.Fetch<T>("WHERE Id=@0", id).Single();

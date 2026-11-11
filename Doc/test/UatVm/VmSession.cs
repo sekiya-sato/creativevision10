@@ -126,7 +126,7 @@ public sealed class VmSession {
 	}
 
 	/// <summary>
-	/// ドメインオブジェクトを新規登録する。ViewModelと同じgRPC経路（<c>Msg201_Op_Execute</c>／`InsertParam`）を使う。
+	/// ドメインオブジェクトを新規登録する。ViewModelと同じgRPC経路（<c>Msg111_Op_Execute</c>／`InsertParam`）を使う。
 	/// </summary>
 	/// <remarks>
 	/// 画面のBuildDenpyo相当の検証・正規化を経ない生の登録なので、既存伝票（Scope概念導入前のJscope空など）の
@@ -136,7 +136,7 @@ public sealed class VmSession {
 		var coreService = AppGlobal.GetGrpcService<ICoreService>();
 		var message = new CvMsg {
 			Code = 0,
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(InsertParam),
 			DataMsg = Common.SerializeObject(new InsertParam(typeof(T), Common.SerializeObject(item))),
 		};
@@ -149,7 +149,7 @@ public sealed class VmSession {
 	}
 
 	/// <summary>
-	/// ドメインオブジェクトを更新する。ViewModelと同じgRPC経路（<c>Msg201_Op_Execute</c>／`UpdateParam`）を使う。
+	/// ドメインオブジェクトを更新する。ViewModelと同じgRPC経路（<c>Msg111_Op_Execute</c>／`UpdateParam`）を使う。
 	/// </summary>
 	/// <remarks>
 	/// 任意SQLでUPDATEを送るAPIは存在しない（`Msg101_Op_Query`はSELECT/クエリ専用）。
@@ -160,7 +160,7 @@ public sealed class VmSession {
 		var coreService = AppGlobal.GetGrpcService<ICoreService>();
 		var message = new CvMsg {
 			Code = 0,
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(UpdateParam),
 			DataMsg = Common.SerializeObject(new UpdateParam(typeof(T), Common.SerializeObject(item))),
 		};

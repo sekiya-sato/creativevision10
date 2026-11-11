@@ -189,7 +189,7 @@ public static class AutoReplenishScenario {
 		session.Check(label + "必要10＝配分8＋発注2", vm.ErrorText.Length == 0 && vm.Rows.Sum(x => x.Row.TransferSu) == transfer && vm.Rows.Sum(x => x.Row.Su) == order && vm.Rows.Sum(x => x.Row.DemandSu) == transfer + order, new { vm.ErrorText, vm.StatusMessage, vm.SummaryText });
 	static Task<List<Tran13Hachu>> Orders(VmSession session, AutoReplenishSeeder.Result data) => session.QueryAsync<Tran13Hachu>("WHERE Id_Soko=@0 AND Id_Shiire=@1", data.Warehouse.Id.ToString(), data.Supplier.Id.ToString());
 	static Task<CvMsg> SendAsync(AutoReplenishParam request) => AppGlobal.GetGrpcService<ICoreService>().QueryMsgAsync(new CvMsg {
-		Flag = CvFlag.Msg201_Op_Execute, DataType = typeof(AutoReplenishParam), DataMsg = Common.SerializeObject(request) }, AppGlobal.GetDefaultCallContext());
+		Flag = CvFlag.Msg111_Op_Execute, DataType = typeof(AutoReplenishParam), DataMsg = Common.SerializeObject(request) }, AppGlobal.GetDefaultCallContext());
 
 	static Tran03Shiire CreateReceipt(AutoReplenishSeeder.Result d, long orderId) => new() {
 		DenDay = DateTime.Today.ToString("yyyyMMdd"), KakeDay = DateTime.Today.ToString("yyyyMMdd"), Id_Soko = d.Warehouse.Id,

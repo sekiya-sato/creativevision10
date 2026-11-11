@@ -230,9 +230,6 @@ public interface ISchedulerService {
 	Task<SchedulerResult> RemoveTaskAsync(RemoveSchedulerTaskRequest request, CallContext context = default);
 
 	[OperationContract]
-	Task<SchedulerResult> RemoveAllTasksAsync(CallContext context = default);
-
-	[OperationContract]
 	Task<GetSchedulerTasksResponse> GetTasksAsync(CallContext context = default);
 
 	[OperationContract]

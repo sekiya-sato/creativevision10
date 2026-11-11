@@ -236,7 +236,7 @@ public partial class SysPermissionProfileMenteViewModel : BaseViewModel {
 		try {
 			var reply = await AppGlobal.GetGrpcService<ICoreService>().QueryMsgAsync(new CvMsg {
 				Code = 0,
-				Flag = CvFlag.Msg201_Op_Execute,
+				Flag = CvFlag.Msg111_Op_Execute,
 				DataType = typeof(PermissionProfileSaveParam),
 				DataMsg = Common.SerializeObject(param),
 			}, AppGlobal.GetDefaultCallContext(CancellationToken.None));

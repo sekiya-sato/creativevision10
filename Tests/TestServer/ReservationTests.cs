@@ -101,7 +101,7 @@ public class ReservationTests {
 	private CoreService Service => _service ?? throw new AssertFailedException("Service not initialized");
 
 	private async Task<CvMsg> ExecuteAsync<T>(T param) where T : notnull => await Service.QueryMsgAsync(new CvMsg {
-		Flag = CvFlag.Msg201_Op_Execute,
+		Flag = CvFlag.Msg111_Op_Execute,
 		DataType = typeof(T),
 		DataMsg = Common.SerializeObject(param),
 	});

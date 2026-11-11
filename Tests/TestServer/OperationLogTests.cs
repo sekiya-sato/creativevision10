@@ -104,7 +104,7 @@ public class OperationLogTests {
 	public async Task GenericInsert_RecordsTypeCountIdsWithoutBody() {
 		var service = CreateService();
 		var item = new MasterShain { Code = "OPLOG01", Name = "個人情報テスト太郎" };
-		var reply = await service.QueryMsgAsync(Msg(CvFlag.Msg201_Op_Execute, new InsertParam(typeof(MasterShain), Common.SerializeObject(item))));
+		var reply = await service.QueryMsgAsync(Msg(CvFlag.Msg111_Op_Execute, new InsertParam(typeof(MasterShain), Common.SerializeObject(item))));
 		Assert.AreEqual(0, reply.Code, reply.Option);
 
 		var row = Rows().Single();
@@ -131,7 +131,7 @@ public class OperationLogTests {
 			new DeleteBulkParam(typeof(SysHistOperation), [new DeleteBulkRow(1, 0)]),
 			new PartialUpdateParam(typeof(SysHistOperation), ["Kind"], [new PartialUpdateRow(1, 0, ["2"])]),
 		}) {
-			var reply = await service.QueryMsgAsync(Msg(CvFlag.Msg201_Op_Execute, param));
+			var reply = await service.QueryMsgAsync(Msg(CvFlag.Msg111_Op_Execute, param));
 			Assert.AreEqual(CvMsgErrorCode.InvalidParameter, reply.Code, param.GetType().Name);
 		}
 		Assert.HasCount(0, Rows());
@@ -172,7 +172,7 @@ public class OperationLogTests {
 	public async Task Level_FiltersKinds() {
 		var query = Msg(CvFlag.Msg101_Op_Query, new QueryListParam(typeof(SysLogin), "Id = @0", null, ["1"]));
 		var menu = Msg(CvFlag.Msg093_OperationLog, new OperationLogParam(OperationKind.MenuOpen, "s", "f", "", ""));
-		var insert = Msg(CvFlag.Msg201_Op_Execute, new InsertParam(typeof(MasterShain), Common.SerializeObject(new MasterShain { Code = "L" })));
+		var insert = Msg(CvFlag.Msg111_Op_Execute, new InsertParam(typeof(MasterShain), Common.SerializeObject(new MasterShain { Code = "L" })));
 
 		foreach (var (level, expected) in new[] { (0, 0), (1, 1), (2, 2), (3, 3) }) {
 			Db.Execute("DELETE FROM SysHistOperation");

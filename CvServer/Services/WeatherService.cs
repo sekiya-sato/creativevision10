@@ -95,7 +95,6 @@ public partial class WeatherService : IWeatherService {
 			Temperature = main.GetProperty("temp").GetDouble(),
 			Condition = weather.GetProperty("main").GetString() ?? "",
 			Description = weather.GetProperty("description").GetString() ?? "",
-			IconUrl = $"https://openweathermap.org/img/wn/{iconCode}@2x.png",
 			Humidity = main.GetProperty("humidity").GetInt32(),
 			WindSpeed = wind.GetProperty("speed").GetDouble(),
 			IconKind = MapToMaterialIcon(iconCode),

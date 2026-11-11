@@ -138,7 +138,7 @@ public static class NouhinPrintFailScenario {
 			[new PartialUpdateRow(den.Id, den.Vdu, [isPrint.ToString()])]);
 		var reply = await AppGlobal.GetGrpcService<ICoreService>().QueryMsgAsync(new CvMsg {
 			Code = 0,
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(PartialUpdateParam),
 			DataMsg = Common.SerializeObject(update),
 		}, AppGlobal.GetDefaultCallContext());

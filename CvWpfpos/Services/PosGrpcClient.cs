@@ -11,7 +11,7 @@ using System.Net.Http;
 namespace CvWpfpos.Services;
 
 /// <summary>
-/// POS端末のサーバ通信。照会は Msg101_Op_Query、伝票の登録は Msg201_Op_Execute の汎用追加（InsertParam）を使う。
+/// POS端末のサーバ通信。照会は Msg101_Op_Query、伝票の登録は Msg111_Op_Execute の汎用追加（InsertParam）を使う。
 /// 単価・税・合計・精算の採番はサーバが確定させ、保存結果の伝票を返す（設計判断記録 §2.18）。
 /// </summary>
 public sealed class PosGrpcClient : IDisposable {
@@ -88,10 +88,10 @@ public sealed class PosGrpcClient : IDisposable {
 		return list ?? [];
 	}
 
-	/// <summary>ICoreService.Msg201_Op_Execute の汎用追加（InsertParam）。サーバが保存した行を返す。</summary>
+	/// <summary>ICoreService.Msg111_Op_Execute の汎用追加（InsertParam）。サーバが保存した行を返す。</summary>
 	public async Task<T> InsertAsync<T>(T item, CancellationToken cancellationToken) where T : class {
 		var reply = await coreService.QueryMsgAsync(new CvMsg {
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(InsertParam),
 			DataMsg = Common.SerializeObject(new InsertParam(typeof(T), Common.SerializeObject(item))),
 		}, CreateCallContext(cancellationToken));

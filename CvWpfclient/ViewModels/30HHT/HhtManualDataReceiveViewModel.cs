@@ -64,7 +64,7 @@ public partial class HhtManualDataReceiveViewModel : Helpers.BaseViewModel {
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			var msg = new CvMsg {
 				Code = 0,
-				Flag = CvFlag.Msg201_Op_Execute,
+				Flag = CvFlag.Msg111_Op_Execute,
 				DataMsg = Common.SerializeObject(new InsertBulkParam(typeof(TranVulcanHht), Common.SerializeObject(records))),
 				DataType = typeof(InsertBulkParam),
 			};

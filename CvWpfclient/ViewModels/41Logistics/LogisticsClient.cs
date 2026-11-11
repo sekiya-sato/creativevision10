@@ -9,7 +9,7 @@ namespace CvWpfclient.ViewModels._41Logistics;
 /// </summary>
 internal static class LogisticsClient {
 	/// <summary>
-	/// パラメータを <see cref="CvAsset.CvFlag.Msg201_Op_Execute"/> で送り、応答を <typeparamref name="T"/> に戻す。
+	/// パラメータを <see cref="CvAsset.CvFlag.Msg111_Op_Execute"/> で送り、応答を <typeparamref name="T"/> に戻す。
 	/// サーバのエラー応答は例外にせず Error に入れる（通信・キャンセルの例外は呼び出し側で扱う）。
 	/// </summary>
 	/// <returns>成功時は Result、失敗時は Error にメッセージ</returns>

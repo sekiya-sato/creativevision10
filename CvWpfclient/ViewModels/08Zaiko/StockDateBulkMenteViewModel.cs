@@ -255,7 +255,7 @@ public partial class StockDateBulkMenteViewModel : Helpers.BaseViewModel {
 	async Task<CvMsg> SendExecuteAsync(object parameter, Type dataType, CancellationToken ct) {
 		var msg = new CvMsg {
 			Code = 0,
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = dataType,
 			DataMsg = Common.SerializeObject(parameter)
 		};

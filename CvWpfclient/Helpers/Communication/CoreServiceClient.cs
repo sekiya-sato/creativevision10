@@ -52,7 +52,7 @@ internal static class CoreServiceClient {
 	internal static Task<CvMsg> SendExecuteAsync(object parameter, CancellationToken ct) {
 		var message = new CvMsg {
 			Code = 0,
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = parameter.GetType(),
 			DataMsg = Common.SerializeObject(parameter),
 		};

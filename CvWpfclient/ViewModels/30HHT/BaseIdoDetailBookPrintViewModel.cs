@@ -108,7 +108,7 @@ public abstract partial class BaseIdoDetailBookPrintViewModel<TDen> : BaseReport
 				[.. targets.Select(x => new PartialUpdateRow(x.Id, x.Vdu, ["1"]))]);
 			var reply = await AppGlobal.GetGrpcService<ICoreService>().QueryMsgAsync(new CvMsg {
 				Code = 0,
-				Flag = CvFlag.Msg201_Op_Execute,
+				Flag = CvFlag.Msg111_Op_Execute,
 				DataType = typeof(PartialUpdateParam),
 				DataMsg = Common.SerializeObject(update),
 			}, AppGlobal.GetDefaultCallContext(ct));

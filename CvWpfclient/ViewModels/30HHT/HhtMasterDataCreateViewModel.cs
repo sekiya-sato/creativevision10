@@ -58,7 +58,7 @@ public partial class HhtMasterDataCreateViewModel : Helpers.BaseViewModel {
 			var coreService = AppGlobal.GetGrpcService<ICoreService>();
 			var msg = new CvMsg {
 				Code = 0,
-				Flag = CvFlag.Msg300_Op_OutData,
+				Flag = CvFlag.Msg121_Op_OutData,
 				DataMsg = Common.SerializeObject(new OutDataHhtMasterParam(IsFixedLengthFormat, 0)),
 				DataType = typeof(OutDataHhtMasterParam)
 			};

@@ -140,7 +140,7 @@ public partial class ExternalCsvUpdateViewModel : Helpers.BaseViewModel {
 				var lineNo = index < importLineNos.Count ? importLineNos[index] : 0;
 				var msg = new CvMsg {
 					Code = 0,
-					Flag = CvFlag.Msg201_Op_Execute,
+					Flag = CvFlag.Msg111_Op_Execute,
 					DataType = typeof(UpdateParam),
 					DataMsg = Common.SerializeObject(new UpdateParam(importType, Common.SerializeObject(item)))
 				};

@@ -230,7 +230,7 @@ public class CoreServiceTests {
 		var edit = db.SingleById<MasterMeisho>(brand.Id);
 		edit.Name = "新ブランド";
 		var request = new CvMsg {
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			Code = 0,
 			DataType = typeof(UpdateParam),
 			DataMsg = Common.SerializeObject(new UpdateParam(typeof(MasterMeisho), Common.SerializeObject(edit)))
@@ -250,7 +250,7 @@ public class CoreServiceTests {
 		var vduBefore = after.Vdu;
 		edit2.Ryaku = "略称のみ変更";
 		var request2 = new CvMsg {
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			Code = 0,
 			DataType = typeof(UpdateParam),
 			DataMsg = Common.SerializeObject(new UpdateParam(typeof(MasterMeisho), Common.SerializeObject(edit2)))

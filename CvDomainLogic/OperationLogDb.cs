@@ -81,11 +81,10 @@ public sealed class OperationLogDb {
 	/// </summary>
 	public static int ClassifyKind(CvFlag flag) => flag switch {
 		CvFlag.Msg001_CopyReply or CvFlag.Msg002_GetVersion or CvFlag.Msg003_GetEnv or CvFlag.Msg004_GetConnectionStatus => 0,
-		CvFlag.Msg700_Test_Start or CvFlag.Msg701_TestCase001 or CvFlag.Msg702_TestCase002 => 0,
 		// 画面の起動・終了はハンドラ自身が記録する
 		CvFlag.Msg093_OperationLog => 0,
 		CvFlag.Msg101_Op_Query => OperationKind.Query,
-		CvFlag.Msg201_Op_Execute => OperationKind.Update,
+		CvFlag.Msg111_Op_Execute => OperationKind.Update,
 		_ => OperationKind.Execute,
 	};
 

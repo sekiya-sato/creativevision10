@@ -284,7 +284,7 @@ public partial class SalesStaffBudgetMasterViewModel : BaseViewModel {
 			);
 			var msg = new CvMsg {
 				Code = 0,
-				Flag = CvFlag.Msg201_Op_Execute,
+				Flag = CvFlag.Msg111_Op_Execute,
 				DataType = typeof(InsertBulkParam),
 				DataMsg = Common.SerializeObject(bulkParam)
 			};

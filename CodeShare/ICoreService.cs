@@ -144,10 +144,6 @@ public enum CvFlag {
 	/// </summary>
 	[EnumMember]
 	Msg004_GetConnectionStatus = 4,
-	[EnumMember]
-	Msg030_ConvertSqlite2Mariadb = 31,
-	[EnumMember]
-	Msg030_ConvertSqlite2Postgre = 32,
 	/// <summary>
 	/// データベースの変換
 	/// </summary>
@@ -347,21 +343,12 @@ public enum CvFlag {
 	/// DBデータを操作
 	/// </summary>
 	[EnumMember]
-	Msg201_Op_Execute = 111,
+	Msg111_Op_Execute = 111,
 	/// <summary>
 	/// データ出力: DataTypeにより処理分岐
 	/// </summary>
 	[EnumMember]
-	Msg300_Op_OutData = 121,
-	/// <summary>
-	/// テスト用メッセージ開始値
-	/// </summary>
-	[EnumMember]
-	Msg700_Test_Start = 7700,
-	[EnumMember]
-	Msg701_TestCase001 = 7701,
-	[EnumMember]
-	Msg702_TestCase002 = 7702,
+	Msg121_Op_OutData = 121,
 	/// <summary>
 	/// ストリーミングテスト
 	/// </summary>
@@ -373,30 +360,6 @@ public enum CvFlag {
 	/// </summary>
 	[EnumMember]
 	Msg800_Error_Start = 9800,
-	/// <summary>
-	/// 未実装エラー QueryDbResult
-	/// [Unimplemented error QueryDbResult]
-	/// </summary>
-	[EnumMember]
-	Msg801_Error_Unimplemented = 9801,
-	/// <summary>
-	/// Exceptionエラー QueryDbResult
-	/// [Exception error QueryDbResult]
-	/// </summary>
-	[EnumMember]
-	Msg802_Error_ExceptionOccurred = 9802,
-	/// <summary>
-	/// 未実装エラー
-	/// [Not implemented error]
-	/// </summary>
-	[EnumMember]
-	Msg901_Error_Unimplemented = 9901,
-	/// <summary>
-	/// Exceptionエラー
-	/// [Exception error]
-	/// </summary>
-	[EnumMember]
-	Msg902_Error_ExceptionOccurred = 9902,
 	/// <summary>
 	/// 最大値4桁 9000以降はエラー等
 	/// [Maximum value 4 digits 9000 and later are errors etc.]

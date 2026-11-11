@@ -368,7 +368,7 @@ public partial class PointLedgerManualViewModel : BaseViewModel {
 	async Task<TranPointEvent?> InsertAsync(TranPointEvent row, string actionName, CancellationToken ct) {
 		var reply = await SendMessageAsync(new CvMsg {
 			Code = 0,
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(InsertParam),
 			DataMsg = Common.SerializeObject(new InsertParam(typeof(TranPointEvent), Common.SerializeObject(row))),
 		}, ct);

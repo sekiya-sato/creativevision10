@@ -38,10 +38,6 @@ public sealed record class WeatherInfo {
 	[DataMember(Order = 4)]
 	public string Description { get; init; } = string.Empty;
 
-	/// <summary>天気アイコンURL (OpenWeatherMap)</summary>
-	[DataMember(Order = 5)]
-	public string IconUrl { get; init; } = string.Empty;
-
 	/// <summary>湿度 (%)</summary>
 	[DataMember(Order = 6)]
 	public int Humidity { get; init; }
@@ -61,10 +57,6 @@ public sealed record class WeatherInfo {
 	/// <summary>日の入り時刻</summary>
 	[DataMember(Order = 10)]
 	public DateTime Sunset { get; init; } = DateTime.MinValue;
-
-	/// <summary>時間別予報リスト</summary>
-	[DataMember(Order = 11)]
-	public List<HourlyForecast> HourlyForecasts { get; init; } = [];
 
 	// デシリアライザ用のデフォルトコンストラクタ
 	public WeatherInfo() { }

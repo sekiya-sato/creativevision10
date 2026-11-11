@@ -78,7 +78,7 @@ public class HaibunSaveHandlerTests {
 	private async Task<CvMsg> SaveAsync(TranHaibun[] replace, TranHaibun[] insert) {
 		var param = new HaibunSaveParam([.. replace.Select(x => new DeleteBulkRow(x.Id, x.Vdu))], insert);
 		return await Service.QueryMsgAsync(new CvMsg {
-			Flag = CvFlag.Msg201_Op_Execute,
+			Flag = CvFlag.Msg111_Op_Execute,
 			DataType = typeof(HaibunSaveParam),
 			DataMsg = Common.SerializeObject(param),
 		});
