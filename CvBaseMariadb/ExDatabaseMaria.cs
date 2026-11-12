@@ -1,7 +1,9 @@
 ﻿using CvBase;
 using MySqlConnector;
+using NPoco;
 using System.Data;
 using System.Data.Common;
+using System.Reflection;
 
 
 namespace CvBaseMariadb;
@@ -111,8 +113,12 @@ public partial class ExDatabaseMaria : ExDatabase {
 		CommandTimeout = timeoutSec;
 	}
 
+	const int _default_varchar2_length = 255; // Use for GetSqlColumns()
+	const int _default_list_length = 1000; // Use for GetSqlColumns()
+	const string _default_varchar = " default ''";// Use for GetSqlColumns()
+
 	/// <summary>
-	/// 基底の列定義をMariaDB向けに補正する。
+	/// クラスの中に含まれるプロパティの配列を"Name database型"で返す(MariaDB の型名)。
 	/// <para>
 	/// 1) 列名を `` ` `` で囲む（<c>SysUpdateDb.Sql</c> のような予約語の列で CREATE TABLE が失敗するため）。
 	/// 2) <c>[SerializedColumn]</c>（JSONを文字列で保存する列）は <c>ColumnSizeDml</c> の桁数に関係なく longtext にする。
@@ -121,25 +127,111 @@ public partial class ExDatabaseMaria : ExDatabase {
 	/// </para>
 	/// </summary>
 	public override List<string> GetSqlColumns(Type classT) {
-		var columns = base.GetSqlColumns(classT);
-		var result = new List<string>(columns.Count);
-		foreach (var column in columns) {
-			var separator = column.IndexOf(' ');
-			if (separator <= 0) {
-				result.Add(column);
-				continue;
-			}
-			var name = column[..separator];
-			var definition = column[(separator + 1)..];
-			var property = classT.GetProperty(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-			if (property != null
-				&& System.Reflection.CustomAttributeExtensions.GetCustomAttribute<NPoco.SerializedColumnAttribute>(property) != null
+		var result = new List<string>();
+		foreach (var property in GetColumnProperties(classT)) {
+			var definition = GetMariaColumnType(property);
+			if (definition == null)
+				continue; // 列にしない項目 [Not a column]
+			if (property.GetCustomAttribute<SerializedColumnAttribute>() != null
 				&& !definition.StartsWith("JSON", StringComparison.OrdinalIgnoreCase)) {
 				definition = "longtext";
 			}
-			result.Add($"{QuoteIdentifier(name)} {definition}");
+			result.Add($"{QuoteIdentifier(property.Name)} {definition}");
 		}
 		return result;
+	}
+
+	/// <summary>
+	/// プロパティに対応するMariaDBの型定義を返す。列にしない場合は null。
+	/// </summary>
+	static string? GetMariaColumnType(PropertyInfo item) {
+		// カラムサイズの定義があるかどうか [Whether there is a column size definition]
+		// 文字列・JSON・列挙以外の指定はプロパティの型から決める(型名が空の列を作らない)
+		var attrSize = item.GetCustomAttribute<ColumnSizeDmlAttribute>();
+		var type = attrSize?.ColType switch {
+			ColumnType.String => $"varchar({attrSize.Size}) " + _default_varchar,
+			ColumnType.Json => "JSON",
+			ColumnType.Enum => "int not null default 0",
+			_ => null
+		};
+		if (type == null) {
+			switch (item.PropertyType.Name) {
+				case "Boolean":
+					type = "TINYINT not null default 0";
+					break;
+				case "Byte":
+				case "SByte":
+					type = "varchar(1) not null default '0'";
+					break;
+				case "Char":
+					type = "varchar(1) " + _default_varchar;
+					break;
+				case "Decimal":
+					type = "decimal(14,8) not null default 0";
+					break;
+				case "Double":
+					type = "double(14,8) not null default 0";
+					break;
+				case "Single":
+					type = "float(14,8) not null default 0";
+					break;
+				case "Int16":
+				case "Int32":
+				case "UInt16":
+				case "UInt32":
+					type = "int not null default 0";
+					break;
+				case "Int64":
+				case "UInt64":
+					type = "bigint not null default 0";
+					break;
+				case "String":
+					type = $"varchar({_default_varchar2_length}) " + _default_varchar;
+					break;
+				default:
+					if (item.PropertyType.Name.StartsWith("List"))
+						return null;
+					type = $"varchar({_default_list_length}) " + _default_varchar;
+					break;
+			}
+		}
+		if (item.Name == "Id") // 列Idであればキー項目 [If it is a column Id, it is a key item]
+			type = "bigint auto_increment";
+		return type;
+	}
+
+	/// <summary>
+	/// テーブルが存在するかどうか
+	/// </summary>
+	public override bool IsExistTable(string tableName) {
+		if (string.IsNullOrEmpty(tableName))
+			return false;
+		tableName = GetUnqualifiedTableName(tableName);
+		var schema = GetCurrentDatabase();
+		return ExistsRow($"SELECT TABLE_NAME,TABLE_ROWS,TABLE_COMMENT,auto_increment from INFORMATION_SCHEMA.TABLES \r\n WHERE table_schema='{schema}' and TABLE_NAME = '{tableName}'");
+	}
+
+	/// <summary>
+	/// 索引を削除するSQL。MariaDB は <c>ON 表名</c> が無いと構文エラーになる
+	/// (付けないと CreateTable の強制再作成が索引の削除で失敗し、索引が作られない)。
+	/// </summary>
+	protected override string GetSqlDropIndex(string tableName, string indexName) =>
+		$"DROP INDEX IF EXISTS {indexName} ON {tableName}";
+
+	/// <summary>
+	/// コメントの作成(上書)
+	/// [Create comment (overwrite)]
+	/// </summary>
+	public override int CreateComment(Type classT) {
+		var ret = 0;
+		var tableNameAttr = classT.GetCustomAttribute<CommentAttribute>();
+		var tableName = GetTableName(classT);
+		if (tableNameAttr != null) {
+			// コメント内の ' を二重化する（MasterShohin のコメントに ' を含み、MariaDBで構文エラーになっていた）
+			var sql = $"ALTER TABLE {tableName} COMMENT = '{tableNameAttr.Content.Replace("'", "''")}'";
+			ret = Execute(sql);
+		}
+		return ret;
 	}
 
 	public override IReadOnlyList<string> GetUserTableNames() =>

@@ -1,9 +1,7 @@
 ﻿using CvBase;
 using Microsoft.Data.Sqlite;
-using NPoco;
 using System.Data;
 using System.Data.Common;
-using System.Reflection;
 
 
 namespace CvBaseSqlite;
@@ -97,6 +95,52 @@ public partial class ExDatabaseSqlite : ExDatabase {
 		}
 	}
 
+	/// <summary>
+	/// 接続先の実表名を取得する。Sys表を含み、DB内部表・ビューを除く。
+	/// </summary>
+	public override IReadOnlyList<string> GetUserTableNames() =>
+		Fetch<string>("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
+
+	/// <summary>
+	/// テーブルが存在するかどうか
+	/// </summary>
+	public override bool IsExistTable(string tableName) {
+		if (string.IsNullOrEmpty(tableName))
+			return false;
+		tableName = GetUnqualifiedTableName(tableName);
+		return ExistsRow($"select * from sqlite_master where type = 'table' and name='{tableName}'");
+	}
+
+	/// <summary>
+	/// テーブル一覧と件数の取得
+	/// </summary>
+	public override List<Tuple<string, string, long>> GetTableCounts(string tableName = "") {
+		string sql = $"""
+SELECT type, name,
+'select '''||name|| '''  name,  count(*) cnt from ' || name || '' AS sqlstr
+FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+""";
+		if (!string.IsNullOrEmpty(tableName)) {
+			sql += $" AND name = '{tableName}'";
+		}
+		else {
+			sql += " AND name NOT LIKE 'Sys%'";
+		}
+		var rows = RawExecCmd(sql);
+		var result = new List<Tuple<string, string, long>>();
+		foreach (var row in rows) {
+			var sql2 = row["sqlstr"]?.ToString() ?? "";
+			var name = row["name"]?.ToString() ?? "";
+			var comment = GetComment(name); // コメントの取得 (必要に応じて使用) [Get comment (use as needed)]
+			if (!string.IsNullOrEmpty(sql2)) {
+				var retQuery = RawExecCmd(sql2);
+				var cnt = retQuery.FirstOrDefault()?["cnt"] ?? 0;
+				result.Add(new Tuple<string, string, long>(row["name"]?.ToString() ?? "", comment, Convert.ToInt64(cnt)));
+			}
+		}
+		return result;
+	}
+
 	static readonly string _default_varchar = " NOT NULL DEFAULT ''"; // not null ではない varchar型のデフォルト定義
 
 	/// <summary>
@@ -107,36 +151,10 @@ public partial class ExDatabaseSqlite : ExDatabase {
 	/// <returns></returns>
 	public override List<string> GetSqlColumns(Type classT) {
 		var ret = new List<string>();
-		var infoArray2 = classT.GetProperties();
-		if (infoArray2 == null || infoArray2.Length == 0)
-			return ret;
-		var infoArray = new List<PropertyInfo>();
-		var columnId = infoArray2.FirstOrDefault(c => c.Name == "Id");
-		if (columnId != null)
-			infoArray.Add(columnId);
-		var columnCreated = infoArray2.FirstOrDefault(c => c.Name == "Vdc");
-		if (columnCreated != null)
-			infoArray.Add(columnCreated);
-		var columnUpdated = infoArray2.FirstOrDefault(c => c.Name == "Vdu");
-		if (columnUpdated != null)
-			infoArray.Add(columnUpdated);
-		for (int i = 0; i < infoArray2.Length; i++) {
-			if (infoArray2[i].Name != "Id" && infoArray2[i].Name != "Vdc" && infoArray2[i].Name != "Vdu")
-				infoArray.Add(infoArray2[i]);
-		}
-		foreach (var item in infoArray) {
+		// 列順と除外(static・Ignore・ComputedColumn・ResultColumn)は基底の共通処理に揃える
+		foreach (var item in GetColumnProperties(classT)) {
 			var name = item.Name;
 			var type = ""; // NUMBER,TEXT,REAL
-						   // 無視するカラムかどうか [Whether to ignore the column]
-			var attrIgnore = (IgnoreAttribute?)Attribute.GetCustomAttribute(item, typeof(IgnoreAttribute));
-			if (attrIgnore != null)
-				continue; // 無視する項目だった場合 [If it was an item to ignore]
-			var attrComputed = (ComputedColumnAttribute?)Attribute.GetCustomAttribute(item, typeof(ComputedColumnAttribute));
-			if (attrComputed != null)
-				continue;
-			var attrResult = (ResultColumnAttribute?)Attribute.GetCustomAttribute(item, typeof(ResultColumnAttribute));
-			if (attrResult != null)
-				continue;
 			switch (item.PropertyType.Name) {
 				case "Boolean":
 					type = "NUMBER";
@@ -195,7 +213,12 @@ public partial class ExDatabaseSqlite : ExDatabase {
 					type += _default_varchar;
 					break;
 				default:
-					if (item.PropertyType.Name.StartsWith("List")) {
+					if (item.PropertyType.IsEnum) {
+						// 列挙型は数値で保存する。TEXT にすると値が文字列で返り、NPoco が列挙型へ戻せない
+						type = "NUMBER";
+						type += " not null default 0";
+					}
+					else if (item.PropertyType.Name.StartsWith("List")) {
 						type = "TEXT";
 						type += _default_varchar;
 					}

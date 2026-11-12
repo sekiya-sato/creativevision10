@@ -2,7 +2,7 @@
 # description
 DdlSnapshotTests は3DBのDDL生成を突き合わせます（T6）。
 
-`GetSqlColumns` は SQLite / MariaDB(基底) / PostgreSQL で別々に実装されているため、
+`GetSqlColumns` は SQLite / MariaDB / PostgreSQL の各プロバイダーで別々に実装されているため、
 放っておくと列の採否や並びがずれます。ずれると同じ業務SQLが片方のDBで動かなくなるので、
 **同じテーブルから同じ列集合が出ること**をテストで固定します。
 

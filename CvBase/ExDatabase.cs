@@ -7,14 +7,11 @@ using System.Reflection;
 namespace CvBase;
 
 /// <summary>
-/// データベース操作用Class mariaDB依存部分(主にDDL)
-/// [Class for database operations (MariaDB dependent parts, mainly DDL)]
+/// データベース操作用Class。DBに依存しない共通処理(方言変換の入口、CREATE文の組み立て、生SQL実行)を持つ。
+/// 接続の生成、列定義(型名)、メタデータ照会などDB固有の処理は CvBaseSqlite / CvBaseMariadb / CvBasePostgre / CvBaseOracle の派生クラスに置く。
+/// [Class for database operations (provider independent parts)]
 /// </summary>
 public partial class ExDatabase : Database {
-
-	const int _default_varchar2_length = 255; // Use for GetSqlColumns()
-	const int _default_list_length = 1000; // Use for GetSqlColumns()
-	const string _default_varchar = " default ''";// Use for GetSqlColumns()
 
 	/// <summary>
 	/// ロガーインスタンス [Logger instance]
@@ -169,134 +166,38 @@ public partial class ExDatabase : Database {
 
 
 	/// <summary>
-	/// SqlDepends: クラスの中に含まれるプロパティの配列を"Name database型"で返す
+	/// クラスの中に含まれるプロパティの配列を"Name database型"で返す。
+	/// 型名・既定値・自動採番の書き方がDBごとに違うため、接続先プロバイダーで実装する。
 	/// </summary>
 	/// <param name="classT"></param>
 	/// <returns></returns>
-	public virtual List<string> GetSqlColumns(Type classT) {
-		var ret = new List<string>();
+	public virtual List<string> GetSqlColumns(Type classT) =>
+		throw new NotSupportedException("列定義の生成は接続先プロバイダーで実装してください。");
+	/// <summary>
+	/// テーブルの列になるプロパティを列順(Id, Vdc, Vdu, 以降は定義順)で返す。
+	/// <para>
+	/// 対象は public のインスタンスプロパティ。Static を含めないのは DerivedJodai.TodaySql のような
+	/// 式プロパティを列にしないため。Ignore / ComputedColumn / ResultColumn 属性の付いたものは除く。
+	/// </para>
+	/// </summary>
+	protected static List<PropertyInfo> GetColumnProperties(Type classT) {
 		// BindingFlags.Public だけでは何も返らない(Instance/Static の指定が必須)。
-		// 指定漏れのため MariaDB では列が0個の CREATE TABLE が生成されていた。
-		// Static を含めないのは DerivedJodai.TodaySql のような式プロパティを列にしないため。
-		var infoArray2 = classT.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-		if (infoArray2 == null || infoArray2.Length == 0)
-			return ret;
-		var infoArray = new List<PropertyInfo>();
-		var columnId = infoArray2.FirstOrDefault(c => c.Name == "Id");
-		if (columnId != null)
-			infoArray.Add(columnId);
-		var columnCreated = infoArray2.FirstOrDefault(c => c.Name == "Vdc");
-		if (columnCreated != null)
-			infoArray.Add(columnCreated);
-		var columnUpdated = infoArray2.FirstOrDefault(c => c.Name == "Vdu");
-		if (columnUpdated != null)
-			infoArray.Add(columnUpdated);
-		foreach (var item in infoArray2) {
-			if (item.Name != "Id" && item.Name != "Vdc" && item.Name != "Vdu")
-				infoArray.Add(item);
+		var properties = classT.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+		var ordered = new List<PropertyInfo>();
+		foreach (var head in (string[])["Id", "Vdc", "Vdu"]) {
+			var property = properties.FirstOrDefault(c => c.Name == head);
+			if (property != null)
+				ordered.Add(property);
 		}
-		foreach (var item in infoArray) {
-			var name = item.Name;
-			var type = ""; // NUMBER,TEXT,REAL
-						   // 無視するカラムかどうか [Whether it is an ignored column]
-			if (item.GetCustomAttribute<IgnoreAttribute>() != null)
-				continue; // 無視する項目だった場合 [If it is an ignored item]
-			if (item.GetCustomAttribute<ComputedColumnAttribute>() != null)
-				continue;
-			if (item.GetCustomAttribute<ResultColumnAttribute>() != null)
-				continue;
-			// カラムサイズの定義があるかどうか [Whether there is a column size definition]
-			var attrSize = item.GetCustomAttribute<ColumnSizeDmlAttribute>();
-			if (attrSize != null) { // サイズおよび型指定があれば
-				if (attrSize.ColType == ColumnType.String) {
-					type = $"varchar({attrSize.Size}) " + _default_varchar;
-				}
-				else if (attrSize.ColType == ColumnType.Json) {
-					type = "JSON";
-				}
-				else if (attrSize.ColType == ColumnType.Enum) {
-					type = "int not null default 0";
-				}
-			}
-			else {
-				switch (item.PropertyType.Name) {
-					case "Boolean":
-						type = "TINYINT";
-						type += " not null default 0";
-						break;
-					case "Byte":
-						type = "varchar(1)";
-						type += " not null default '0'";
-						break;
-					case "Char":
-						type = "varchar(1)";
-						type += " " + _default_varchar;
-						break;
-					case "Decimal":
-						type = "decimal(14,8)";
-						type += " not null default 0";
-						break;
-					case "Double":
-						type = "double(14,8)";
-						type += " not null default 0";
-						break;
-					case "Single":
-						type = "float(14,8)";
-						type += " not null default 0";
-						break;
-					case "Int16":
-						type = "int";
-						type += " not null default 0";
-						break;
-					case "Int32":
-						type = "int";
-						type += " not null default 0";
-						break;
-					case "Int64":
-						type = "bigint";
-						type += " not null default 0";
-						break;
-					case "UInt16":
-						type = "int";
-						type += " not null default 0";
-						break;
-					case "UInt32":
-						type = "int";
-						type += " not null default 0";
-						break;
-					case "UInt64":
-						type = "bigint";
-						type += " not null default 0";
-						break;
-					case "SByte":
-						type = "varchar(1)";
-						type += " not null default '0'";
-						break;
-					case "String":
-						type = $"varchar({_default_varchar2_length}) " + _default_varchar;
-						break;
-					default:
-						if (item.PropertyType.Name.StartsWith("List"))
-							continue;
-						type = $"varchar({_default_list_length}) " + _default_varchar;
-						break;
-				}
-			}
-			if (name == "Id") { // 列Idであればキー項目 [If it is a column Id, it is a key item]
-				type = "bigint auto_increment"; // mariaDB
-				if (Connection.ToString().ToLower().Contains("sqlite")) {
-					type = "INTEGER PRIMARY KEY AUTOINCREMENT"; // Sqlite で自動採番を有効にする
-				}
-			}
-			/*
-			var attrComment = (CommentAttribute?)Attribute.GetCustomAttribute(item, typeof(CommentAttribute));
-			if (attrComment != null) {
-				type += $" comment '{attrComment.Content}'";
-			}
-			*/
-			ret.Add((name + " " + type).Trim());
+		foreach (var property in properties) {
+			if (property.Name != "Id" && property.Name != "Vdc" && property.Name != "Vdu")
+				ordered.Add(property);
 		}
-		return ret;
+		ordered.RemoveAll(static property =>
+			property.GetCustomAttribute<IgnoreAttribute>() != null
+			|| property.GetCustomAttribute<ComputedColumnAttribute>() != null
+			|| property.GetCustomAttribute<ResultColumnAttribute>() != null);
+		return ordered;
 	}
 	public string GetCurrentDatabase() {
 		var dbname = Connection?.Database ?? "";
@@ -319,11 +220,8 @@ public partial class ExDatabase : Database {
 	/// <summary>
 	/// 接続先の実表名を取得する。Sys表を含み、DB内部表・ビューを除く。照会失敗は呼出元へ通知する。
 	/// </summary>
-	public virtual IReadOnlyList<string> GetUserTableNames() {
-		if (DatabaseType != NPoco.DatabaseType.SQLite)
-			throw new NotSupportedException("実表一覧の取得は接続先プロバイダーで実装してください。");
-		return Fetch<string>("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
-	}
+	public virtual IReadOnlyList<string> GetUserTableNames() =>
+		throw new NotSupportedException("実表一覧の取得は接続先プロバイダーで実装してください。");
 
 	/// <summary>
 	/// テーブルが存在するかどうか
@@ -335,34 +233,33 @@ public partial class ExDatabase : Database {
 		return IsExistTable(tableName);
 	}
 	/// <summary>
-	/// テーブルが存在するかどうか
+	/// テーブルが存在するかどうか。メタデータの照会方法がDBごとに違うため、接続先プロバイダーで実装する。
 	/// </summary>
 	/// <param name="tableName"></param>
 	/// <returns></returns>
-	public virtual bool IsExistTable(string tableName) {
-		bool ret = false;
-		if (string.IsNullOrEmpty(tableName))
-			return false;
+	public virtual bool IsExistTable(string tableName) =>
+		throw new NotSupportedException("テーブルの存在確認は接続先プロバイダーで実装してください。");
+	/// <summary>
+	/// スキーマ修飾(a.b)を外した表名を返す。
+	/// </summary>
+	protected static string GetUnqualifiedTableName(string tableName) {
 		if (tableName.Contains('.')) {
 			var splitName = tableName.Split('.');
 			tableName = splitName[splitName.Length - 1];
 		}
-		var schema = GetCurrentDatabase();
-		var checkSql = $"SELECT TABLE_NAME,TABLE_ROWS,TABLE_COMMENT,auto_increment from INFORMATION_SCHEMA.TABLES \r\n WHERE table_schema='{schema}' and TABLE_NAME = '{tableName}'";
-		if (DatabaseType == NPoco.DatabaseType.SQLite)
-			checkSql = $"select * from sqlite_master where type = 'table' and name='{tableName}'";
-		if (DatabaseType == NPoco.DatabaseType.Oracle || DatabaseType == NPoco.DatabaseType.OracleManaged)
-			checkSql = $"select * from user_tables where table_name=upper('{tableName}')";
+		return tableName;
+	}
+	/// <summary>
+	/// 存在確認SQLを実行し、1行以上返れば true。SQLエラーはログへ出して false を返す。
+	/// </summary>
+	protected bool ExistsRow(string checkSql) {
 		try {
-			var schemaTables = Fetch<dynamic>(checkSql);
-			if (schemaTables.Count > 0)
-				ret = true;
+			return Fetch<dynamic>(checkSql).Count > 0;
 		}
 		catch (Exception ex) {
 			_logger.LogError(ex, string.Format("SQL実行エラー {0}", checkSql));
 			return false;
 		}
-		return ret;
 	}
 	/// <summary>
 	/// テーブルおよび関連キーの作成(デフォルトはテーブル存在時は何もしない) 成功したら戻り値true
@@ -426,7 +323,15 @@ public partial class ExDatabase : Database {
 	}
 	void CreateIndex(Type classT, bool isForce = false) {
 		var tableName = GetTableName(classT);
-		var attrs = classT.GetCustomAttributes<KeyDmlAttribute>();
+		// 同名の索引は派生クラスの定義だけを使う。SummaryStock は親 SummaryRealStock と同じ名前(unq1)を
+		// 別の列構成で定義しており、親の分まで実行すると強制再作成のとき子の索引を消して親の列構成で作り直してしまう。
+		var attrs = new List<KeyDmlAttribute>();
+		for (var type = classT; type != null; type = type.BaseType) {
+			foreach (var attrKey in type.GetCustomAttributes<KeyDmlAttribute>(false)) {
+				if (!attrs.Any(c => c.KeyName == attrKey.KeyName))
+					attrs.Add(attrKey);
+			}
+		}
 		foreach (var attrKey in attrs) {
 			var indexName = attrKey.KeyName;
 			var colNames = string.Join(",", attrKey.ColNames);
@@ -459,13 +364,18 @@ public partial class ExDatabase : Database {
 		 */
 		int ret = 0;
 		if (isForce) {
-			ret = Execute(string.Format("DROP INDEX IF EXISTS {0}", indexName));
+			ret = Execute(GetSqlDropIndex(tbName, indexName));
 		}
 		ret = Execute(string.Format("CREATE {3} INDEX IF NOT EXISTS {1} ON {0}({2})"
 			, tbName, indexName, dbColumn, isUnique ? "unique" : ""));
 		if (ret == 0) return 1;
 		else return -1;
 	}
+	/// <summary>
+	/// 索引を削除するSQL。MariaDB は <c>ON 表名</c> が必須のためプロバイダーで上書きする。
+	/// </summary>
+	protected virtual string GetSqlDropIndex(string tableName, string indexName) =>
+		string.Format("DROP INDEX IF EXISTS {0}", indexName);
 	/*
 	public bool CreateView<T>(bool isForce = false) where T : IViewClass, new() {
 		var ret = 0;
@@ -500,26 +410,13 @@ public partial class ExDatabase : Database {
 
 
 	/// <summary>
-	/// コメントの作成(上書)
+	/// コメントの作成(上書)。基底では何もしない(SQLite はテーブルコメントを持たない)。
+	/// 構文がDBごとに違うため、対応するプロバイダーで実装する。
 	/// [Create comment (overwrite)]
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <returns></returns>
-	public virtual int CreateComment(Type classT) {
-		if (DatabaseType == NPoco.DatabaseType.SQLite)
-			return 0;
-		if (DatabaseType == NPoco.DatabaseType.Oracle || DatabaseType == NPoco.DatabaseType.OracleManaged)
-			return 0;
-		var ret = 0;
-		var tableNameAttr = (CommentAttribute?)Attribute.GetCustomAttribute(classT, typeof(CommentAttribute));
-		var tableName = GetTableName(classT);
-		if (tableNameAttr != null) {
-			// コメント内の ' を二重化する（MasterShohin のコメントに ' を含み、MariaDBで構文エラーになっていた）
-			var sql = $"ALTER TABLE {tableName} COMMENT = '{tableNameAttr.Content.Replace("'", "''")}'";
-			ret = Execute(sql);
-		}
-		return ret;
-	}
+	public virtual int CreateComment(Type classT) => 0;
 	/// <summary>
 	/// RawExecCommand用の列挙型
 	/// [Enumeration for RawExecCommand]
@@ -696,41 +593,17 @@ public partial class ExDatabase : Database {
 	}
 
 	/// <summary>
-	/// SqlDepends: テーブル一覧と件数の取得
+	/// テーブル一覧と件数の取得。メタデータの照会方法がDBごとに違うため、接続先プロバイダーで実装する。
 	/// </summary>
 	/// <returns></returns>
-	public virtual List<Tuple<string, string, long>> GetTableCounts(string tableName = "") {
-		string sql = $"""
-SELECT type, name,  
-'select '''||name|| '''  name,  count(*) cnt from ' || name || '' AS sqlstr
-FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
-""";
-		if (!string.IsNullOrEmpty(tableName)) {
-			sql += $" AND name = '{tableName}'";
-		}
-		else {
-			sql += " AND name NOT LIKE 'Sys%'";
-		}
-		var rows = RawExecCmd(sql);
-		var result = new List<Tuple<string, string, long>>();
-		foreach (var row in rows) {
-			var sql2 = row["sqlstr"]?.ToString() ?? "";
-			var name = row["name"]?.ToString() ?? "";
-			var comment = GetComment(name); // コメントの取得 (必要に応じて使用) [Get comment (use as needed)]
-			if (!string.IsNullOrEmpty(sql2)) {
-				var retQuery = RawExecCmd(sql2);
-				var cnt = retQuery.FirstOrDefault()?["cnt"] ?? 0;
-				result.Add(new Tuple<string, string, long>(row["name"]?.ToString() ?? "", comment, Convert.ToInt64(cnt)));
-			}
-		}
-		return result;
-	}
+	public virtual List<Tuple<string, string, long>> GetTableCounts(string tableName = "") =>
+		throw new NotSupportedException("テーブル一覧と件数の取得は接続先プロバイダーで実装してください。");
 	/// <summary>
-	/// テーブルコメントを取得するためのヘルパークラス(同一アセンブリからの読み出し)
+	/// テーブル定義クラスの <see cref="CommentAttribute"/> からテーブルコメントを取得する(CvBase.dll 内の同名の型を探す)
 	/// </summary>
 	/// <param name="tableName"></param>
 	/// <returns></returns>
-	string GetComment(string tableName) {
+	protected string GetComment(string tableName) {
 		var assembly = Assembly.GetExecutingAssembly(); // CvBase.dll 自身
 		var type = assembly.GetTypes().FirstOrDefault(t => t.Name == tableName);
 		if (type == null) {

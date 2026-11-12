@@ -94,8 +94,7 @@ public sealed class SwitchDb {
 	/// </summary>
 	int CopyTable(Type tableType) {
 		var tableName = _toDb.GetTableName(tableType);
-		// 表ごと削除してから作る。CreateTable(isForce:true) は索引を DROP INDEX IF EXISTS <名前> で消すが、
-		// MariaDB は ON <表名> が必須で構文エラーになるため使わない（表を消せば索引も消える）。
+		// 表ごと削除してから作る（表を消せば索引も消えるので、索引の個別削除は要らない）。
 		_toDb.DropTable(tableType);
 		if (!_toDb.CreateTable(tableType, isForce: false)) {
 			throw new InvalidOperationException($"{tableName}: 移動先の表作成に失敗しました。");

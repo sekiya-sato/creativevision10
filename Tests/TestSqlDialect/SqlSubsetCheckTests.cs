@@ -35,8 +35,6 @@ public sealed class SqlSubsetCheckTests {
 		// テンプレート側でJSONパスをC#の文字列補間穴 '$.{property}' のまま持つため、
 		// ソース走査では単一階層パスと判定できない。実行時には実名へ置き換わり変換できる。
 		"CvDomainLogic/MasterCascadeDb.cs",
-		// ExDatabase のメタデータ参照(sqlite_master)。プロバイダー側で override 済み。
-		"CvBase/ExDatabase.cs",
 		// AI照会のスキーマ説明(sqlite_master / pragma_table_info)。SQLite接続だけで実行し、
 		// PostgreSQL / MariaDB は information_schema の個別SQLへ分岐する（AiQuerySchemaCatalog）。
 		"CvDomainLogic/AiQuery/AiQuerySchemaCatalog.cs",
