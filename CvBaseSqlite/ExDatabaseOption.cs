@@ -1,8 +1,29 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using CvBase;
+using Microsoft.Data.Sqlite;
 
 namespace CvBaseSqlite;
 
+/// <summary>
+/// SQLite 固有の保守処理(統計情報の更新、WAL の収束、プールの後始末)
+/// </summary>
 public class ExDatabaseOption {
+
+	/// <summary>統計情報を更新するSQL</summary>
+	public const string OptimizeSql = "PRAGMA optimize;";
+
+	/// <summary>WAL を本体へ書き戻して切り詰めるSQL</summary>
+	public const string WalCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
+
+	/// <summary>
+	/// 接続中のDBで統計情報を更新する。エラーは結果行の "Error" に入る(<see cref="ExDatabase.RawExecCmd"/>)。
+	/// </summary>
+	public static List<Dictionary<string, object>> ExecuteOptimize(ExDatabase db) => db.RawExecCmd(OptimizeSql);
+
+	/// <summary>
+	/// 接続中のDBで WAL チェックポイントを実行する。結果行は busy / log / checkpointed。
+	/// エラーは結果行の "Error" に入る(<see cref="ExDatabase.RawExecCmd"/>)。
+	/// </summary>
+	public static List<Dictionary<string, object>> ExecuteWalCheckpoint(ExDatabase db) => db.RawExecCmd(WalCheckpointSql);
 
 	/// <summary>
 	/// SQLite のプールをクリーンアップし、終了時に .db ファイルのみが残るように
@@ -56,13 +77,13 @@ public class ExDatabaseOption {
 	static void ExecuteOptimizeBeforePoolClear(string databasePath) {
 		using var conn = new SqliteConnection(BuildConnectionString(databasePath, pooling: true));
 		conn.Open();
-		ExecuteNonQuery(conn, "PRAGMA optimize;");
+		ExecuteNonQuery(conn, OptimizeSql);
 	}
 
 	static void FinalizeWalFiles(string databasePath) {
 		using var conn = new SqliteConnection(BuildConnectionString(databasePath, pooling: false, defaultTimeout: 1));
 		conn.Open();
-		ExecuteNonQuery(conn, "PRAGMA wal_checkpoint(TRUNCATE);");
+		ExecuteNonQuery(conn, WalCheckpointSql);
 		ExecuteNonQuery(conn, "PRAGMA journal_mode=DELETE;");
 	}
 

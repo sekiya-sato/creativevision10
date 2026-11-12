@@ -349,10 +349,9 @@ public partial class CoreService {
 		if (string.IsNullOrWhiteSpace(connStr)) {
 			throw new InvalidOperationException($"接続定義 '{name}' がサーバ設定(ConnectionStrings)にありません。");
 		}
-		var key = name.ToLowerInvariant();
-		if (key.Contains("sqlite")) return CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr);
-		if (key.Contains("maria") || key.Contains("mysql")) return CvBaseMariadb.ExDatabaseMaria.GetDbConn(connStr);
-		if (key.Contains("postgre")) return CvBasePostgre.ExDatabasePostgre.GetDbConn(connStr);
+		if (ExDatabaseFactory.TryResolveByConnectionName(name, out var dialect)) {
+			return ExDatabaseFactory.Create(dialect, connStr);
+		}
 		throw new InvalidOperationException($"接続定義 '{name}' のDB種別を判別できません。名前に sqlite / mariadb / postgres のいずれかを含めてください。");
 	}
 

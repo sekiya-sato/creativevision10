@@ -3,7 +3,6 @@ using CvAsset;
 using CvBase;
 using CvBase.Share;
 using CvBase.Sql;
-using CvBaseOracle;
 using CvDomainLogic;
 using ProtoBuf.Grpc;
 using System.Collections;
@@ -1444,7 +1443,7 @@ public partial class CoreService {
 	/// </summary>
 	private ConvertDb CreateConvertDb() {
 		var oracleConnectionString = _configuration.GetConnectionString("oracle") ?? string.Empty;
-		var fromDb = ExDatabaseOracle.GetDbConn(oracleConnectionString);
+		var fromDb = ExDatabaseFactory.Create(EnumSqlDialect.Oracle, oracleConnectionString);
 		return new ConvertDb(fromDb, _db);
 	}
 

@@ -103,14 +103,7 @@ var (connectionStringName, isSqlite, sqlDialectProvider) = databaseProvider.ToUp
 };
 var connStr = builder.Configuration.GetConnectionString(connectionStringName)
 	?? throw new InvalidOperationException($"Connection string '{connectionStringName}' is not configured.");
-builder.Services.AddScoped<ExDatabase>(sp => {
-	return databaseProvider.ToUpperInvariant() switch {
-		"SQLITE" => CvBaseSqlite.ExDatabaseSqlite.GetDbConn(connStr),
-		"POSTGRES" => CvBasePostgre.ExDatabasePostgre.GetDbConn(connStr),
-		"MARIADB" => CvBaseMariadb.ExDatabaseMaria.GetDbConn(connStr),
-		_ => throw new InvalidOperationException($"Database:Provider '{databaseProvider}' is invalid.")
-	};
-});
+builder.Services.AddScoped<ExDatabase>(sp => ExDatabaseFactory.Create(sqlDialectProvider, connStr));
 // SQL方言変換の動作モード。Auto=変換して未対応構文は警告 / Strict=未対応構文で例外 / Off=変換しない
 // Off は障害時の退避用で、全プロバイダーが恒等変換に落ちる。
 // 設定 Database:SqlTranslation が明示されていればそれを優先し、未設定なら
@@ -235,7 +228,7 @@ app.Lifetime.ApplicationStopping.Register(() => {
 
 		if (isSqlite) {
 			RunShutdownStep("SQLite shutdown checkpoint の実行", () => {
-				var checkpointResult = database.RawExecCmd("PRAGMA wal_checkpoint(TRUNCATE);").FirstOrDefault();
+				var checkpointResult = CvBaseSqlite.ExDatabaseOption.ExecuteWalCheckpoint(database).FirstOrDefault();
 				if (checkpointResult?.TryGetValue("Error", out var checkpointError) == true) {
 					logger.LogWarning("SQLite shutdown checkpoint でエラーが返されました: {Error}", checkpointError);
 				}

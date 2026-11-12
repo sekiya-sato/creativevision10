@@ -20,8 +20,6 @@ public class SchedulerService : ISchedulerService {
 	private const int IntervalTooShort = 5;
 	private const int Canceled = 8;
 	private const int InternalError = 9;
-	private const string SqliteOptimizeSql = "PRAGMA optimize;";
-	private const string SqliteWalCheckpointSql = "PRAGMA wal_checkpoint(TRUNCATE);";
 	private const int MaxAutoexecTaskNameLength = 100;
 	private const int MaxAutoexecMemoLength = 250;
 	/// <summary>自動実行履歴のMemoへメール送信結果を追記するときの区切り。</summary>
@@ -1636,10 +1634,11 @@ public class SchedulerService : ISchedulerService {
 	}
 
 	public static Dictionary<string, object> ExecuteSqliteWalCheckpoint(ExDatabase db) {
-		var result = db.RawExecCmd(SqliteOptimizeSql);
-		Helpers.EnsureRawExecSucceeded(result, SqliteOptimizeSql);
-		result = db.RawExecCmd(SqliteWalCheckpointSql);
-		Helpers.EnsureRawExecSucceeded(result, SqliteWalCheckpointSql);
+		// SQLite 固有の保守SQL(PRAGMA)は CvBaseSqlite 側に置く
+		var result = CvBaseSqlite.ExDatabaseOption.ExecuteOptimize(db);
+		Helpers.EnsureRawExecSucceeded(result, CvBaseSqlite.ExDatabaseOption.OptimizeSql);
+		result = CvBaseSqlite.ExDatabaseOption.ExecuteWalCheckpoint(db);
+		Helpers.EnsureRawExecSucceeded(result, CvBaseSqlite.ExDatabaseOption.WalCheckpointSql);
 		if (result.Count == 0) {
 			return new Dictionary<string, object>();
 		}
