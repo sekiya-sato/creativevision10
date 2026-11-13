@@ -154,6 +154,8 @@ public partial class CoreService {
 			using (var writer = new StreamWriter(request.TempDataFullPath, false, Sjis)) {
 				dataList.WriteDynamicCsv(writer);
 			}
+			// PrintStream なしの一覧PDFで見出しに使う列名（PrintStream は読まない）
+			File.WriteAllText(Path.Combine(tempDir, "columns.txt"), CsvText.BuildLine(dataList[0].Keys), Encoding.UTF8);
 		}
 		else {
 			return new PrintResult(false, "不正なパラメータの型");

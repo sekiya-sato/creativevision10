@@ -45,8 +45,15 @@ public class PrintAdapter : IPrintService {
 			}
 		});
 #else
-		await Task.CompletedTask;
-		return new PrintResult(false, "Print機能は無効です。環境変数 printenable=true を設定してください。");
+		// PrintStream なし: data.txt を確認用の一覧 PDF にする
+		return await Task.Run(() => {
+			try {
+				return SimpleListPdfWriter.Write(context);
+			}
+			catch (Exception ex) {
+				return new PrintResult(false, ex.Message);
+			}
+		});
 #endif
 	}
 	/// <summary>

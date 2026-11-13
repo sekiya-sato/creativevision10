@@ -18,6 +18,17 @@
   <ItemGroup Condition="'$(PrintEnable)' == 'true'">
     <PackageReference Include="IKVM" />
   </ItemGroup>
+  <!-- PrintStream なしの構成は data.txt を確認用の一覧PDFにする（SimpleListPdfWriter） -->
+  <ItemGroup Condition="'$(PrintEnable)' != 'true'">
+    <PackageReference Include="PDFsharp" />
+    <!-- PDFsharp が推移的に要求する Pkcs 8.0.1 の脆弱性対応（Directory.Packages.props の注記を参照） -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <EmbeddedResource Include="Fonts\ipag.ttf" LogicalName="CvPrints.Fonts.ipag.ttf" />
+    <None Include="Fonts\IPA_Font_License_Agreement_v1.0.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CvAsset\CvAsset.csproj" />
+  </ItemGroup>
   <ItemGroup Condition="'$(PrintEnable)' == 'true'">
     <IkvmReference Include="printstream.jar">
       <AssemblyName>printstream</AssemblyName>

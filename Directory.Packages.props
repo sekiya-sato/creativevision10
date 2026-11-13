@@ -9,6 +9,7 @@
     <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.85.0" />
     <PackageVersion Include="IKVM" Version="8.16.3" />
     <PackageVersion Include="MailKit" Version="4.18.2" />
+    <PackageVersion Include="PDFsharp" Version="6.2.4" />
     <PackageVersion Include="MaterialDesignColors" Version="5.4.0" />
     <PackageVersion Include="MaterialDesignThemes" Version="5.4.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
@@ -43,6 +44,7 @@
       脆弱性対応（2026-11-10）: Oracle.ManagedDataAccess.Core 23.26.400 が推移的に
       System.Security.Cryptography.Pkcs 8.0.1（GHSA-846f-f764-76mx 高 / GHSA-2fmv-rv2c-59x7 中）を要求するため、
       CvBaseOracle / McpOracle で直接参照して版を引き上げている。
+      PDFsharp 6.2.4 も同じ 8.0.1 を要求するため、CvPrints（PrintEnable=false の構成）でも直接参照している。
       Oracle.ManagedDataAccess.Core の更新時に依存先が修正済みの版（10.0.13 以上）になっていれば、
       この PackageVersion と両 csproj の PackageReference を削除し、
       dotnet list package の脆弱性確認（推移的依存を含める）で警告が出ないことを確認する。
