@@ -49,6 +49,7 @@
     <PackageReference Include="protobuf-net.Grpc.ClientFactory" />
     <PackageReference Include="NLog" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+    <PackageReference Include="CosineKitty.AstronomyEngine" />
     <PackageReference Include="tyme4net" />
     <PackageReference Include="Velopack" />
   </ItemGroup>

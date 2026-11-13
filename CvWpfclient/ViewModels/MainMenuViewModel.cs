@@ -21,7 +21,6 @@ using TymeSolarDay = tyme.solar.SolarDay;
 namespace CvWpfclient.ViewModels;
 
 public partial class MainMenuViewModel : ObservableObject, IDisposable {
-	private const double MoonIconSize = 24.0;
 	private const string DefaultJmaWeatherAreaCode = "130000";
 	private const string JmaWeatherOverviewBaseUrl = "https://www.jma.go.jp/bosai/forecast/data/overview_forecast/";
 	private const string JmaWeatherForecastPageBaseUrl = "https://www.jma.go.jp/bosai/forecast/#area_type=offices&area_code=";
@@ -99,10 +98,10 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	public partial string? Kyureki { get; set; } // 旧暦表示用
 
 	[ObservableProperty]
-	public partial double MoonShadowOffset { get; set; } // 月アイコンの暗い円をずらして満ち欠け形状にする
+	public partial DateTime MoonDate { get; set; } = DateTime.Today; // 月相アイコンの表示日
 
 	[ObservableProperty]
-	public partial string MoonPhaseToolTip { get; set; } = "旧暦";
+	public partial string MoonPhaseNote { get; set; } = ""; // 月相アイコンのツールチップ追記（旧暦）
 
 	[ObservableProperty]
 	public partial string FunctionToolTip { get; set; } = "バージョンアップ(F9) 環境設定(F10) リフレッシュトークン(F11) ログイン(F12)";
@@ -777,36 +776,10 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 
 	private static System.Globalization.JapaneseLunisolarCalendar luna = new System.Globalization.JapaneseLunisolarCalendar();
 	private void UpdateKyureki(DateTime now) {
-		int kyurekiDay = luna.GetDayOfMonth(now);
-		// 添付画像の並びに合わせ、29日と30日は28日と同じ表示にする。
-		var moonDay = Math.Min(Math.Clamp(kyurekiDay, 1, 30), 28);
-		var isWaxing = moonDay <= 15;
-		var lightRatio = moonDay <= 15
-			? (moonDay - 1) / 14.0
-			: (28 - moonDay) / 13.0;
-		lightRatio = Math.Clamp(lightRatio, 0.0, 1.0);
-
-		var shadowOffset = MoonIconSize * lightRatio;
-		// 日本では満ちていく月は右側、欠けていく月は左側を明るく表示する。
 		Kyureki = $"旧: {now.ToSimpleLunisolarStr()}";
-		MoonShadowOffset = isWaxing ? -shadowOffset : shadowOffset;
-		var moonPhaseName = moonDay switch {
-			<= 1 => "新月",
-			<= 4 => "三日月",
-			<= 7 => "上弦前",
-			8 => "上弦",
-			<= 14 => "上弦後",
-			15 => "満月",
-			16 => "十六夜",
-			17 => "立待月",
-			18 => "居待月",
-			19 => "寝待月",
-			<= 21 => "下弦前",
-			22 => "下弦",
-			< 29 => "下弦後",
-			_ => "今夜の月"
-		};
-		MoonPhaseToolTip = $"{moonPhaseName}：旧暦 {now.ToSimpleLunisolarStrDigit()}";
+		// 月相の計算・描画は MoonPhaseIcon が行う。
+		MoonDate = now.Date;
+		MoonPhaseNote = $"旧暦 {now.ToSimpleLunisolarStrDigit()}";
 		SolarTerm = GetSolarTermName(now);
 	}
 
