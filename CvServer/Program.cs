@@ -99,7 +99,7 @@ var (connectionStringName, isSqlite, sqlDialectProvider) = databaseProvider.ToUp
 	"POSTGRES" => ("postgres", false, EnumSqlDialect.Postgre),
 	"MARIADB" => ("mariadb", false, EnumSqlDialect.MariaDb),
 	_ => throw new InvalidOperationException(
-		$"Database:Provider '{databaseProvider}' is invalid. Use Sqlite, Postgre, or MariaDb.")
+		$"Database:Provider '{databaseProvider}' is invalid. Use Sqlite, Postgres, or MariaDb.")
 };
 var connStr = builder.Configuration.GetConnectionString(connectionStringName)
 	?? throw new InvalidOperationException($"Connection string '{connectionStringName}' is not configured.");
