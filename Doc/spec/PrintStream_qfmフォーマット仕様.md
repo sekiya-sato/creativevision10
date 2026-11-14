@@ -1,27 +1,22 @@
 # PrintStream qfm フォーマット仕様 ⭕️
 
-状態: **常設ドキュメント（随時更新）**。qfm新規作成・修正のたびに参照・追記する恒久的なフォーマット仕様であり、完了・未完了の区分を持たない。
+状態: **常設ドキュメント（随時更新）**。qfm新規作成・修正のたびに参照・追記する。
 
-確認日: 2026-11-07
-対象HEAD: `dbde204c354f380f6e206a8d3c73d54ca73ca2e0`（現行 `printform` 130本をcp932でXML解析し、構造・件数を静的照合。前回（2026-10-27、`763bd3ea`）以降の変更は買掛金・売掛金管理表の見出しへの対象年月（`item12`、`decode datatype="date"`）追加の2本。PDF出力は再検証していない。）
-文法抽出の記録: 2026-09-20、HEAD `2741cc3e9633656925911143d20d0f20271919a0`
+確認日: 2026-11-15 / 調査対象HEAD: `166cda67`（`printform` は前回確認の `dbde204c` 以降変更なし。現行130本の構造・件数は2026-11-07の静的照合結果。PDF出力は再検証していない）
+文法抽出の記録: 2026-09-20、HEAD `2741cc3e`
 
 PrintStream 帳票ファイル (`.qfm`) の XML フォーマット仕様。**AI が qfm を新規作成・修正できる粒度**でまとめた実務リファレンス。
 
+> `PrintEnable=false`（PrintStream なし）の構成では qfm を使わず、`data.txt` を確認用の一覧PDF（A4横、`CvPrints/SimpleListPdfWriter.cs`）に出力する。qfm のレイアウト確認は PrintStream ありの構成か `author-printstream-qfm` スキルの qfmprint で行う。
+
 ## この仕様の作り方（根拠）
 
-qfm の XML 文法そのものはベンダーの CHM ヘルプに記載がない（`datadesc` / `calctype` などのタグ名で `PrintStream.chm` を全文検索してもヒットしない）。CHM は FormEditor(GUI) 操作とスクリプト API の解説であって、raw XML の文法書ではない。
+qfm の XML 文法はベンダーの CHM ヘルプに記載がない（CHM は FormEditor(GUI) 操作とスクリプト API の解説）。そこで 2 系統の一次情報を突き合わせて構成している。
 
-そこでこの仕様は 2 系統の一次情報を突き合わせて構成している。
+1. **XML 文法（タグ・属性・出現構造・値の分布）= 実 qfm コーパスの機械マイニング**: 抽出時点の cv10 `printform` 129本＋旧 cv.net `C:\gitroot\cv\cvnet_pkg\cvnetpss\*.qfm` 1968本（サブフォルダ含む）＝ **2097本**。`Doc/spec/tools/extract_qfm_grammar.ps1` で再現できる。
+2. **属性値の意味（書式トークン / レコード種別 / バーコード種別 / フォント等）= CHM の該当ページ**（展開済み: `refer/printdll/PrintStream_decompiled/FormEditor/*.html`）
 
-1. **XML 文法（タグ・属性・出現構造・値の分布）= 実 qfm コーパスの機械マイニング（下記2097本は過去の抽出記録）**
-   - `C:\gitroot\new2022\cv10\printform\*.qfm` … 129 本（cv10 実運用）
-   - `C:\gitroot\cv\cvnet_pkg\cvnetpss\*.qfm` … 1968 本（旧 cv.net 資産、サブフォルダ含む）
-   - 合計 **2097 本**。抽出は `Doc/spec/tools/extract_qfm_grammar.ps1` で再現可能。
-2. **属性値の意味（書式トークン / レコード種別 / バーコード種別 / フォント等）= CHM の該当ページ**
-   - 展開済み: `refer/printdll/PrintStream_decompiled/FormEditor/*.html`
-
-現行 `printform` は **130本**。全件をcp932でXML解析し、ルートversion=3.0・CSV入力は各130件、`item` 3415件の属性は `id` のみ、`group` 55件はすべて `item` 直下と確認した。旧cv.netを含むコーパスの再抽出は行っていない。§1の件数は2097本の抽出時点、§2〜4の属性・値の分布はそれ以前の2075本の抽出記録であり、現在の件数として使わない。
+現行 `printform` は **130本**。全件をcp932でXML解析し、ルートversion=3.0・CSV入力は各130件、`item` 3415件の属性は `id` のみ、`group` 55件はすべて `item` 直下と確認した。§1の件数は2097本の抽出時点、§2〜4の属性・値の分布はそれ以前の2075本の抽出記録であり、現在の件数として使わない（旧cv.netを含む再抽出は未実施）。
 
 各項目には出所を明記する。
 
@@ -319,7 +314,7 @@ CHM のレコード種別 `[C]`:
 プリセットフォント（フォント情報ファイル不要、サーバ登録不要）`[C]`:
 `QFM Gothic`(MS ゴシック) / `QFM Mincho`(MS 明朝) / `QFM TimesRoman` / `QFM Courier` / `QFM Gothic JP|CN|TW|KR` / `QFM Mincho JP|CN|TW|KR`。
 
-> 非プリセットフォントは標準印刷で `.far`（フォント情報ファイ）が要る。PDF ではフォント埋め込みが必要。**PDF は標準印刷と完全一致しない**（太字・自動改行・網掛けで差が出やすい）。cv10 は最終的に PDF 出力なので実 PDF で確認する。 `[C]`
+> 非プリセットフォントは標準印刷で `.far`（フォント情報ファイル）が要る。PDF ではフォント埋め込みが必要。**PDF は標準印刷と完全一致しない**（太字・自動改行・網掛けで差が出やすい）。cv10 は最終的に PDF 出力なので実 PDF で確認する。 `[C]`
 
 ### 4.5 color `[C+M]`
 
