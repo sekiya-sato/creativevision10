@@ -8,53 +8,54 @@
     <PackageVersion Include="Grpc.Net.Client" Version="2.85.0" />
     <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.85.0" />
     <PackageVersion Include="IKVM" Version="8.16.3" />
-    <PackageVersion Include="MailKit" Version="4.18.2" />
+    <PackageVersion Include="MailKit" Version="5.0.0" />
     <PackageVersion Include="PDFsharp" Version="6.2.4" />
     <PackageVersion Include="MaterialDesignColors" Version="5.4.0" />
     <PackageVersion Include="MaterialDesignThemes" Version="5.4.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.15" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
-    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.15" />
     <PackageVersion Include="ModelContextProtocol.Core" Version="2.4.0" />
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.KeyPerFile" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.KeyPerFile" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
     <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.161" />
     <PackageVersion Include="Moq" Version="4.21.0" />
-    <PackageVersion Include="MSTest" Version="4.5.2" />
-    <PackageVersion Include="MySqlConnector" Version="2.6.2" />
+    <PackageVersion Include="MSTest" Version="4.5.3" />
+    <PackageVersion Include="MySqlConnector" Version="3.0.0" />
     <PackageVersion Include="NCrontab" Version="3.4.0" />
     <PackageVersion Include="NCrontab.Scheduler.AspNetCore" Version="2.1.23" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="NLog" Version="6.2.2" />
-    <PackageVersion Include="NLog.Extensions.Logging" Version="6.2.2" />
+    <PackageVersion Include="NLog.Extensions.Logging" Version="6.3.0" />
     <PackageVersion Include="NLog.Targets.Network" Version="6.0.4" />
-    <PackageVersion Include="NLog.Web.AspNetCore" Version="6.2.2" />
+    <PackageVersion Include="NLog.Web.AspNetCore" Version="6.3.0" />
     <PackageVersion Include="Npgsql" Version="10.0.3" />
-    <PackageVersion Include="NPoco" Version="6.4.0" />
+    <PackageVersion Include="NPoco" Version="6.5.0" />
     <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.26.400" />
     <!--
       脆弱性対応（2026-11-10）: Oracle.ManagedDataAccess.Core 23.26.400 が推移的に
       System.Security.Cryptography.Pkcs 8.0.1（GHSA-846f-f764-76mx 高 / GHSA-2fmv-rv2c-59x7 中）を要求するため、
       CvBaseOracle / McpOracle で直接参照して版を引き上げている。
       PDFsharp 6.2.4 も同じ 8.0.1 を要求するため、CvPrints（PrintEnable=false の構成）でも直接参照している。
+      2026-11-14 時点の最新（Oracle.ManagedDataAccess.Core 23.26.400 / PDFsharp 6.5.0）も 8.0.1 のままで、指定はまだ外せない。
       Oracle.ManagedDataAccess.Core の更新時に依存先が修正済みの版（10.0.13 以上）になっていれば、
       この PackageVersion と両 csproj の PackageReference を削除し、
       dotnet list package の脆弱性確認（推移的依存を含める）で警告が出ないことを確認する。
     -->
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.15" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.3.14" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.3.14" />
     <PackageVersion Include="protobuf-net.Grpc.ClientFactory" Version="1.3.14" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
-    <PackageVersion Include="System.IO.Ports" Version="10.0.14" />
+    <PackageVersion Include="System.IO.Ports" Version="10.0.15" />
     <PackageVersion Include="CosineKitty.AstronomyEngine" Version="2.1.19" />
     <PackageVersion Include="tyme4net" Version="1.5.1" />
     <PackageVersion Include="Velopack" Version="1.2.161" />
