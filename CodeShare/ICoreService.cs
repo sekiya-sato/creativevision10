@@ -275,6 +275,11 @@ public enum CvFlag {
 	[EnumMember]
 	Msg067_PointExpire = 67,
 	/// <summary>
+	/// 全社分析: 期間区切り×商品属性で期首/期末在庫・発注・受注・仕入・売上・粗利を集計する（読み取りのみ）
+	/// </summary>
+	[EnumMember]
+	Msg068_CorporateAnalysis = 68,
+	/// <summary>
 	/// 原価4処理の月次状態照会（消化仕入・原価更新の2区分をまとめて返す。参照専用）
 	/// </summary>
 	[EnumMember]

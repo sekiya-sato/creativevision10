@@ -63,6 +63,7 @@ public partial class CoreService : ICoreService {
 			[CvFlag.Msg064_PointCampaignTargetSave] = (req, ctx) => Task.FromResult(HandlePointCampaignTargetSave(req, ctx)),
 			[CvFlag.Msg065_RfmCrossAnalysis] = (req, ctx) => Task.FromResult(HandleRfmCrossAnalysis(req, ctx)),
 			[CvFlag.Msg066_RfmCustomerList] = (req, ctx) => Task.FromResult(HandleRfmCustomerList(req, ctx)),
+			[CvFlag.Msg068_CorporateAnalysis] = (req, ctx) => Task.FromResult(HandleCorporateAnalysis(req, ctx)),
 			[CvFlag.Msg080_CostMonthStatus] = (req, ctx) => Task.FromResult(HandleCostMonthStatus(req, ctx)),
 			[CvFlag.Msg081_CostConsumptionPreview] = (req, ctx) => Task.FromResult(HandleCostConsumptionPreview(req, ctx)),
 			[CvFlag.Msg083_CostSundryPreview] = (req, ctx) => Task.FromResult(HandleCostSundryPreview(req, ctx)),

@@ -69,6 +69,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["oplog"] = OperationLogScenario.RunAsync,
 	["pointsummary"] = PointSummaryLayoutScenario.RunAsync,
 	["rfm"] = RfmCrossAnalysisScenario.RunAsync,
+	["corporate"] = CorporateAnalysisScenario.RunAsync,
 	["menulayout"] = MenuLayoutScenario.RunAsync,
 	["menuperm"] = MenuPermissionScenario.RunAsync,
 	["switchdb"] = SwitchDbScenario.RunAsync,

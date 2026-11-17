@@ -466,6 +466,7 @@ public partial class MenuData : ObservableObject {
 				new("卸・店舗売上実績表", typeof(Views._21OroshiAnalysis.OroshiShopSalesActualReportView), addInfo:"卸と店舗の売上･構成比･合計･前年比を年月別に印刷"),
 			])),
 			new("▲ 自由照会 ----", new([
+				new("全社分析", typeof(Views._23AiQuery.CorporateAnalysisView), addInfo:"年/月/日単位で期首･期末在庫･発注･受注･仕入･売上･粗利を集計し、ブランド→アイテム→シーズン→展示会→素材→商品へドリルダウン"),
 				new("AI照会（CSV）", typeof(Views._23AiQuery.AiQueryView), addInfo:"会話で集計条件を決め、AIが作ったSQLを検査・実行してCSV保存。保存SQLはAIなしで再実行"),
 			])),
 		])),

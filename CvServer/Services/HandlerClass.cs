@@ -369,6 +369,29 @@ public partial class CoreService {
 	}
 
 	/// <summary>
+	/// 全社分析の集計（読み取りのみ）。条件不正は InvalidParameter で返す。
+	/// </summary>
+	private CvMsg HandleCorporateAnalysis(CvMsg request, CallContext context) {
+		if (request.DataType != typeof(CorporateAnalysisParameter) || Common.DeserializeObject(request.DataMsg, request.DataType) is not CorporateAnalysisParameter param) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, null, typeof(string), "エラー: パラメータのデシリアライズに失敗");
+		}
+		try {
+			var started = DateTime.Now;
+			var result = new CorporateAnalysisDb(_db).Analyze(param);
+			_logger.LogInformation("全社分析 Unit={Unit} {From}-{To} ByBucket={ByBucket} Axis={Axis} Filters={Filters} 行数={Rows} 所要={Elapsed}ms",
+				param.Unit, param.From, param.To, param.ByBucket, param.GroupAxis, param.Filters.Count, result.TotalCount, (int)(DateTime.Now - started).TotalMilliseconds);
+			return CreateSuccessResponse(request.Flag, typeof(CorporateAnalysisResult), Common.SerializeObject(result));
+		}
+		catch (ArgumentException ex) {
+			return CreateErrorResponse(request.Flag, CvMsgErrorCode.InvalidParameter, ex.Message, typeof(string), ex.Message);
+		}
+		catch (Exception ex) {
+			_logger.LogError(ex, "全社分析の集計に失敗");
+			return CreateExceptionResponse(request.Flag, ex, typeof(string), ex.Message);
+		}
+	}
+
+	/// <summary>
 	/// RFMクロス分析の集計（読み取りのみ）。条件不正は InvalidParameter で返す。
 	/// </summary>
 	private CvMsg HandleRfmCrossAnalysis(CvMsg request, CallContext context) {

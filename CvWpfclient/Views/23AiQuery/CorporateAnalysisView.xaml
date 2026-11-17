@@ -1,0 +1,355 @@
+﻿<helpers:BaseWindow x:Class="CvWpfclient.Views._23AiQuery.CorporateAnalysisView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:helpers="clr-namespace:CvWpfclient.Helpers"
+	xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="clr-namespace:CvWpfclient.ViewModels._23AiQuery"
+	Title="{Binding Title}"
+	Width="{StaticResource StandardWindowWidth}"
+	Height="{StaticResource StandardWindowHeight}"
+	Background="{DynamicResource AppCommonBackgroundBrush}"
+	FontSize="14"
+	Foreground="{DynamicResource MaterialDesignBody}"
+	TextOptions.TextFormattingMode="Display" WindowStartupLocation="CenterScreen"
+	mc:Ignorable="d">
+	<helpers:BaseWindow.DataContext>
+		<vm:CorporateAnalysisViewModel />
+	</helpers:BaseWindow.DataContext>
+
+	<helpers:BaseWindow.Resources>
+		<Style x:Key="CaColumnHeaderStyle"
+			BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}"
+			TargetType="DataGridColumnHeader">
+			<Setter Property="Background" Value="#FF1B2A4A" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="Padding" Value="6,4" />
+		</Style>
+		<Style x:Key="CaNumberCell"
+			TargetType="TextBlock">
+			<Setter Property="HorizontalAlignment" Value="Right" />
+		</Style>
+		<Style x:Key="CaJudgeCell"
+			TargetType="TextBlock">
+			<Setter Property="Foreground" Value="#FFC62828" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+		</Style>
+		<!--  合計行（期間計・合計）は太字＋薄灰  -->
+		<Style x:Key="CaRowStyle"
+			BasedOn="{StaticResource MaterialDesignDataGridRow}"
+			TargetType="DataGridRow">
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding IsTotal}" Value="True">
+					<Setter Property="FontWeight" Value="Bold" />
+					<Setter Property="Background" Value="#FFEEF1F5" />
+					<Setter Property="Foreground" Value="#FF111827" />
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+	</helpers:BaseWindow.Resources>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="2*" />
+			<RowDefinition Height="3*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<!--  ヘッダ帯  -->
+		<materialDesign:ColorZone Grid.Row="0"
+			Padding="12,8"
+			materialDesign:ElevationAssist.Elevation="Dp4" Mode="PrimaryMid">
+			<DockPanel>
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Margin="4,0"
+						Command="{Binding SearchCommand}"
+						IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="条件で集計（推移と内訳）">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon Kind="Calculator" />
+							<TextBlock Margin="4,0,0,0"
+								Text="集計" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding ExportCsvCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="表示中の推移と内訳をCSV出力">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon Kind="FileDelimitedOutline" />
+							<TextBlock Margin="4,0,0,0"
+								Text="CSV出力" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal">
+					<Button Margin="0,0,8,0"
+						Command="{Binding ExitCommand}"
+						Style="{StaticResource ToolCommandButton}"
+						ToolTip="閉じる (Esc)">
+						<materialDesign:PackIcon Kind="ArrowLeft" />
+					</Button>
+					<materialDesign:PackIcon Width="28" Height="28"
+						VerticalAlignment="Center"
+						Kind="ChartBoxOutline" />
+					<TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+						FontSize="20" FontWeight="SemiBold"
+						Text="{Binding Title}" />
+				</StackPanel>
+			</DockPanel>
+		</materialDesign:ColorZone>
+
+		<!--  条件・絞込  -->
+		<StackPanel Grid.Row="1"
+			Margin="16,8,16,0">
+			<WrapPanel Orientation="Horizontal">
+				<StackPanel Margin="0,4,20,4" Orientation="Horizontal">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="単位" />
+					<ComboBox Width="110"
+						ItemsSource="{Binding UnitItems}"
+						SelectedItem="{Binding SelectedUnit}" />
+				</StackPanel>
+				<StackPanel Margin="0,4,20,4" Orientation="Horizontal">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="期間" />
+					<TextBox Width="110" Height="36"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding FromText, UpdateSourceTrigger=PropertyChanged}" />
+					<TextBlock Margin="8,0" VerticalAlignment="Center"
+						Text="〜" />
+					<TextBox Width="110" Height="36"
+						Style="{StaticResource MaterialDesignTextBox}"
+						Text="{Binding ToText, UpdateSourceTrigger=PropertyChanged}" />
+				</StackPanel>
+				<StackPanel Margin="0,4,20,4" Orientation="Horizontal">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="内訳" />
+					<ComboBox Width="110"
+						ItemsSource="{Binding AxisItems}"
+						SelectedItem="{Binding SelectedAxis}" />
+				</StackPanel>
+				<StackPanel Margin="0,4,20,4" Orientation="Horizontal"
+					ToolTip="商品別の内訳は件数が多いため上位2,000件を表示します。その並び順">
+					<TextBlock Style="{StaticResource FormLabel}"
+						Text="商品の並び" />
+					<ComboBox Width="150"
+						ItemsSource="{Binding SortItems}"
+						SelectedItem="{Binding SelectedSort}" />
+				</StackPanel>
+			</WrapPanel>
+			<TextBlock Margin="0,0,0,4"
+				Foreground="{DynamicResource MaterialDesignBodyLight}"
+				Text="{Binding PeriodHint}" />
+			<DockPanel Margin="0,2,0,0">
+				<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+					<Button Margin="4,0"
+						Command="{Binding BackCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}"
+						ToolTip="最後の絞込を外す">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="ArrowUpLeft" />
+							<TextBlock Margin="4,0,0,0"
+								Text="1つ戻る" />
+						</StackPanel>
+					</Button>
+					<Button Margin="4,0"
+						Command="{Binding ResetFiltersCommand}"
+						Style="{StaticResource MaterialDesignOutlinedButton}"
+						ToolTip="絞込をすべて外して全社に戻す">
+						<StackPanel Orientation="Horizontal">
+							<materialDesign:PackIcon VerticalAlignment="Center"
+								Kind="OfficeBuildingOutline" />
+							<TextBlock Margin="4,0,0,0"
+								Text="全社に戻る" />
+						</StackPanel>
+					</Button>
+				</StackPanel>
+				<materialDesign:PackIcon Margin="0,0,6,0" VerticalAlignment="Center"
+					Kind="FilterOutline" />
+				<TextBlock VerticalAlignment="Center"
+					FontWeight="SemiBold"
+					Text="{Binding FilterText}"
+					TextTrimming="CharacterEllipsis" />
+			</DockPanel>
+		</StackPanel>
+
+		<!--  推移表: 行を選ぶとその期間の内訳を表示（先頭行=期間計）  -->
+		<DockPanel Grid.Row="2"
+			Margin="16,8,16,4">
+			<TextBlock Margin="0,0,0,4" DockPanel.Dock="Top"
+				FontWeight="SemiBold"
+				Text="{Binding TrendCaption}"
+				TextWrapping="Wrap" />
+			<DataGrid materialDesign:DataGridAssist.CellPadding="6,3"
+				AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
+				AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" FrozenColumnCount="1" GridLinesVisibility="All" HeadersVisibility="Column"
+				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				HorizontalScrollBarVisibility="Auto" IsReadOnly="True"
+				ItemsSource="{Binding TrendRows}"
+				RowStyle="{StaticResource CaRowStyle}"
+				SelectedItem="{Binding SelectedTrendRow}"
+				SelectionMode="Single"
+				Style="{StaticResource MaterialDesignDataGrid}"
+				VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				VerticalScrollBarVisibility="Auto">
+				<DataGrid.ColumnHeaderStyle>
+					<Style BasedOn="{StaticResource CaColumnHeaderStyle}"
+						TargetType="DataGridColumnHeader" />
+				</DataGrid.ColumnHeaderStyle>
+				<DataGrid.Columns>
+					<DataGridTextColumn Width="190"
+						Binding="{Binding Label}"
+						Header="期間" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding OpeningStockAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="期首在庫" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding ClosingStockAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="期末在庫" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding HachuAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="発注" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding ShiireAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="仕入" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding JuchuAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="受注" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding SalesAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="売上" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding GrossProfit, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="粗利" />
+					<DataGridTextColumn Width="66"
+						Binding="{Binding GrossMarginRate, StringFormat={}{0:0.0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="粗利率%" />
+					<DataGridTextColumn Width="66"
+						Binding="{Binding SellThroughRate, StringFormat={}{0:0.0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="消化率%" />
+					<DataGridTextColumn Width="72"
+						Binding="{Binding TurnoverDays, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="回転日数" />
+				</DataGrid.Columns>
+			</DataGrid>
+		</DockPanel>
+
+		<!--  内訳表: ダブルクリックで絞り込み、次の軸へ進む  -->
+		<DockPanel Grid.Row="3"
+			Margin="16,4,16,8">
+			<TextBlock Margin="0,0,0,4" DockPanel.Dock="Top"
+				FontWeight="SemiBold"
+				Text="{Binding BreakdownCaption}"
+				TextWrapping="Wrap" />
+			<DataGrid materialDesign:DataGridAssist.CellPadding="6,3"
+				AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackgroundBrush}"
+				AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" EnableRowVirtualization="True" FrozenColumnCount="2" GridLinesVisibility="All" HeadersVisibility="Column"
+				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				HorizontalScrollBarVisibility="Auto" IsReadOnly="True"
+				ItemsSource="{Binding BreakdownRows}"
+				RowStyle="{StaticResource CaRowStyle}"
+				SelectedItem="{Binding SelectedBreakdownRow}"
+				SelectionMode="Single"
+				Style="{StaticResource MaterialDesignDataGrid}"
+				ToolTip="行をダブルクリックすると、その値で絞り込んで次の軸の内訳を表示します"
+				VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+				VerticalScrollBarVisibility="Auto">
+				<behaviors:Interaction.Triggers>
+					<behaviors:EventTrigger EventName="MouseDoubleClick">
+						<behaviors:InvokeCommandAction Command="{Binding DrillDownCommand}"
+							CommandParameter="{Binding SelectedBreakdownRow}" />
+					</behaviors:EventTrigger>
+				</behaviors:Interaction.Triggers>
+				<DataGrid.ColumnHeaderStyle>
+					<Style BasedOn="{StaticResource CaColumnHeaderStyle}"
+						TargetType="DataGridColumnHeader" />
+				</DataGrid.ColumnHeaderStyle>
+				<DataGrid.Columns>
+					<DataGridTextColumn Width="90"
+						Binding="{Binding Code}"
+						Header="コード" />
+					<DataGridTextColumn Width="190"
+						Binding="{Binding Label}"
+						Header="名称" />
+					<DataGridTextColumn Width="110"
+						Binding="{Binding OpeningStockAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="期首在庫" />
+					<DataGridTextColumn Width="110"
+						Binding="{Binding ClosingStockAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="期末在庫" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding HachuAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="発注" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding ShiireAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="仕入" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding JuchuAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="受注" />
+					<DataGridTextColumn Width="110"
+						Binding="{Binding SalesAmount, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="売上" />
+					<DataGridTextColumn Width="105"
+						Binding="{Binding GrossProfit, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="粗利" />
+					<DataGridTextColumn Width="72"
+						Binding="{Binding GrossMarginRate, StringFormat={}{0:0.0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="粗利率%" />
+					<DataGridTextColumn Width="80"
+						Binding="{Binding SalesQty, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="売上数" />
+					<DataGridTextColumn Width="80"
+						Binding="{Binding ClosingStockQty, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="期末在庫数" />
+					<DataGridTextColumn Width="72"
+						Binding="{Binding SellThroughRate, StringFormat={}{0:0.0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="消化率%" />
+					<DataGridTextColumn Width="80"
+						Binding="{Binding TurnoverDays, StringFormat={}{0:N0}}"
+						ElementStyle="{StaticResource CaNumberCell}"
+						Header="回転日数" />
+					<DataGridTextColumn Width="170"
+						Binding="{Binding Judgement}"
+						ElementStyle="{StaticResource CaJudgeCell}"
+						Header="判定" />
+				</DataGrid.Columns>
+			</DataGrid>
+		</DockPanel>
+
+		<!--  ステータス帯  -->
+		<Border Grid.Row="4"
+			Padding="12,6"
+			Background="{DynamicResource MaterialDesignToolBarBackground}">
+			<TextBlock VerticalAlignment="Center"
+				Foreground="{DynamicResource MaterialDesignBodyLight}"
+				Text="{Binding Message}"
+				TextTrimming="CharacterEllipsis" />
+		</Border>
+	</Grid>
+</helpers:BaseWindow>
