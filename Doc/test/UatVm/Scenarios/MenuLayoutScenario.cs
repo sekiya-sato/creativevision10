@@ -36,6 +36,8 @@ public static class MenuLayoutScenario {
 	/// 撮影は省く。保存・更新・削除・実行系のコマンドは対象外。
 	/// </summary>
 	public static bool RunSearch { get; set; }
+	/// <summary>メニューに無い子画面（CvWpfclient.Views.Sub の Window）も既定状態で撮る（--include-sub）。</summary>
+	public static bool IncludeSubViews { get; set; }
 
 	/// <summary>RunSearch で実行するコマンド（読み取りのみのもの）</summary>
 	static readonly HashSet<string> SearchCommandNames = new(StringComparer.Ordinal) {
@@ -84,6 +86,12 @@ public static class MenuLayoutScenario {
 		Directory.CreateDirectory(jpgDir);
 
 		var entries = Enumerate(MenuData.CreateDefault(), string.Empty).ToList();
+		if (IncludeSubViews) {
+			entries.AddRange(typeof(MenuData).Assembly.GetTypes()
+				.Where(t => t.Namespace == "CvWpfclient.Views.Sub" && typeof(Window).IsAssignableFrom(t) && !t.IsAbstract && t.GetConstructor(Type.EmptyTypes) != null)
+				.OrderBy(t => t.Name)
+				.Select(t => new MenuEntry("Sub > " + t.Name, t.Name, t, 0, null, false)));
+		}
 		// ロール別ショートカットは標準メニューと同じViewなので、View型＋InitParamで重複を除く（先頭の出現を採用）
 		var unique = entries
 			.GroupBy(x => (x.ViewType, x.InitParam))

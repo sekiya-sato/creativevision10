@@ -53,9 +53,12 @@ public partial class SalesOrderAllocationInputView : Helpers.BaseWindow {
 			cellStyle.Setters.Add(new Setter(ToolTipProperty, new Binding($"Cells[{i}].ZanText")));
 			var over = new DataTrigger { Binding = new Binding($"Cells[{i}].IsOver"), Value = true };
 			over.Setters.Add(new Setter(BackgroundProperty, new SolidColorBrush(Color.FromRgb(0xFF, 0xE0, 0xB2))));
+			// 淡色背景のためダークテーマでも濃色文字に固定する
+			over.Setters.Add(new Setter(ForegroundProperty, new SolidColorBrush(Color.FromRgb(0x21, 0x21, 0x21))));
 			cellStyle.Triggers.Add(over);
 			var noOrder = new DataTrigger { Binding = new Binding($"Cells[{i}].HasOrder"), Value = false };
 			noOrder.Setters.Add(new Setter(BackgroundProperty, new SolidColorBrush(Color.FromRgb(0xE0, 0xE0, 0xE0))));
+			noOrder.Setters.Add(new Setter(ForegroundProperty, new SolidColorBrush(Color.FromRgb(0x21, 0x21, 0x21))));
 			noOrder.Setters.Add(new Setter(IsEnabledProperty, false));
 			cellStyle.Triggers.Add(noOrder);
 

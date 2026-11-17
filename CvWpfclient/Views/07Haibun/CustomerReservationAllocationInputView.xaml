@@ -221,10 +221,13 @@
 							<DataTrigger Binding="{Binding IsNearLimit}"
 								Value="True">
 								<Setter Property="Background" Value="#FFE8C8" />
+								<!--  淡色背景のためダークテーマでも濃色文字に固定する  -->
+								<Setter Property="Foreground" Value="#212121" />
 							</DataTrigger>
 							<DataTrigger Binding="{Binding IsOverdue}"
 								Value="True">
 								<Setter Property="Background" Value="#FFD0D0" />
+								<Setter Property="Foreground" Value="#212121" />
 							</DataTrigger>
 							<DataTrigger Binding="{Binding IsOpen}"
 								Value="False">

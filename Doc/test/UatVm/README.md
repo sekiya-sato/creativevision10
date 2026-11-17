@@ -48,6 +48,8 @@ dotnet build Doc/test/UatVm/UatVm.csproj
 | `--code <code>` | 対象取引先コード |
 | `--no-execute` | 更新を伴う実行を省き、入力検証だけ行う（DBへ書かない） |
 | `--hide-views` | Viewを表示しない |
+| `--theme dark` | ダークテーマ（`UIColors.Dark.xaml` と MaterialDesign の Dark）で表示する |
+| `--include-sub` | menulayout で `Views.Sub` の子画面（選択・条件ダイアログ）も既定状態で撮る |
 
 ### 全メニュー画面の表示崩れベースライン（menulayout）
 

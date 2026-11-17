@@ -6,6 +6,7 @@
 	Width="820" Height="720"
 	Background="{DynamicResource AppCommonBackgroundBrush}"
 	FontSize="18" WindowStartupLocation="CenterOwner"
+	Foreground="{DynamicResource MaterialDesignBody}"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:RangeParamViewModel />

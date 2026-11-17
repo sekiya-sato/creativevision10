@@ -7,6 +7,7 @@
 	Width="640" Height="520"
 	helpers:OwnerWindowPlacement.IsEnabled="True" helpers:OwnerWindowPlacement.LeftOffset="-40" helpers:OwnerWindowPlacement.TopOffset="-20" BorderBrush="DarkSlateGray"
 	BorderThickness="0.5,0,1.5,1.5" FontSize="18" WindowStartupLocation="Manual"
+	Foreground="{DynamicResource MaterialDesignBody}"
 	mc:Ignorable="d">
 	<helpers:BaseWindow.DataContext>
 		<vm:SelectWinViewModel />

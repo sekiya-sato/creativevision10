@@ -44,6 +44,8 @@ public static class VmHost {
 		public Action<string>? Seed { get; set; }
 		/// <summary>テスト専用SQLite。未指定時は従来の開発DBを使う。</summary>
 		public string? SqlitePath { get; set; }
+		/// <summary>ダークテーマで表示するか（--theme dark）。</summary>
+		public bool DarkTheme { get; set; }
 	}
 
 	/// <summary>
@@ -116,6 +118,10 @@ public static class VmHost {
 			var summary = ClientResources.Load(app, Path.Combine(baseDir, "App.xaml"));
 			Boot(baseDir, $"リソース構築 完了 辞書={summary.Dictionaries} 単体={summary.Objects} 未処理={summary.Skipped.Count}");
 			evidence.Write("resources", "loaded", summary);
+			if (options.DarkTheme) {
+				ClientResources.ApplyDarkTheme(app);
+				Boot(baseDir, "ダークテーマ適用");
+			}
 			if (summary.Skipped.Count > 0) {
 				// App.xamlに解釈できない定義が増えた場合。Viewのバインディングが落ちる前に気づけるようにする。
 				session.Fail("resources:未処理の定義", string.Join(" / ", summary.Skipped));

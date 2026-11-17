@@ -116,6 +116,21 @@ public static class ClientResources {
 	}
 
 	/// <summary>
+	/// ダークテーマへ切り替える。CvWpfclient の ThemeService と同じく UIColors 辞書の差し替えと
+	/// MaterialDesign のベーステーマ変更を行う（ThemeService は相対URIのためハーネスでは解決できない）。
+	/// </summary>
+	public static void ApplyDarkTheme(Application app) {
+		var dictionaries = app.Resources.MergedDictionaries;
+		var uiColors = dictionaries.FirstOrDefault(d => d.Source?.OriginalString.EndsWith("/UIColors.xaml", StringComparison.OrdinalIgnoreCase) == true)
+			?? throw new InvalidOperationException("UIColors.xaml の辞書が見つかりません。");
+		uiColors.Source = QualifySource("/Resources/UIColors.Dark.xaml");
+		var palette = new MaterialDesignThemes.Wpf.PaletteHelper();
+		var theme = palette.GetTheme();
+		MaterialDesignThemes.Wpf.ThemeExtensions.SetBaseTheme(theme, MaterialDesignThemes.Wpf.BaseTheme.Dark);
+		palette.SetTheme(theme);
+	}
+
+	/// <summary>
 	/// `/Resources/UIColors.xaml` のようなアセンブリ名なしのSourceを、CvWpfclient修飾の絶対URIへ変換する。
 	/// </summary>
 	private static Uri QualifySource(string source) {

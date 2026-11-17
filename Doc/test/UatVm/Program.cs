@@ -154,6 +154,8 @@ if (string.IsNullOrEmpty(name) || !scenarios.TryGetValue(name, out var scenario)
 	Console.Error.WriteLine("  --hide-views       Viewを表示しない");
 	Console.Error.WriteLine("  --out <dir>        画像・結果の出力先（menulayout）");
 	Console.Error.WriteLine("  --filter <文字列>  View型名・メニュー名の部分一致で対象を絞る（menulayout）");
+	Console.Error.WriteLine("  --include-sub      Views.Sub の子画面も既定状態で撮る（menulayout）");
+	Console.Error.WriteLine("  --theme dark       ダークテーマで表示する");
 	Console.Error.WriteLine("  --switch-to <接続名> DB切替の移動先（switchdb、既定: MariaDb。PostgreSQLは Postgres）");
 	Console.Error.WriteLine("  --verify-only      移行せず、前回の移行結果を照合だけする（switchdb）");
 	Console.Error.WriteLine("  --fire-at <HH:mm:ss> 同日の壁時計時刻まで待ってから実行する（manuallockrace）");
@@ -175,6 +177,7 @@ if (Flag("--no-execute")) BillingCalculationScenario.Execute = false;
 if (Option("--out") is { } outDir) MenuLayoutScenario.OutputDirectory = Path.GetFullPath(outDir);
 if (Option("--filter") is { } filter) MenuLayoutScenario.Filter = filter;
 if (Flag("--search")) MenuLayoutScenario.RunSearch = true;
+if (Flag("--include-sub")) MenuLayoutScenario.IncludeSubViews = true;
 if (Option("--switch-to") is { } switchTo) SwitchDbScenario.ToConnection = switchTo;
 if (Flag("--verify-only")) SwitchDbScenario.VerifyOnly = true;
 // democapture: デモ動画の画面録画（--cuts menu,input_hachu など、--capture-out 出力先）
@@ -204,6 +207,7 @@ var options = new VmHost.Options {
 	ManageServer = Flag("--manage-server"),
 	Seed = Flag("--no-seed") ? null : seeders.GetValueOrDefault(name),
 	SqlitePath = Option("--sqlite"),
+	DarkTheme = string.Equals(Option("--theme"), "dark", StringComparison.OrdinalIgnoreCase),
 };
 
 // manuallockrace は同一秒に2プロセスが起動しうるため、既定の証跡ファイル名(<scenario>-<yyyyMMdd-HHmmss>.jsonl)

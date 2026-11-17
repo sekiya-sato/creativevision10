@@ -21,6 +21,8 @@ public partial class MasterJouDaiBulkChangeView : Helpers.BaseWindow {
 	// Style.Triggersの後勝ちにより最低販売価格違反の色を優先する（より重い警告として後段に置く）。
 	static readonly Brush CostViolationBrush = FrozenBrush(0xFF, 0xCD, 0xD2);
 	static readonly Brush MinPriceViolationBrush = FrozenBrush(0xFF, 0xB7, 0x4D);
+	// 違反セルは淡色背景のため、ダークテーマでも濃色文字に固定する
+	static readonly Brush ViolationForegroundBrush = FrozenBrush(0x21, 0x21, 0x21);
 
 	readonly MasterJouDaiBulkChangeViewModel? viewModel;
 	ObservableCollection<JodaiScopeRow>? subscribedScopeRows;
@@ -141,10 +143,12 @@ public partial class MasterJouDaiBulkChangeView : Helpers.BaseWindow {
 
 		var costTrigger = new DataTrigger { Binding = new Binding($"Cells[{scopeIndex}].IsCostViolation"), Value = true };
 		costTrigger.Setters.Add(new Setter(Control.BackgroundProperty, CostViolationBrush));
+		costTrigger.Setters.Add(new Setter(Control.ForegroundProperty, ViolationForegroundBrush));
 		style.Triggers.Add(costTrigger);
 
 		var minPriceTrigger = new DataTrigger { Binding = new Binding($"Cells[{scopeIndex}].IsMinPriceViolation"), Value = true };
 		minPriceTrigger.Setters.Add(new Setter(Control.BackgroundProperty, MinPriceViolationBrush));
+		minPriceTrigger.Setters.Add(new Setter(Control.ForegroundProperty, ViolationForegroundBrush));
 		style.Triggers.Add(minPriceTrigger);
 
 		return style;
