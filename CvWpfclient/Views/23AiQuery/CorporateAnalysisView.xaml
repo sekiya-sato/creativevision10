@@ -25,9 +25,18 @@
 			<Setter Property="HorizontalContentAlignment" Value="Center" />
 			<Setter Property="Padding" Value="6,4" />
 		</Style>
+		<!--  セルの中身をセル幅いっぱいに広げる（既定は左寄せで中身の幅になり、右詰めが効かない）  -->
+		<Style x:Key="CaCellStyle"
+			BasedOn="{StaticResource MaterialDesignDataGridCell}"
+			TargetType="DataGridCell">
+			<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		</Style>
+		<!--  金額・数量・率・日数は右詰め  -->
 		<Style x:Key="CaNumberCell"
 			TargetType="TextBlock">
-			<Setter Property="HorizontalAlignment" Value="Right" />
+			<Setter Property="HorizontalAlignment" Value="Stretch" />
+			<Setter Property="TextAlignment" Value="Right" />
+			<Setter Property="Padding" Value="0,0,4,0" />
 		</Style>
 		<Style x:Key="CaJudgeCell"
 			TargetType="TextBlock">
@@ -191,6 +200,7 @@
 				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 				HorizontalScrollBarVisibility="Auto" IsReadOnly="True"
 				ItemsSource="{Binding TrendRows}"
+				CellStyle="{StaticResource CaCellStyle}"
 				RowStyle="{StaticResource CaRowStyle}"
 				SelectedItem="{Binding SelectedTrendRow}"
 				SelectionMode="Single"
@@ -262,6 +272,7 @@
 				HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
 				HorizontalScrollBarVisibility="Auto" IsReadOnly="True"
 				ItemsSource="{Binding BreakdownRows}"
+				CellStyle="{StaticResource CaCellStyle}"
 				RowStyle="{StaticResource CaRowStyle}"
 				SelectedItem="{Binding SelectedBreakdownRow}"
 				SelectionMode="Single"

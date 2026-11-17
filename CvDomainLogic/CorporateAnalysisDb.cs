@@ -42,7 +42,8 @@ public sealed class CorporateAnalysisDb(ExDatabase db) {
 		var buckets = CorporateAnalysisPeriod.Build(p.Unit, p.From, p.To, p.ByBucket, shime, fiscalStart);
 
 		var sql = BuildSql(p, buckets, shime);
-		var rows = db.Fetch<CorporateAnalysisRow>(ExDatabase.SuppressAutoSelectForWith(db.TranslateDialect(sql)));
+		var aggRows = db.Fetch<AggRow>(ExDatabase.SuppressAutoSelectForWith(db.TranslateDialect(sql)));
+		var rows = BuildRows(buckets, aggRows);
 
 		var total = rows.Count;
 		if (p.GroupAxis == CorporateAnalysisAxis.Shohin) {
@@ -58,6 +59,69 @@ public sealed class CorporateAnalysisDb(ExDatabase db) {
 			Buckets = buckets, Rows = rows, TotalCount = total, ShimeBi = shime, FiscalStartMonth = fiscalStart,
 		};
 	}
+
+	/// <summary>SQL の集計結果1行（区切り×軸）。在庫は区切り内の増減、アンカー行(~)は期間末の在庫。</summary>
+	internal sealed class AggRow {
+		public string BucketKey { get; set; } = string.Empty;
+		public long GroupId { get; set; }
+		public string GroupCode { get; set; } = string.Empty;
+		public string GroupName { get; set; } = string.Empty;
+		public long DeltaQty { get; set; }
+		public long DeltaAmount { get; set; }
+		public long HachuQty { get; set; }
+		public long HachuAmount { get; set; }
+		public long JuchuQty { get; set; }
+		public long JuchuAmount { get; set; }
+		public long ShiireQty { get; set; }
+		public long ShiireAmount { get; set; }
+		public long SalesQty { get; set; }
+		public long SalesAmount { get; set; }
+		public long SalesCost { get; set; }
+	}
+
+	/// <summary>
+	/// 集計済みの行から期首/期末在庫を積み戻す。期末(最後の区切り)=アンカー、期末(n−1)=期首(n)=期末(n)−増減(n)。
+	/// <para>
+	/// SQL の結果（区切り数×軸の値の数）に対する加減算だけで、DBの読み直しはしない。
+	/// SQL 側で区切り×軸の格子とウィンドウ関数を作ると、集計結果を複数回参照することになり、
+	/// CTE を使い回さない MariaDB では集計が参照回数ぶん繰り返されて約3倍遅くなったため（設計書 §3.3）。
+	/// </para>
+	/// </summary>
+	internal static List<CorporateAnalysisRow> BuildRows(IReadOnlyList<CorporateAnalysisBucket> buckets, IEnumerable<AggRow> aggRows) {
+		var map = new Dictionary<(string, long), AggRow>();
+		var groups = new Dictionary<long, AggRow>();
+		foreach (var a in aggRows) {
+			map[(a.BucketKey, a.GroupId)] = a;
+			// 名称はどの行でも同じ（軸の Id から引く）。最初に見えた行を使う
+			groups.TryAdd(a.GroupId, a);
+		}
+		var result = new List<(int Ord, CorporateAnalysisRow Row)>();
+		foreach (var (gid, named) in groups) {
+			var closingQty = map.GetValueOrDefault((AnchorKey, gid))?.DeltaQty ?? 0;
+			var closingAmount = map.GetValueOrDefault((AnchorKey, gid))?.DeltaAmount ?? 0;
+			for (var i = buckets.Count - 1; i >= 0; i--) {
+				var a = map.GetValueOrDefault((buckets[i].Key, gid));
+				var row = new CorporateAnalysisRow {
+					BucketKey = buckets[i].Key, GroupId = gid, GroupCode = named.GroupCode, GroupName = named.GroupName,
+					ClosingStockQty = closingQty, ClosingStockAmount = closingAmount,
+					OpeningStockQty = closingQty - (a?.DeltaQty ?? 0), OpeningStockAmount = closingAmount - (a?.DeltaAmount ?? 0),
+					HachuQty = a?.HachuQty ?? 0, HachuAmount = a?.HachuAmount ?? 0,
+					JuchuQty = a?.JuchuQty ?? 0, JuchuAmount = a?.JuchuAmount ?? 0,
+					ShiireQty = a?.ShiireQty ?? 0, ShiireAmount = a?.ShiireAmount ?? 0,
+					SalesQty = a?.SalesQty ?? 0, SalesAmount = a?.SalesAmount ?? 0, SalesCost = a?.SalesCost ?? 0,
+				};
+				closingQty = row.OpeningStockQty;
+				closingAmount = row.OpeningStockAmount;
+				if (!IsEmpty(row)) result.Add((i, row));
+			}
+		}
+		return [.. result.OrderBy(x => x.Ord).ThenBy(x => x.Row.GroupCode, StringComparer.Ordinal).ThenBy(x => x.Row.GroupId).Select(x => x.Row)];
+	}
+
+	static bool IsEmpty(CorporateAnalysisRow r) =>
+		r.OpeningStockQty == 0 && r.OpeningStockAmount == 0 && r.ClosingStockQty == 0 && r.ClosingStockAmount == 0
+		&& r.HachuQty == 0 && r.HachuAmount == 0 && r.JuchuQty == 0 && r.JuchuAmount == 0
+		&& r.ShiireQty == 0 && r.ShiireAmount == 0 && r.SalesQty == 0 && r.SalesAmount == 0;
 
 	/// <summary>MasterSysman.FiscalStartDate の月。未設定・不正は1月（暦年）とする。</summary>
 	private int GetFiscalStartMonth() {
@@ -76,38 +140,38 @@ public sealed class CorporateAnalysisDb(ExDatabase db) {
 
 		// ---- 在庫（k=0）: アンカー行(~)＋区切り内の増減 ----
 		var stock = new List<string> {
-			$"SELECT '{AnchorKey}' AS b, Id_Shohin AS sid, Su AS q FROM SummaryRealStock",
+			Grouped($"SELECT '{AnchorKey}' AS b, Id_Shohin AS sid, Su AS q FROM SummaryRealStock"),
 		};
 		if (isDay) {
 			// 日単位: 終了日の計上月より後は月次集計、終了日の翌日〜その計上月末は伝票から差し引く
 			var monthTo = ClosingMonthCalculator.CalculateKakeMonth(last.DayTo, shime);
 			var monthEnd = ClosingMonthCalculator.GetPeriod(monthTo, shime).DayTo;
-			stock.Add($"SELECT '{AnchorKey}', Id_Shohin, -Su FROM SummaryStock WHERE SumMonth > '{monthTo}'");
+			stock.Add(Grouped($"SELECT '{AnchorKey}' AS b, Id_Shohin AS sid, -Su AS q FROM SummaryStock WHERE SumMonth > '{monthTo}'"));
 			var dayKey = p.ByBucket ? "t.DenDay" : "''";
 			foreach (var table in StockTables) {
 				var soko = TranCalcBase.GetCalcSoko(table).Item1;
-				if (soko != 0) stock.Add(StockMoveSql(table, "Id_Soko", soko, first.DayFrom, last.DayTo, monthEnd, dayKey));
+				if (soko != 0) stock.Add(Grouped(StockMoveSql(table, "Id_Soko", soko, first.DayFrom, last.DayTo, monthEnd, dayKey)));
 				var idosaki = TranCalcBase.GetCalcIdosaki(table).Item1;
-				if (idosaki != 0) stock.Add(StockMoveSql(table, "Id_Ido", idosaki, first.DayFrom, last.DayTo, monthEnd, dayKey));
+				if (idosaki != 0) stock.Add(Grouped(StockMoveSql(table, "Id_Ido", idosaki, first.DayFrom, last.DayTo, monthEnd, dayKey)));
 			}
 		}
 		else {
-			stock.Add($"SELECT '{AnchorKey}', Id_Shohin, -Su FROM SummaryStock WHERE SumMonth > '{last.MonthTo}'");
+			stock.Add(Grouped($"SELECT '{AnchorKey}' AS b, Id_Shohin AS sid, -Su AS q FROM SummaryStock WHERE SumMonth > '{last.MonthTo}'"));
 			var monthKey = p.ByBucket
 				? CaseRange("SumMonth", buckets.Select(b => (b.MonthFrom, b.MonthTo, b.Key)))
 				: "''";
-			stock.Add($"SELECT {monthKey}, Id_Shohin, Su FROM SummaryStock WHERE SumMonth BETWEEN '{first.MonthFrom}' AND '{last.MonthTo}'");
+			stock.Add(Grouped($"SELECT {monthKey} AS b, Id_Shohin AS sid, Su AS q FROM SummaryStock WHERE SumMonth BETWEEN '{first.MonthFrom}' AND '{last.MonthTo}'"));
 		}
 
 		// ---- 金額（k=1..4） ----
 		var flowKey = !p.ByBucket ? "''"
 			: isDay ? "h.DenDay"
 			: CaseRange("h.DenDay", buckets.Select(b => (b.DayFrom, b.DayTo, b.Key)));
-		var flows = FlowTables.Select(f => $@"SELECT {flowKey} AS b, CAST(json_extract(m.value, '$.Id_Shohin') AS INTEGER) AS sid, {f.Kind} AS k,
+		var flows = FlowTables.Select(f => GroupedFlow($@"SELECT {flowKey} AS b, CAST(json_extract(m.value, '$.Id_Shohin') AS INTEGER) AS sid, {f.Kind} AS k,
   h.CalcFlag * CAST(IFNULL(json_extract(m.value, '$.Su'), 0) AS INTEGER) AS su,
   h.CalcFlag * CAST(IFNULL(json_extract(m.value, '$.Kingaku'), 0) AS INTEGER) AS kin
  FROM {f.Table} AS h CROSS JOIN json_each(h.Jmeisai) AS m
- WHERE h.DenDay BETWEEN '{first.DayFrom}' AND '{last.DayTo}' AND json_valid(h.Jmeisai)");
+ WHERE h.DenDay BETWEEN '{first.DayFrom}' AND '{last.DayTo}' AND json_valid(h.Jmeisai)"));
 
 		var (groupExpr, nameJoin, codeExpr, nameExpr) = Axis(p.GroupAxis);
 		// 全社は gid=0 の1行。GROUP BY に整数定数を書くと列番号扱いになるため、区切りだけで括る
@@ -116,7 +180,6 @@ public sealed class CorporateAnalysisDb(ExDatabase db) {
 		foreach (var f in p.Filters ?? []) {
 			filters.Append($" AND {FilterColumn(f.Axis)} = {f.Id.ToString(CultureInfo.InvariantCulture)}");
 		}
-		var bucketList = string.Join("\n  UNION ALL ", buckets.Select((b, i) => $"SELECT '{b.Key}' AS b, {i} AS ord"));
 
 		return $@"WITH fact AS (
  SELECT s.b, s.sid, 0 AS k, SUM(s.q) AS su, 0 AS kin FROM (
@@ -143,34 +206,11 @@ agg AS (
  FROM fact AS x LEFT JOIN MasterShohin AS sh ON sh.Id = x.sid
  WHERE 1 = 1{filters}
  GROUP BY x.b{groupBy}
-),
-bk AS (
-  {bucketList}
-),
-gs AS (SELECT DISTINCT gid FROM agg),
-anc AS (SELECT gid, dq, da FROM agg WHERE b = '{AnchorKey}'),
-grid AS (
- SELECT bk.ord, bk.b, gs.gid,
-  COALESCE(a.dq, 0) AS dq, COALESCE(a.da, 0) AS da,
-  COALESCE(a.hq, 0) AS hq, COALESCE(a.ha, 0) AS ha, COALESCE(a.jq, 0) AS jq, COALESCE(a.ja, 0) AS ja,
-  COALESCE(a.sq, 0) AS sq, COALESCE(a.sa, 0) AS sa, COALESCE(a.uq, 0) AS uq, COALESCE(a.ua, 0) AS ua, COALESCE(a.uc, 0) AS uc
- FROM bk CROSS JOIN gs LEFT JOIN agg AS a ON a.b = bk.b AND a.gid = gs.gid
-),
-cum AS (
- SELECT g.*,
-  COALESCE(n.dq, 0) - COALESCE(SUM(g.dq) OVER (PARTITION BY g.gid ORDER BY g.ord DESC ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS cq,
-  COALESCE(n.da, 0) - COALESCE(SUM(g.da) OVER (PARTITION BY g.gid ORDER BY g.ord DESC ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS ca
- FROM grid AS g LEFT JOIN anc AS n ON n.gid = g.gid
 )
-SELECT c.b AS BucketKey, c.gid AS GroupId, {codeExpr} AS GroupCode, {nameExpr} AS GroupName,
- c.cq - c.dq AS OpeningStockQty, c.ca - c.da AS OpeningStockAmount,
- c.cq AS ClosingStockQty, c.ca AS ClosingStockAmount,
- c.hq AS HachuQty, c.ha AS HachuAmount, c.jq AS JuchuQty, c.ja AS JuchuAmount,
- c.sq AS ShiireQty, c.sa AS ShiireAmount, c.uq AS SalesQty, c.ua AS SalesAmount, c.uc AS SalesCost
-FROM cum AS c{nameJoin}
-WHERE NOT (c.cq = 0 AND c.ca = 0 AND c.dq = 0 AND c.da = 0 AND c.hq = 0 AND c.ha = 0 AND c.jq = 0 AND c.ja = 0
-  AND c.sq = 0 AND c.sa = 0 AND c.uq = 0 AND c.ua = 0)
-ORDER BY c.ord, GroupCode";
+SELECT a.b AS BucketKey, a.gid AS GroupId, {codeExpr} AS GroupCode, {nameExpr} AS GroupName,
+ a.dq AS DeltaQty, a.da AS DeltaAmount, a.hq AS HachuQty, a.ha AS HachuAmount, a.jq AS JuchuQty, a.ja AS JuchuAmount,
+ a.sq AS ShiireQty, a.sa AS ShiireAmount, a.uq AS SalesQty, a.ua AS SalesAmount, a.uc AS SalesCost
+FROM agg AS a{nameJoin}";
 	}
 
 	/// <summary>
@@ -178,15 +218,26 @@ ORDER BY c.ord, GroupCode";
 	/// </summary>
 	private static string StockMoveSql(string table, string sokoColumn, int flag, string dayFrom, string dayTo, string monthEnd, string dayKey) {
 		var isStock = table == nameof(Tran03Shiire) ? " AND t.IsStock = 1" : string.Empty;
-		return $@"SELECT CASE WHEN t.DenDay > '{dayTo}' THEN '{AnchorKey}' ELSE {dayKey} END,
-  CAST(json_extract(j.value, '$.Id_Shohin') AS INTEGER),
-  CAST(json_extract(j.value, '$.Su') AS INTEGER) * t.CalcFlag * {flag} * (CASE WHEN t.DenDay > '{dayTo}' THEN -1 ELSE 1 END)
+		return $@"SELECT CASE WHEN t.DenDay > '{dayTo}' THEN '{AnchorKey}' ELSE {dayKey} END AS b,
+  CAST(json_extract(j.value, '$.Id_Shohin') AS INTEGER) AS sid,
+  CAST(json_extract(j.value, '$.Su') AS INTEGER) * t.CalcFlag * {flag} * (CASE WHEN t.DenDay > '{dayTo}' THEN -1 ELSE 1 END) AS q
  FROM {table} AS t CROSS JOIN json_each(t.Jmeisai) AS j
   LEFT JOIN MasterTokui AS mt ON mt.Id = t.{sokoColumn}
   LEFT JOIN MasterShohin AS ms ON ms.Id = CAST(json_extract(j.value, '$.Id_Shohin') AS INTEGER)
  WHERE t.DenDay BETWEEN '{dayFrom}' AND '{monthEnd}' AND json_type(t.Jmeisai) = 'array'
   AND COALESCE(mt.IsZaiko, 1) = 1 AND COALESCE(ms.IsZaiko, 1) = 1{isStock}";
 	}
+
+	/// <summary>
+	/// 在庫の源泉1つを (区切り, 商品) で先に集計する。行のまま UNION ALL すると、MariaDB は数百万行を
+	/// 一時表へ書き出してから集計するため遅い（現在庫だけで約178万行）。源泉ごとに商品単位へ縮めてから結合する。
+	/// </summary>
+	private static string Grouped(string rowSelect) =>
+		$"SELECT x.b, x.sid, SUM(x.q) AS q FROM ({rowSelect}) AS x GROUP BY x.b, x.sid";
+
+	/// <summary>金額の源泉1つを (区切り, 商品, 種別) で先に集計する（理由は <see cref="Grouped"/> と同じ）。</summary>
+	private static string GroupedFlow(string rowSelect) =>
+		$"SELECT x.b, x.sid, x.k, SUM(x.su) AS su, SUM(x.kin) AS kin FROM ({rowSelect}) AS x GROUP BY x.b, x.sid, x.k";
 
 	/// <summary>範囲→区切りキーの CASE 式。</summary>
 	private static string CaseRange(string column, IEnumerable<(string From, string To, string Key)> ranges) {
@@ -203,11 +254,11 @@ ORDER BY c.ord, GroupCode";
 			return ("0", string.Empty, "''", "'全社'");
 		}
 		if (axis == CorporateAnalysisAxis.Shohin) {
-			return ("x.sid", " LEFT JOIN MasterShohin AS nm ON nm.Id = c.gid",
+			return ("x.sid", " LEFT JOIN MasterShohin AS nm ON nm.Id = a.gid",
 				"COALESCE(nm.Code, '')", "COALESCE(nm.Name, '(商品マスタなし)')");
 		}
 		var kubun = MeishoKubun(axis);
-		return (FilterColumn(axis), $" LEFT JOIN MasterMeisho AS nm ON nm.Id = c.gid AND nm.Kubun = '{kubun}'",
+		return (FilterColumn(axis), $" LEFT JOIN MasterMeisho AS nm ON nm.Id = a.gid AND nm.Kubun = '{kubun}'",
 			"COALESCE(nm.Code, '')", "COALESCE(nm.Name, '(未設定)')");
 	}
 
