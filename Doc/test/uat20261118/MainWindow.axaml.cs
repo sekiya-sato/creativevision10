@@ -19,20 +19,40 @@ public partial class MainWindow : Window, IPrototypeDialogs {
 		DataContext = vm = new MainViewModel(new DummyProductService(), this);
 		vm.PropertyChanged += OnViewModelChanged;
 		Opened += async (_, _) => {
-			await vm.SearchCommand.ExecuteAsync(null);
+			await vm.LoadInitialAsync();
 			// 手動検証用。指定先に実ウィンドウを描画し、確認後に終了する。
 			var captureDir = Environment.GetEnvironmentVariable("UAT_AVALONIA_CAPTURE_DIR");
 			if (!string.IsNullOrWhiteSpace(captureDir)) {
 				Directory.CreateDirectory(captureDir);
+				await Task.Delay(100);
+				await vm.DetailsTask;
 				await CaptureAsync(Path.Combine(captureDir, "standard.png"));
 				Width = MinWidth; Height = MinHeight;
 				await CaptureAsync(Path.Combine(captureDir, "minimum.png"));
 				vm.SelectedTab = 1; vm.DarkTheme = true;
 				await CaptureAsync(Path.Combine(captureDir, "details-dark.png"));
+				vm.SelectedTab = 0;
+				ProductGrid.ScrollIntoView(vm.Rows.LastOrDefault(), null);
+				await Task.Delay(150);
+				await vm.DetailsTask;
+				await CaptureAsync(Path.Combine(captureDir, "scrolled.png"));
+				var scrolledCount = vm.FullLoadedCount;
+				ProductGrid.ScrollIntoView(vm.Rows.FirstOrDefault(), null);
+				await Task.Delay(800);
+				File.WriteAllText(Path.Combine(captureDir, "load-count.txt"), $"{vm.DetailStatus}\n末尾表示後: {scrolledCount} 件 / 先頭へ戻った後: {vm.FullLoadedCount} 件");
+				var search = new ProductSearchWindow();
+				search.Opened += async (_, _) => {
+					await Task.Delay(300);
+					using var bitmap = new RenderTargetBitmap(new PixelSize((int)search.Bounds.Width, (int)search.Bounds.Height), new Vector(96, 96));
+					bitmap.Render(search);
+					bitmap.Save(Path.Combine(captureDir, "search.png"));
+					search.Close(false);
+				};
+				await search.ShowDialog<bool>(this);
 				Close();
 			}
 		};
-		Closing += (_, _) => vm.CancelCommand.Execute(null);
+		Closing += (_, _) => vm.StopLoading();
 		Closed += (_, _) => vm.PropertyChanged -= OnViewModelChanged;
 		KeyDown += (_, e) => {
 			if (e.Key == Key.Escape) {
@@ -43,6 +63,12 @@ public partial class MainWindow : Window, IPrototypeDialogs {
 			}
 		};
 	}
+
+	private void ProductRowLoading(object? sender, DataGridRowEventArgs e) {
+		if (e.Row.DataContext is ProductRow row) vm.RequestFullRow(row);
+	}
+
+	public Task<bool> ShowProductSearchAsync() => new ProductSearchWindow().ShowDialog<bool>(this);
 
 	private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) {
 		if (e.PropertyName == nameof(MainViewModel.DarkTheme))
@@ -98,7 +124,7 @@ public partial class MainWindow : Window, IPrototypeDialogs {
 			await using var writer = new StreamWriter(stream, new UTF8Encoding(true));
 			await writer.WriteLineAsync("コード,商品名,カナ,分類,単価");
 			foreach (var row in vm.Rows) await writer.WriteLineAsync(string.Join(",",
-				new[] { row.Code, row.Name, row.Kana, row.Category, row.Price.ToString(CultureInfo.InvariantCulture) }.Select(Csv)));
+				new[] { row.Code, row.Name, row.Kana, row.Category, row.IsFullLoaded ? row.Price.ToString(CultureInfo.InvariantCulture) : "未取得" }.Select(Csv)));
 			vm.Status = "表示中のダミー一覧をCSVに保存しました。";
 		}
 		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { vm.Status = $"CSV保存失敗: {ex.Message}"; }

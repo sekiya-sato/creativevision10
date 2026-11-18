@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="UatAvalonia.ProductSearchWindow" Title="商品マスター検索（ダミー）"
+        Width="820" Height="720" MinWidth="680" MinHeight="540" WindowStartupLocation="CenterOwner">
+  <Grid RowDefinitions="Auto,*,Auto" Margin="16" RowSpacing="12">
+    <Border Background="#503280" CornerRadius="8" Padding="16,12">
+      <StackPanel Spacing="6">
+        <TextBlock Text="商品マスター検索" FontSize="22" FontWeight="SemiBold" Foreground="White" />
+        <TextBlock Text="条件入力・複数選択のUI検証 / 入力条件は一覧へ反映しません" Foreground="White" TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+    <Border Grid.Row="1" Classes="card">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <Grid ColumnDefinitions="110,*,24,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+              Margin="4" ColumnSpacing="10" RowSpacing="12" MinWidth="570">
+          <TextBlock Classes="label" Text="商品ID" />
+          <TextBox Grid.Column="1" Watermark="開始ID" />
+          <TextBlock Grid.Column="2" Classes="label" Text="～" />
+          <TextBox Grid.Column="3" Watermark="終了ID" />
+          <TextBlock Grid.Row="1" Classes="label" Text="商品コード" />
+          <TextBox Grid.Row="1" Grid.Column="1" Watermark="開始コード" />
+          <TextBlock Grid.Row="1" Grid.Column="2" Classes="label" Text="～" />
+          <TextBox Grid.Row="1" Grid.Column="3" Watermark="終了コード" />
+          <TextBlock Grid.Row="2" Classes="label" Text="ブランド" />
+          <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+            <Button Content="選択…" Click="SelectBrands" />
+            <TextBlock x:Name="BrandText" Grid.Column="1" Classes="label" Text="未選択" TextWrapping="Wrap" />
+            <Button Grid.Column="2" Content="解除" Click="ClearBrands" />
+          </Grid>
+          <TextBlock Grid.Row="3" Classes="label" Text="アイテム" />
+          <Grid Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+            <Button Content="選択…" Click="SelectItems" />
+            <TextBlock x:Name="ItemText" Grid.Column="1" Classes="label" Text="未選択" TextWrapping="Wrap" />
+            <Button Grid.Column="2" Content="解除" Click="ClearItems" />
+          </Grid>
+          <TextBlock Grid.Row="4" Classes="label" Text="商品名" />
+          <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" Watermark="部分一致" />
+          <TextBlock Grid.Row="5" Classes="label" Text="略称" />
+          <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3" Watermark="部分一致" />
+          <TextBlock Grid.Row="6" Classes="label" Text="カナ" />
+          <TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3" Watermark="部分一致 / IME確認" />
+          <TextBlock Grid.Row="7" Classes="label" Text="並び順" />
+          <ComboBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" SelectedIndex="0" HorizontalAlignment="Stretch">
+            <ComboBoxItem Content="商品コード順" /><ComboBoxItem Content="商品名順" /><ComboBoxItem Content="商品ID順" />
+          </ComboBox>
+          <TextBlock Grid.Row="8" Classes="label" Text="取得件数" />
+          <NumericUpDown Grid.Row="8" Grid.Column="1" Minimum="1" Maximum="10000" Value="100" Increment="100" />
+          <CheckBox Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="3" Content="有効な商品のみ（仮条件）" />
+        </Grid>
+      </ScrollViewer>
+    </Border>
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+      <Button Content="検索（ダミー一覧取得）" Classes="primary" IsDefault="True" Click="AcceptSearch" />
+      <Button Content="取消 Esc" IsCancel="True" Click="CancelSearch" />
+    </StackPanel>
+  </Grid>
+</Window>

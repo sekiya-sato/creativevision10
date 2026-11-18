@@ -37,18 +37,20 @@
     <Grid Grid.Row="2" ColumnDefinitions="43*,8,57*">
       <Border Classes="card">
         <Grid RowDefinitions="Auto,*" RowSpacing="8">
-          <Grid ColumnDefinitions="*,Auto">
-            <TextBlock Text="商品一覧（選択 → 編集用コピー）" FontWeight="SemiBold" />
+          <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+            <TextBlock Text="商品一覧（基本情報を全件取得）" FontWeight="SemiBold" />
             <TextBlock Grid.Column="1" Text="{Binding Rows.Count, StringFormat='{}{0} 件'}" />
+            <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding DetailStatus}" TextWrapping="Wrap" FontSize="12" />
           </Grid>
-          <DataGrid Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False"
+          <DataGrid x:Name="ProductGrid" Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" LoadingRow="ProductRowLoading"
                     IsReadOnly="True" GridLinesVisibility="Horizontal" FrozenColumnCount="1" SelectionMode="Single">
             <DataGrid.Columns>
+              <DataGridTextColumn Header="取得状態" Binding="{Binding LoadState}" Width="125" />
               <DataGridTextColumn Header="コード" Binding="{Binding Code}" Width="90" />
               <DataGridTextColumn Header="商品名" Binding="{Binding Name}" Width="180" />
               <DataGridTextColumn Header="カナ" Binding="{Binding Kana}" Width="180" />
               <DataGridTextColumn Header="分類" Binding="{Binding Category}" Width="75" />
-              <DataGridTextColumn Header="単価" Binding="{Binding Price, StringFormat=N0}" Width="100" />
+              <DataGridTextColumn Header="単価" Binding="{Binding PriceDisplay}" Width="100" />
               <DataGridCheckBoxColumn Header="有効" Binding="{Binding Enabled}" Width="65" />
             </DataGrid.Columns>
           </DataGrid>
@@ -59,7 +61,7 @@
         <TabControl SelectedIndex="{Binding SelectedTab}">
           <TabItem Header="基本情報">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-              <Grid Margin="4,12,8,12" ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12" ColumnSpacing="10" MinWidth="380">
+              <Grid IsEnabled="{Binding CanEdit}" Margin="4,12,8,12" ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12" ColumnSpacing="10" MinWidth="380">
                 <TextBlock Classes="label" Text="コード *" />
                 <TextBox Grid.Column="1" Text="{Binding Edit.Code}" MaxLength="12" Watermark="追加は未使用コードを入力" />
                 <TextBlock Grid.Row="1" Classes="label" Text="商品名 *" />
