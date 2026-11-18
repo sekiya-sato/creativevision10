@@ -68,6 +68,7 @@ printform/data*.*
 CvServer/*.db
 Doc/spec/*.pdf
 Doc/test/uat20*/
+!Doc/test/uat20261118/
 Doc/test/uat-20*/
 .tmp*/
 .tmp*

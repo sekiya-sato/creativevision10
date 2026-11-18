@@ -1,0 +1,126 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:UatAvalonia" x:Class="UatAvalonia.MainWindow" x:DataType="local:MainViewModel"
+        Title="CV10 Avalonia UI 部品検証（ダミー）" Width="1280" Height="900" MinWidth="960" MinHeight="700"
+        FontSize="14" WindowStartupLocation="CenterScreen">
+  <Window.KeyBindings>
+    <KeyBinding Gesture="F2" Command="{Binding UpdateCommand}" />
+    <KeyBinding Gesture="F3" Command="{Binding DeleteCommand}" />
+    <KeyBinding Gesture="F4" Command="{Binding InsertCommand}" />
+    <KeyBinding Gesture="F5" Command="{Binding SearchCommand}" />
+    <KeyBinding Gesture="F6" Command="{Binding PrintCommand}" />
+  </Window.KeyBindings>
+  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="12" RowSpacing="10">
+    <Border Classes="toolbar" Background="#503280" CornerRadius="8" Padding="14,10">
+      <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="8">
+        <TextBlock Text="商品マスタ / UI部品検証" FontSize="22" FontWeight="SemiBold" Foreground="White" />
+        <CheckBox Grid.Column="1" Content="ダーク表示" Foreground="White" IsChecked="{Binding DarkTheme}" />
+        <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal">
+          <Button Margin="0,0,6,0" Content="修正 F2" Command="{Binding UpdateCommand}" IsEnabled="{Binding CanWrite}" />
+          <Button Margin="0,0,6,0" Content="削除 F3" Command="{Binding DeleteCommand}" IsEnabled="{Binding CanWrite}" />
+          <Button Margin="0,0,6,0" Content="追加 F4" Command="{Binding InsertCommand}" IsEnabled="{Binding CanStart}" />
+          <Button Margin="0,0,6,0" Content="検索 F5" Classes="primary" Command="{Binding SearchCommand}" IsEnabled="{Binding CanStart}" />
+          <Button Margin="0,0,6,0" Content="印刷 F6（ダミー）" Command="{Binding PrintCommand}" />
+          <Button Margin="0,0,6,0" Content="CSV保存" Click="SaveCsv" IsEnabled="{Binding CanStart}" />
+          <Button Content="閉じる Esc" Click="CloseWindow" />
+        </WrapPanel>
+      </Grid>
+    </Border>
+    <Border Grid.Row="1" Classes="card">
+      <Grid ColumnDefinitions="Auto,150,Auto,*,Auto" ColumnSpacing="10">
+        <TextBlock Classes="label" Text="分類" />
+        <ComboBox Grid.Column="1" ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" HorizontalAlignment="Stretch" />
+        <TextBlock Grid.Column="2" Classes="label" Text="コード・名称・カナ" />
+        <TextBox Grid.Column="3" Watermark="部分一致検索 / 日本語IMEを確認" Text="{Binding Filter}" />
+        <CheckBox Grid.Column="4" Content="ダミーエラー" IsChecked="{Binding SimulateError}" />
+      </Grid>
+    </Border>
+    <Grid Grid.Row="2" ColumnDefinitions="43*,8,57*">
+      <Border Classes="card">
+        <Grid RowDefinitions="Auto,*" RowSpacing="8">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="商品一覧（選択 → 編集用コピー）" FontWeight="SemiBold" />
+            <TextBlock Grid.Column="1" Text="{Binding Rows.Count, StringFormat='{}{0} 件'}" />
+          </Grid>
+          <DataGrid Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False"
+                    IsReadOnly="True" GridLinesVisibility="Horizontal" FrozenColumnCount="1" SelectionMode="Single">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="コード" Binding="{Binding Code}" Width="90" />
+              <DataGridTextColumn Header="商品名" Binding="{Binding Name}" Width="180" />
+              <DataGridTextColumn Header="カナ" Binding="{Binding Kana}" Width="180" />
+              <DataGridTextColumn Header="分類" Binding="{Binding Category}" Width="75" />
+              <DataGridTextColumn Header="単価" Binding="{Binding Price, StringFormat=N0}" Width="100" />
+              <DataGridCheckBoxColumn Header="有効" Binding="{Binding Enabled}" Width="65" />
+            </DataGrid.Columns>
+          </DataGrid>
+        </Grid>
+      </Border>
+      <GridSplitter Grid.Column="1" ResizeDirection="Columns" HorizontalAlignment="Stretch" />
+      <Border Grid.Column="2" Classes="card">
+        <TabControl SelectedIndex="{Binding SelectedTab}">
+          <TabItem Header="基本情報">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+              <Grid Margin="4,12,8,12" ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12" ColumnSpacing="10" MinWidth="380">
+                <TextBlock Classes="label" Text="コード *" />
+                <TextBox Grid.Column="1" Text="{Binding Edit.Code}" MaxLength="12" Watermark="追加は未使用コードを入力" />
+                <TextBlock Grid.Row="1" Classes="label" Text="商品名 *" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Edit.Name}" />
+                <TextBlock Grid.Row="2" Classes="label" Text="カナ" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Edit.Kana}" />
+                <TextBlock Grid.Row="3" Classes="label" Text="分類" />
+                <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding EditCategories}" SelectedItem="{Binding Edit.Category}" HorizontalAlignment="Stretch" />
+                <TextBlock Grid.Row="4" Classes="label" Text="仕入先" />
+                <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                  <TextBox Text="{Binding Edit.Supplier}" IsReadOnly="True" />
+                  <Button Grid.Column="1" Content="選択…" Command="{Binding SelectSupplierCommand}" IsEnabled="{Binding CanStart}" />
+                </Grid>
+                <TextBlock Grid.Row="5" Classes="label" Text="単価" />
+                <NumericUpDown Grid.Row="5" Grid.Column="1" Value="{Binding Edit.Price}" Minimum="0" Maximum="99999999" FormatString="N0" Increment="100" HorizontalAlignment="Stretch" />
+                <TextBlock Grid.Row="6" Classes="label" Text="適用開始日" />
+                <DatePicker Grid.Row="6" Grid.Column="1" SelectedDate="{Binding Edit.StartDate}" HorizontalAlignment="Stretch" />
+                <TextBlock Grid.Row="7" Classes="label" Text="状態" />
+                <CheckBox Grid.Row="7" Grid.Column="1" Content="有効な商品" IsChecked="{Binding Edit.Enabled}" />
+                <TextBlock Grid.Row="8" Classes="label" Text="メモ" />
+                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding Edit.Memo}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="76" />
+                <TextBlock Grid.Row="9" Grid.ColumnSpan="2" Text="* 必須項目 / 一覧の編集内容は確認後にメモリへ保存" TextWrapping="Wrap" Opacity="0.7" />
+              </Grid>
+            </ScrollViewer>
+          </TabItem>
+          <TabItem Header="色・サイズ明細">
+            <Grid RowDefinitions="Auto,*,Auto" Margin="4,12" RowSpacing="10">
+              <TextBlock Text="編集用 DataGrid / Tab・Enter・日本語入力を確認" TextWrapping="Wrap" />
+              <DataGrid Grid.Row="1" ItemsSource="{Binding Details}" AutoGenerateColumns="False" GridLinesVisibility="All">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="色" Binding="{Binding Color}" Width="*" />
+                  <DataGridTextColumn Header="サイズ" Binding="{Binding Size}" Width="*" />
+                  <DataGridTextColumn Header="数量" Binding="{Binding Quantity}" Width="*" />
+                </DataGrid.Columns>
+              </DataGrid>
+              <StackPanel Grid.Row="2" Spacing="8">
+                <Button Content="明細行を追加" Command="{Binding AddDetailCommand}" />
+                <TextBlock Text="明細はUI操作専用。商品保存の対象には含めません。" TextWrapping="Wrap" Opacity="0.7" />
+              </StackPanel>
+            </Grid>
+          </TabItem>
+          <TabItem Header="移行確認">
+            <ScrollViewer>
+              <StackPanel Margin="4,12" Spacing="12">
+                <TextBlock Text="今回の仮構築" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="操作バー / カード / 一覧選択 / 分割リサイズ / タブ / 検索 / 文字・数値・日付入力 / 編集グリッド / 確認・選択ダイアログ / ファイル選択 / テーマ / 取消・異常系" TextWrapping="Wrap" />
+                <TextBlock Text="ダミー要求（実通信なし）" FontWeight="SemiBold" />
+                <TextBox Text="{Binding Request}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="100" />
+                <TextBlock Text="未対応: WPF MaterialDesignの外観再現、固有のEnter移動、動的列、PDF/WebView、権限、実gRPC、実印刷、他OS検証。標準部品の配置を確認する試作です。" TextWrapping="Wrap" />
+              </StackPanel>
+            </ScrollViewer>
+          </TabItem>
+        </TabControl>
+      </Border>
+    </Grid>
+    <Border Grid.Row="3" Classes="card">
+      <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="6" ColumnSpacing="10">
+        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" VerticalAlignment="Center" />
+        <Button Grid.Column="1" Content="取消" Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}" />
+        <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" IsIndeterminate="True" IsVisible="{Binding IsBusy}" Height="4" />
+      </Grid>
+    </Border>
+  </Grid>
+</Window>
