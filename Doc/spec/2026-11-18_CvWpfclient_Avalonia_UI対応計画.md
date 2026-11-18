@@ -251,3 +251,42 @@ P0で代表データ件数、機器、ネットワーク条件、起動・検索
 - 描画時の行要求をまとめ、取得中／取得済みの行は重複要求しない。詳細取得前の行は編集・修正・削除を無効化する。検索条件変更・再検索・保存後・終了時は旧取得を中断し、新一覧へ旧応答が反映されないようにした。
 - 一覧に取得状態・基本件数・詳細取得件数を表示する。Windowsの描画確認では、基本40件・初期詳細16件→末尾へ移動後26件→先頭へ戻っても26件となり、全詳細の先行取得と戻り時の再取得を行っていないことを確認した。
 - buildは警告0・エラー0。F5の商品検索ダイアログ、ブランド選択結果の条件欄表示、ダイアログからのダミー一覧再取得を実画面で確認した。実通信、条件値の連携、詳細取得の異常系、製品実装との同等性は未検証。これはUI移行向けのダミー検証であり、製品の取得方式を変更するものではない。
+
+## 12. 改訂範囲・アイコンの簡易チェック（2026-11-18追加）
+
+追加確認対象HEAD: `3e9090149640586a43b819c0568022881c8c3ade`。既存ソースとAvalonia公式資料の静的確認であり、アイコン移植・実機検証は行っていない。§2の棚卸しは初回調査HEAD時点の記録として維持する。
+
+### 12.1 改訂範囲の理解
+
+主に **CvWpfclientのデザイン・画面動作と、それを支えるクライアント共通基盤の改訂** という理解でよい。ただし、個別画面のXAMLとViewModelを変更するだけでは完了しない。
+
+| 対象 | 必要な対応・根拠 |
+|---|---|
+| 個別画面 | XAML、ViewModel、code-behindを対応。入力・選択・終了・非同期処理の動作を維持 |
+| プロジェクト・起動 | `CvWpfclient.csproj`のUseWPF・Windows向けTFM・依存パッケージ、および`App.xaml.cs`のApplication・起動／終了・Dispatcher処理を対応 |
+| 共通画面基盤 | `BaseWindow`、`ClientLib`のWindow操作・同期ダイアログ・配置処理を対応。メニューのView型判定も分離 |
+| スタイル・入力部品 | MaterialDesignの共有リソース、WPFのDependencyPropertyを使うBehavior、WPF型を返すConverterを移植 |
+| PDF・OS連携 | WebView2、ファイル選択、配布・更新を対象OSごとに対応 |
+| 検証 | WPFの実View・Dispatcherに依存するUatVmの実行基盤を対応 |
+
+モデル・gRPC契約・UI非依存処理は再利用候補とし、UI移行を理由にサーバ・DBの業務仕様を変更しない。クライアント共通基盤を先に対応できれば、各画面の移行は主にXAML・ViewModel・code-behindの改訂に絞れる見通し。ただし、再利用可能な範囲は将来の移行着手時に再確認する。
+
+### 12.2 アイコンは同じように設定できるか
+
+**同じ意匠のアイコンを設定することは可能だが、WPFの設定・コントロールをそのまま流用するものではない。** 現行には、ICOファイル、MaterialDesignのPackIcon、自作描画部品の3系統がある。
+
+| 現行の種類 | 将来の対応案 |
+|---|---|
+| アプリ・ウィンドウのICO | `cv10.ico`と色別の`cv10-*.ico`は再利用候補。Windowsのexeアイコンは`ApplicationIcon`、ウィンドウはAvaloniaの`WindowIcon`で設定する。WPFのResource・pack URIはAvaloniaResource・avares URI等へ変更 |
+| 色テーマ別の切替 | [MainThemeService](../../CvWpfclient/Services/MainThemeService.cs) はWPFのImageSourceとpack URIを使用。色別アイコンを選ぶ考え方は維持し、画像読込・リソース反映部分を置換 |
+| ボタン・天気等のPackIcon | [MainMenuView.xaml](../../CvWpfclient/Views/MainMenuView.xaml) 等の`MaterialDesignThemes.Wpf.PackIcon`は直接流用しない。同じ図柄の利用可能なパスデータをAvaloniaのPathIconで描くか、対応ライブラリへ置換する。Kind名・図柄・サイズ・色の対応は個別確認 |
+| 月相などの自作描画 | [MoonPhaseIcon](../../CvWpfclient/Helpers/Controls/MoonPhaseIcon.cs) はWPFのFrameworkElement・描画型に依存。月相計算は再利用候補とし、描画・プロパティ・ツールチップ部分を移植 |
+| Linux・macOSの配布アイコン | 同じロゴから各OS用のサイズ・形式を用意する。Linuxのデスクトップ登録、macOSのアプリバンドル等の配布設定も必要で、WindowsのICO指定だけでは完結しない |
+
+色・サイズ・配置を現行に近づけることは可能。タイトルバー・タスクバー・Dock等の表示箇所や挙動はOS仕様に依存するため、全OSで同じ見え方になるとは扱わない。採用する図柄・ライブラリの利用条件と、各OS・DPI・明暗テーマでの表示は将来の受入時に確認する。
+
+確認資料: [Avalonia Window](https://docs.avaloniaui.net/docs/how-to/window-how-to)、[Windows](https://docs.avaloniaui.net/docs/platform-specific-guides/windows/)、[PathIcon](https://v11.docs.avaloniaui.net/docs/reference/controls/path-icon/)。採用バージョンの仕様は移行時に再確認する。
+
+### 12.3 現時点の扱い
+
+現行Windows／WPF版の安定化・画面確定を最優先とする。今回の追加は調査結果の文書化のみで、製品・試作の改修、アイコン置換、共通基盤抽出などの移行作業は行わない。Windows・Linux・macOS向けのAvalonia対応は将来バージョン（2.0候補）で再開を判断する。
