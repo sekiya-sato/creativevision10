@@ -323,9 +323,9 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 			_logger.LogWarning("権限明細の無いメニューを既定ポリシー(警告付き許可)で起動 Profile={Profile} FunctionId={FunctionId}",
 				_menuPermission.ProfileId, SelectedMenu.FunctionId);
 		}
-		// Product : ログインしてないときはログイン画面を出す etc リリース前に実装
-		if (InfolocalServer == null) {
-			await afterLogin(new _00System.LoginViewModel());
+		// ログインが必要なサーバで未ログイン・期限切れなら、サーバ呼出しで401になる前に止める
+		if (!await EnsureLoginForMenuAsync()) {
+			return;
 		}
 		if (SelectedMenu.IsDialog)
 			ClientLib.ExitAllWithoutMe(this);
@@ -391,6 +391,24 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 				await RefreshWeatherDashboardAsync(App.GetHostLifetimeToken());
 			}
 		}
+	}
+	/// <summary>
+	/// メニュー起動前のログイン確認。認証を解除したUAT用サーバではログイン無しで通す。
+	/// </summary>
+	/// <returns>起動してよければ true</returns>
+	async Task<bool> EnsureLoginForMenuAsync() {
+		var state = AppGlobal.GetLoginState();
+		if (state == EnumClientLoginState.LoggedIn) {
+			return true;
+		}
+		if (!await AppGlobal.GetServerAuthRequiredAsync(App.GetHostLifetimeToken())) {
+			return true;
+		}
+		var message = state == EnumClientLoginState.Expired
+			? "ログイン期限が切れています。再度ログインしてください。"
+			: "ログインしていません。ログインしてから実行してください。";
+		MessageEx.ShowWarningDialog(message, owner: ClientLib.GetActiveView(this));
+		return false;
 	}
 	async Task afterLogin(_00System.LoginViewModel vm) {
 		if (vm?.LoginData != null) {

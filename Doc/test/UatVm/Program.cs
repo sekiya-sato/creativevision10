@@ -72,6 +72,7 @@ var scenarios = new Dictionary<string, Func<VmSession, Task>>(StringComparer.Ord
 	["corporate"] = CorporateAnalysisScenario.RunAsync,
 	["menulayout"] = MenuLayoutScenario.RunAsync,
 	["menuperm"] = MenuPermissionScenario.RunAsync,
+	["loginguard"] = LoginGuardScenario.RunAsync,
 	["switchdb"] = SwitchDbScenario.RunAsync,
 	["mastercrud"] = MasterCrudScenario.RunAsync,
 	["democapture"] = DemoCaptureScenario.RunAsync,

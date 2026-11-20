@@ -76,6 +76,24 @@ public sealed record class LoginRefresh {
 }
 
 /// <summary>
+/// 認証モード照会リクエスト（項目なし）
+/// </summary>
+[DataContract]
+public sealed record class AuthModeRequest {
+}
+/// <summary>
+/// 認証モード照会リプライ
+/// </summary>
+[DataContract]
+public sealed record class AuthModeReply {
+	/// <summary>
+	/// true=業務APIの呼出しにログインが必要。false=UAT用に認証を解除したサーバ
+	/// </summary>
+	[DataMember(Order = 1)]
+	public bool AuthRequired { get; set; }
+}
+
+/// <summary>
 /// Contract:gRPC公開サービス
 /// [Contract: gRPC Public Service]
 /// </summary>
@@ -89,4 +107,10 @@ public interface ILoginService {
 
 	[OperationContract]
 	Task<LoginReply> CreateLoginAsync(LoginRequest request, CallContext context = default);
+
+	/// <summary>
+	/// 業務APIの呼出しにログインが必要かを返す。ログイン前に呼ぶため匿名で公開する。
+	/// </summary>
+	[OperationContract]
+	Task<AuthModeReply> GetAuthModeAsync(AuthModeRequest request, CallContext context = default);
 }

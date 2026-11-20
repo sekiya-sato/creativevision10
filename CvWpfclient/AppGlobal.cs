@@ -189,6 +189,7 @@ public static partial class AppGlobal {
 		if (url != null) {
 			_config["ConnectionStrings:Url"] = url;
 			_grpcServiceCache.Clear();
+			ClearServerAuthMode();
 		}
 		if (loginId != null) {
 			_config["Application:LoginId"] = loginId;

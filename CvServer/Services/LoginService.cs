@@ -196,6 +196,15 @@ public partial class LoginService : ILoginService {
 	}
 
 	/// <summary>
+	/// 業務APIの呼出しにログインが必要かを返す。クライアントがメニュー起動前のログイン確認に使う。
+	/// UAT用の認証切替対象にはしない（常に匿名で呼べること）。
+	/// </summary>
+	[AllowAnonymous]
+	public Task<AuthModeReply> GetAuthModeAsync(AuthModeRequest request, ProtoBuf.Grpc.CallContext context = default) {
+		return Task.FromResult(new AuthModeReply { AuthRequired = Handlers.AuthModeProbe.AuthRequired });
+	}
+
+	/// <summary>
 	/// 追加情報をセットする
 	/// </summary>
 	/// <returns></returns>
