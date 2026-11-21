@@ -618,6 +618,16 @@ public partial class MainMenuViewModel : ObservableObject, IDisposable {
 	private async Task RefreshWeatherServerAsync(CancellationToken cancellationToken) {
 		try {
 			cancellationToken.ThrowIfCancellationRequested();
+			// 天気・気温はサーバのWeatherService経由で、ログインが必要なサーバでは未ログイン・期限切れだと401になる。
+			// その場合は取得せず、ログイン後(afterLogin)の再取得に任せる。期限切れは直前の表示を残す。
+			var loginState = AppGlobal.GetLoginState();
+			if (loginState != EnumClientLoginState.LoggedIn
+				&& await AppGlobal.GetServerAuthRequiredAsync(cancellationToken)) {
+				if (loginState == EnumClientLoginState.NotLoggedIn) {
+					WeatherDescription = "ログイン後に表示します";
+				}
+				return;
+			}
 			var weatherService = AppGlobal.GetGrpcService<IWeatherService>();
 			var reagion = AppGlobal.WeatherRegion;
 			var weather = await weatherService.GetCurrentWeatherAsync(reagion, AppGlobal.GetDefaultCallContext(cancellationToken, WeatherGrpcTimeout));

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection;
+using System.Text;
 using System.Windows;
 using CvWpfclient;
 using CvWpfclient.Models;
@@ -19,6 +20,7 @@ namespace UatVm.Scenarios;
 public static class LoginGuardScenario {
 	const string NotLoggedInMessage = "ログインしていません";
 	const string ExpiredMessage = "ログイン期限が切れています";
+	const string WeatherWaitMessage = "ログイン後に表示します";
 
 	public static async Task RunAsync(VmSession session) {
 		var expectAuth = ReadExpectAuth();
@@ -41,6 +43,20 @@ public static class LoginGuardScenario {
 			AppGlobal.SetLoginJwt(CreateUnsignedJwt(DateTimeOffset.UtcNow.AddMinutes(-5)));
 			session.CheckEqual("期限切れJWTは期限切れ", EnumClientLoginState.Expired, AppGlobal.GetLoginState());
 			await RunMenuAsync(session, vm, menu, "期限切れ", authRequired ? ExpiredMessage : null);
+
+			// 天気・気温: ログインが必要なサーバで未ログインなら取得しない（ログイン後に取得する）
+			AppGlobal.ClearLoginJwt();
+			var weatherVm = new MainMenuViewModel();
+			var refreshWeather = typeof(MainMenuViewModel).GetMethod("RefreshWeatherServerAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
+			await (Task)refreshWeather.Invoke(weatherVm, [CancellationToken.None])!;
+			if (authRequired) {
+				session.CheckEqual("未ログイン: 天気は取得せずログイン後と表示", WeatherWaitMessage, weatherVm.WeatherDescription);
+				session.CheckEqual("未ログイン: 気温は未取得のまま", "--℃", weatherVm.WeatherTemperature);
+			}
+			else {
+				session.Check("認証なし: 天気はログイン前でも取得する", weatherVm.WeatherDescription != WeatherWaitMessage,
+					new { weatherVm.WeatherDescription, weatherVm.WeatherTemperature });
+			}
 
 			AppGlobal.SetLoginJwt("not-a-jwt");
 			session.CheckEqual("読めないJWTは未ログイン", EnumClientLoginState.NotLoggedIn, AppGlobal.GetLoginState());
