@@ -127,6 +127,9 @@ public abstract partial class BaseLightMenteViewModel<T> : BaseMenteViewModel<T>
 				return;
 			}
 
+			await CompleteReferencesAsync([detail], ct);
+			if (ct.IsCancellationRequested || Current.Id != id || Current.Vdu != vdu) return;
+
 			ApplyLoadedDetail(detail);
 		}
 		catch (OperationCanceledException) {

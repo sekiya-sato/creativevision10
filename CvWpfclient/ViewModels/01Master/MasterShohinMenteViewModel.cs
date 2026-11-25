@@ -12,7 +12,12 @@ using System.Collections.ObjectModel;
 namespace CvWpfclient.ViewModels._01Master;
 
 public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMenteViewModel<MasterShohin> {
+	const string SizeKuWhere = $"Kubun='{MasterMeisho.KubunIndex}' and (Code='{MasterMeisho.KubunSize}' or Code Like 'US%')";
 	long selectedShohinIdAfterList;
+	Dictionary<string, string> sizeKuNames = new(StringComparer.Ordinal);
+
+	[ObservableProperty]
+	public partial string SizeKuName { get; private set; } = string.Empty;
 
 	[ObservableProperty]
 	public partial string Title { get; set; } = "商品マスターメンテ";
@@ -23,7 +28,33 @@ public partial class MasterShohinMenteViewModel : Helpers.BaseCodeNameLightMente
 	[ObservableProperty]
 	public partial string ShohinImageStatusText { get; set; } = "画像なし";
 
-	protected override string[] AdditionalLightweightColumns => ["VBrand"];
+	protected override string[] AdditionalLightweightColumns => ["VBrand", "SizeKu", "Id_Soko", "VSoko"];
+
+	protected override async Task CompleteReferencesAsync(IEnumerable<MasterShohin> items, CancellationToken ct) {
+		if (!items.Any()) return;
+
+		var missingSoko = items.Where(x => x.Id_Soko > 0 &&
+			(string.IsNullOrWhiteSpace(x.VSoko?.Cd) || string.IsNullOrWhiteSpace(x.VSoko?.Mei))).ToArray();
+		var sizeTask = CoreServiceClient.QuerySqlListAsync<MasterMeisho>(
+			$"select Code, Name from MasterMeisho where {SizeKuWhere}", [], ct);
+		var sokoTask = missingSoko.Length == 0
+			? Task.FromResult(new List<MasterTokui>())
+			: CoreServiceClient.QuerySqlListAsync<MasterTokui>(
+				$"select Id, Code, Name from MasterTokui where Id in ({string.Join(",", missingSoko.Select(x => x.Id_Soko).Distinct())})", [], ct);
+		await Task.WhenAll(sizeTask, sokoTask);
+		ct.ThrowIfCancellationRequested();
+
+		sizeKuNames = (await sizeTask).ToDictionary(x => x.Code, x => x.Name, StringComparer.Ordinal);
+		var sokoById = (await sokoTask).ToDictionary(x => x.Id);
+		foreach (var item in missingSoko) {
+			if (!sokoById.TryGetValue(item.Id_Soko, out var soko)) continue;
+
+			var saved = item.VSoko;
+			var code = string.IsNullOrWhiteSpace(saved?.Cd) ? soko.Code ?? string.Empty : saved.Cd;
+			var name = string.IsNullOrWhiteSpace(saved?.Mei) ? soko.Name ?? string.Empty : saved.Mei;
+			item.VSoko = new(soko.Id, code, name);
+		}
+	}
 	protected override string? SelectCodeDisplayName => "商品";
 	protected override string? FormFile => "MasterShohinMente.qfm";
 	protected override QueryListSqlParam? PrintBySqlParam {
@@ -248,6 +279,7 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 
 	protected override void OnCurrentEditChangedCore(MasterShohin? oldValue, MasterShohin newValue) {
 		if (oldValue != null) oldValue.PropertyChanged -= OnCurrentEditPropertyChanged;
+		SizeKuName = sizeKuNames.GetValueOrDefault(newValue?.SizeKu ?? string.Empty) ?? string.Empty;
 		if (newValue == null) {
 			ShohinImageUri = null;
 			ShohinImageStatusText = "画像なし";
@@ -276,6 +308,9 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 	void OnCurrentEditPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
 		if (e.PropertyName == nameof(MasterShohin.PurchaseType)) {
 			OnPropertyChanged(nameof(IsConsumptionPurchase));
+		}
+		else if (e.PropertyName == nameof(MasterShohin.SizeKu)) {
+			SizeKuName = sizeKuNames.GetValueOrDefault(CurrentEdit.SizeKu ?? string.Empty) ?? string.Empty;
 		}
 	}
 
@@ -432,11 +467,13 @@ from TargetShohin M, json_each(M.Jcolsiz) J
 		var selWin = new Views.Sub.SelectKubunView();
 		var vm = selWin.DataContext as Sub.SelectKubunViewModel;
 		if (vm == null) return;
-		vm.SetParam($"Kubun='{MasterMeisho.KubunIndex}' and (Code='SIZ' or Code Like 'US%')", CurrentEdit.SizeKu);
+		vm.SetParam(SizeKuWhere, CurrentEdit.SizeKu);
 		if (ClientLib.ShowDialogView(selWin, this) != true) return;
 		var meisho = vm.Current as MasterMeisho;
 		if (meisho == null) return;
-		CurrentEdit.SizeKu = meisho.Code ?? "";
+		var code = meisho.Code ?? string.Empty;
+		SizeKuName = sizeKuNames[code] = meisho.Name ?? string.Empty;
+		CurrentEdit.SizeKu = code;
 	}
 
 	[RelayCommand]

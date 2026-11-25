@@ -565,13 +565,17 @@
 								<TextBlock Grid.Row="19"
 									Style="{StaticResource FormLabel}"
 									Text="サイズ区分" />
-								<TextBox Grid.Row="19" Grid.Column="1"
-									Width="120" Height="36"
-									Margin="0,4" HorizontalAlignment="Left" HorizontalContentAlignment="Left"
-									helpers:SearchTextBoxAssist.Command="{Binding DoSelectSizeKuCommand}"
-									BorderThickness="0,0,0,1"
-									Style="{StaticResource MenteSearchTextBox}"
-									Text="{Binding CurrentEdit.SizeKu, UpdateSourceTrigger=PropertyChanged}" />
+								<DockPanel Grid.Row="19" Grid.Column="1"
+									Margin="0,4">
+									<TextBox Width="120" Height="36"
+										HorizontalContentAlignment="Left"
+										helpers:SearchTextBoxAssist.Command="{Binding DoSelectSizeKuCommand}"
+										BorderThickness="0,0,0,1" DockPanel.Dock="Left"
+										Style="{StaticResource MenteSearchTextBox}"
+										Text="{Binding CurrentEdit.SizeKu, UpdateSourceTrigger=PropertyChanged}" />
+									<TextBlock Style="{StaticResource MasterRefText}"
+										Text="{Binding SizeKuName, Mode=OneWay}" />
+								</DockPanel>
 
 								<!--  基準倉庫  -->
 								<TextBlock Grid.Row="20"

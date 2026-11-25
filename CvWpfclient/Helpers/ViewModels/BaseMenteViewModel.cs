@@ -118,6 +118,8 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 		new DeleteParam(Tabletype, Common.SerializeObject(CurrentEdit));
 
 	protected virtual void AfterList(IList list) { }
+
+	protected virtual Task CompleteReferencesAsync(IEnumerable<T> items, CancellationToken ct) => Task.CompletedTask;
 	protected virtual void AfterInsert(T item) => Message = $"追加しました (CD={GetCode(item)}, Id={item.Id})";
 	protected virtual void AfterUpdate(T item) => Message = $"修正しました (CD={GetCode(item)}, Id={item.Id})";
 	protected virtual void AfterDelete(T removedItem) => Message = $"削除しました (CD={GetCode(removedItem)}, Id={removedItem.Id})";
@@ -383,7 +385,9 @@ public abstract partial class BaseMenteViewModel<T> : BaseViewModel where T : Ba
 			}
 
 			if (Common.DeserializeObject(reply.DataMsg ?? "[]", reply.DataType) is IList list) {
-				ListData = new ObservableCollection<T>(list.Cast<T>());
+				var items = list.Cast<T>();
+				await CompleteReferencesAsync(items, ct);
+				ListData = new ObservableCollection<T>(items);
 				Count = ListData.Count;
 				Current = ListData.FirstOrDefault() ?? new T();
 				AfterList(list);
