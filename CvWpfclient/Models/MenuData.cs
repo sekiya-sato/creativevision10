@@ -50,6 +50,12 @@ public partial class MenuData : ObservableObject {
 	public const string FavoriteHeader = "★ お気に入り";
 
 	/// <summary>
+	/// ロール別メニュー（「■ 店舗業務」「■ 倉庫業務」）を表示するか。
+	/// メニュー権限の仕様が固まるまでは false とし、全ユーザ共通メニューのみを出す。定義は <see cref="CreateAll"/> に残す。
+	/// </summary>
+	public static bool ShowRoleMenus { get; } = false;
+
+	/// <summary>
 	/// Scope対象画面(<see cref="IsScopeTargetView"/>がtrueの画面)がどのScope種別を見るかの宣言。
 	/// null/空の間はScope判定をスキップする。この Step では値を設定しない。
 	/// </summary>
@@ -187,7 +193,7 @@ public partial class MenuData : ObservableObject {
 	/// `addInfo:"準備中"` のものは、基本的に空のViewおよびViewModel
 	/// </summary>
 	private static ObservableCollection<MenuData> CreateAll() {
-		return new([
+		var menu = new ObservableCollection<MenuData>([
 		/* ================================================================
 		 * ロール別メニュー: 標準業務メニューへのショートカット。
 		 * 同一のViewを標準業務メニュー側にも残しているため、ここは表示経路の追加のみ。
@@ -561,6 +567,12 @@ public partial class MenuData : ObservableObject {
 			])),
 		])),
 	]);
+		if (!ShowRoleMenus) {
+			foreach (var node in menu.Where(IsRoleShortcut).ToList()) {
+				menu.Remove(node);
+			}
+		}
+		return menu;
 	}
 }
 /// <summary>

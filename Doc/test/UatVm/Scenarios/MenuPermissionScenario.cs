@@ -18,6 +18,8 @@ namespace UatVm.Scenarios;
 /// メニュー実行権限と個人メニュー（Doc/spec/2026-10-20_メニュー実行権限と個人メニュー_最小変更設計案.md）を実View→gRPC→DBで確認する。
 /// <para>
 /// 1. 権限プロファイル設定画面で新規プロファイルを作り、フォルダ一括許可・個別禁止・連動を保存して明細を読み戻す。
+/// ロール別メニュー（MenuData.ShowRoleMenus）を出さない共通メニューを前提に、「■ 在庫管理」を一括許可し、
+/// 発注と配分・出荷の両方にある「仕入配分入力(伝票別)」で同じ機能Idの行の連動を見る。
 /// 2. FullAccess は明細を変更できない。
 /// 3. 既定ポリシー Audit / Deny それぞれで、MainMenuViewModel がログイン時に作るメニューの絞り込み・空フォルダ除去・起動時の再確認を見る。
 /// 4. お気に入りの追加・解除と、権限で使えないメニューがお気に入りに出ないことを見る。
@@ -25,10 +27,12 @@ namespace UatVm.Scenarios;
 /// </para>
 /// </summary>
 public static class MenuPermissionScenario {
-	const string ShopFolder = "■ 店舗業務";
-	const string DeniedFunction = "40Shop.SalesQuickReportCostless";
+	const string AllowFolder = "■ 在庫管理";
+	const string DeniedFunction = "08Zaiko.StockInput";
 	const string ZaikoQuery = "08Zaiko.ZaikoQuery";
-	const string ShopUriageInput = "06Uriage.ShopUriageInput";
+	const string ShohinHistoryQuery = "08Zaiko.ShohinHistoryQuery";
+	/// <summary>発注・配分出荷の2か所にある画面。連動確認用に1行だけ許可する</summary>
+	const string LinkedFunction = "03Hatchu.HachuHaibunInput";
 
 	public static async Task RunAsync(VmSession session) {
 		var jpgDir = Path.Combine(Path.GetDirectoryName(session.Evidence.FilePath)!, $"menuperm-{DateTime.Now:yyyyMMdd-HHmmss}");
@@ -48,7 +52,7 @@ public static class MenuPermissionScenario {
 		}
 	}
 
-	/// <summary>権限プロファイル設定で新規プロファイルを作る。店舗業務フォルダを一括許可し、1件だけ禁止する</summary>
+	/// <summary>権限プロファイル設定で新規プロファイルを作る。在庫管理フォルダを一括許可して1件だけ禁止し、連動確認用に1件許可する</summary>
 	static async Task<long> AdminScreenAsync(VmSession session, string jpgDir) {
 		session.SetDialogResponder(VmSession.StrictResponder);
 		var d = session.OpenView<SysPermissionProfileMenteView, SysPermissionProfileMenteViewModel>();
@@ -69,17 +73,20 @@ public static class MenuPermissionScenario {
 		await d.RunAsync("新規", vm => vm.NewProfileCommand);
 		var code = $"Uat{DateTime.Now:MMddHHmmss}";
 		d.Input("コード・名称", vm => { vm.EditProfile!.Code = code; vm.EditProfile.Name = "UAT店舗スタッフ"; }, code);
-		var folder = d.Vm.MenuRows.First(r => r.IsFolder && r.Header == ShopFolder);
-		d.Input("店舗業務フォルダを選択", vm => vm.SelectedRow = folder, folder.Header);
+		var folder = d.Vm.MenuRows.First(r => r.IsFolder && r.Header == AllowFolder);
+		d.Input("在庫管理フォルダを選択", vm => vm.SelectedRow = folder, folder.Header);
 		d.Run("一括許可", vm => vm.SetAllowCommand);
 		session.Check("フォルダ配下が全件許可", folder.Leaves.Count > 0 && folder.Leaves.All(r => r.Setting == PermissionMenuRow.Allow), folder.Leaves.Count);
 		var deny = d.Vm.MenuRows.First(r => r.FunctionId == DeniedFunction);
 		d.Input("1件だけ禁止", vm => deny.Setting = PermissionMenuRow.Deny, DeniedFunction);
+		var linkedRows = d.Vm.MenuRows.Where(r => r.FunctionId == LinkedFunction).ToList();
+		d.Input("2か所にある画面の1行だけ許可", vm => linkedRows[0].Setting = PermissionMenuRow.Allow, LinkedFunction);
 		var zaikoRows = d.Vm.MenuRows.Where(r => r.FunctionId == ZaikoQuery).ToList();
 		var denyRows = d.Vm.MenuRows.Where(r => r.FunctionId == DeniedFunction).ToList();
-		// 禁止はショートカット側の1行だけに入れたので、標準メニュー側の行が連動していれば連動の確認になる
-		session.Check("同じ機能Idの行は連動する（ショートカットと標準メニュー）", zaikoRows.Count >= 2 && zaikoRows.All(r => r.Setting == PermissionMenuRow.Allow)
-			&& denyRows.Count == 2 && denyRows.All(r => r.Setting == PermissionMenuRow.Deny), new { zaiko = zaikoRows.Select(r => r.Setting), deny = denyRows.Select(r => r.Setting) });
+		// 許可は発注側の1行だけに入れたので、配分・出荷側の行も許可になっていれば連動の確認になる
+		session.Check("同じ機能Idの行は連動する（発注と配分・出荷）", linkedRows.Count == 2 && linkedRows.All(r => r.Setting == PermissionMenuRow.Allow)
+			&& zaikoRows.All(r => r.Setting == PermissionMenuRow.Allow) && denyRows.All(r => r.Setting == PermissionMenuRow.Deny),
+			new { linked = linkedRows.Select(r => r.Setting), zaiko = zaikoRows.Select(r => r.Setting), deny = denyRows.Select(r => r.Setting) });
 		session.Check("結果列: 許可=可 禁止=不可 既定=可（既定）", deny.ResultText == "不可" && zaikoRows[0].ResultText == "可"
 			&& d.Vm.MenuRows.First(r => !r.IsFolder && r.Setting == PermissionMenuRow.Default).ResultText == "可（既定）");
 
@@ -88,7 +95,8 @@ public static class MenuPermissionScenario {
 		var saved = (await session.QueryAsync<SysPermissionProfile>("SELECT * FROM SysPermissionProfile WHERE Code = @0", code)).Single();
 		var details = await session.QueryAsync<SysPermissionProfileDetail>(
 			$"SELECT * FROM SysPermissionProfileDetail WHERE Id_PermissionProfile = {saved.Id} ORDER BY FunctionId");
-		var expectedAllow = folder.Leaves.Select(r => r.FunctionId!).Distinct().Count() - 1;
+		// 在庫管理配下から禁止の1件を除き、連動確認の1件を足す
+		var expectedAllow = folder.Leaves.Select(r => r.FunctionId!).Distinct().Count() - 1 + 1;
 		session.Check("明細はView・重複なしで保存", details.All(x => x.PermissionType == (int)EnumPermissionType.View)
 			&& details.Count == expectedAllow + 1 && details.Count(x => !x.IsAllowed) == 1 && details.Single(x => !x.IsAllowed).FunctionId == DeniedFunction,
 			details.Select(x => new { x.FunctionId, x.IsAllowed }));
@@ -141,6 +149,9 @@ public static class MenuPermissionScenario {
 		await (Task)update.Invoke(vm, [login])!;
 
 		var all = CountLeaves(MenuData.CreateDefault());
+		var deniedCount = Leaves(MenuData.CreateDefault()).Count(x => x.FunctionId == DeniedFunction);
+		var expectedIds = Leaves(MenuData.CreateDefault().Where(x => x.Header == AllowFolder))
+			.Select(x => x.FunctionId).Where(x => x != DeniedFunction).Append(LinkedFunction).ToHashSet();
 		var shown = CountLeaves(vm.MenuItems);
 		var shownIds = Leaves(vm.MenuItems).Select(x => x.FunctionId).ToHashSet();
 		session.Note($"{label}: 表示メニュー", new { all, shown, topFolders = vm.MenuItems.Select(x => x.Header) });
@@ -148,12 +159,12 @@ public static class MenuPermissionScenario {
 		session.Check($"{label}: 許可したメニューは出る", shownIds.Contains(ZaikoQuery));
 		session.Check($"{label}: 空のフォルダは出ない", AllFolders(vm.MenuItems).All(f => f.SubItems!.Count > 0));
 		if (mode == EnumPermissionDefaultMode.Deny) {
-			session.Check("Deny: 許可した店舗業務の画面と、それと同じ機能Idの標準メニューだけが出る", shown < all && Leaves(vm.MenuItems).All(x => x.FunctionId != null),
-				new { all, shown });
+			session.Check("Deny: 許可した在庫管理の画面と仕入配分入力(伝票別)だけが出る", shown < all && Leaves(vm.MenuItems).All(x => x.FunctionId != null) && shownIds.SetEquals(expectedIds),
+				new { all, shown, missing = expectedIds.Except(shownIds), extra = shownIds.Except(expectedIds) });
 			session.Check("Deny: 権限プロファイル設定も出ない（FullAccess以外）", !shownIds.Contains("00System.SysPermissionProfileMente"));
 		}
 		else {
-			session.CheckEqual("Audit: 禁止した1件（2か所）以外はすべて出る", all - 2, shown);
+			session.CheckEqual("Audit: 禁止した1件以外はすべて出る", all - deniedCount, shown);
 		}
 
 		// 表示されていないメニューへ到達しても開かない
@@ -176,7 +187,7 @@ public static class MenuPermissionScenario {
 		session.Check($"{label}: お気に入りはログインID別ファイルへ保存", stored.SequenceEqual([ZaikoQuery]), MenuFavoriteStore.GetFilePath(login.LoginId!));
 		session.Check($"{label}: 初めて出たお気に入りフォルダは開いている", vm.MenuItems[0].IsExpanded);
 		vm.MenuItems[0].IsExpanded = false;
-		vm.SelectedMenu = Leaves(vm.MenuItems).First(x => x.FunctionId == ShopUriageInput && !x.IsFavoriteEntry);
+		vm.SelectedMenu = Leaves(vm.MenuItems).First(x => x.FunctionId == ShohinHistoryQuery && !x.IsFavoriteEntry);
 		vm.AddFavoriteCommand.Execute(null);
 		session.Check($"{label}: 追加でフォルダを作り直しても閉じた状態を保つ", !vm.MenuItems[0].IsExpanded && vm.MenuItems[0].SubItems!.Count == 2);
 

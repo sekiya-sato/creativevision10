@@ -226,7 +226,11 @@ public static class DemoCaptureScenario {
 		await ScreenRecorder.Pause(2.5);
 		foreach (var f in vm.MenuItems) f.IsExpanded = false;
 		await ScreenRecorder.Pause(1.0);
-		// 店舗業務・倉庫業務の入口
+		// 店舗業務・倉庫業務の入口（ロール別メニュー。MenuData.ShowRoleMenus が false の間はメニューに無いので飛ばす）
+		if (!MenuData.ShowRoleMenus) {
+			await ScreenRecorder.Pause(1.5);
+			return;
+		}
 		foreach (var header in new[] { "■ 店舗業務", "■ 倉庫業務" }) {
 			var folder = vm.MenuItems.FirstOrDefault(x => x.Header == header);
 			if (folder == null) continue;
