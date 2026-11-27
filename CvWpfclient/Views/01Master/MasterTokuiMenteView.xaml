@@ -520,8 +520,6 @@
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
 									<RowDefinition Height="Auto" />
-									<RowDefinition Height="Auto" />
-									<RowDefinition Height="Auto" />
 								</Grid.RowDefinitions>
 
 								<!--  メールアドレス  -->
@@ -533,65 +531,66 @@
 									Style="{StaticResource FormTextBox}"
 									Text="{Binding CurrentEdit.Mail}" />
 
-								<!--  締日1  -->
-								<TextBlock Grid.Row="1"
-									Style="{StaticResource FormLabel}"
-									Text="締日1" />
-								<ComboBox Grid.Row="1" Grid.Column="1"
-									Margin="0,4"
-									materialDesign:HintAssist.Hint="締日1"
-									ItemsSource="{Binding ShimeBiItems}"
-									SelectedItem="{Binding CurrentEdit.EnShime1, Mode=TwoWay}"
-									Style="{StaticResource FormComboBox}">
-									<ComboBox.ItemTemplate>
-										<DataTemplate>
-											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
-												Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
-										</DataTemplate>
-									</ComboBox.ItemTemplate>
-								</ComboBox>
-
-								<!--  締日2  -->
-								<TextBlock Grid.Row="2"
-									Style="{StaticResource FormLabel}"
-									Text="締日2" />
-								<ComboBox Grid.Row="2" Grid.Column="1"
-									Margin="0,4"
-									materialDesign:HintAssist.Hint="締日2"
-									ItemsSource="{Binding ShimeBiItems}"
-									SelectedItem="{Binding CurrentEdit.EnShime2, Mode=TwoWay}"
-									Style="{StaticResource FormComboBox}">
-									<ComboBox.ItemTemplate>
-										<DataTemplate>
-											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
-												Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
-										</DataTemplate>
-									</ComboBox.ItemTemplate>
-								</ComboBox>
-
-								<!--  締日3  -->
-								<TextBlock Grid.Row="3"
-									Style="{StaticResource FormLabel}"
-									Text="締日3" />
-								<ComboBox Grid.Row="3" Grid.Column="1"
-									Margin="0,4"
-									materialDesign:HintAssist.Hint="締日3"
-									ItemsSource="{Binding ShimeBiItems}"
-									SelectedItem="{Binding CurrentEdit.EnShime3, Mode=TwoWay}"
-									Style="{StaticResource FormComboBox}">
-									<ComboBox.ItemTemplate>
-										<DataTemplate>
-											<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
-												Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
-										</DataTemplate>
-									</ComboBox.ItemTemplate>
-								</ComboBox>
+								<!--  締日1〜3  -->
+								<Grid Grid.Row="1" Grid.ColumnSpan="2">
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="*" MinWidth="72" MaxWidth="130" />
+										<ColumnDefinition Width="*" />
+										<ColumnDefinition Width="*" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<TextBlock
+										Style="{StaticResource FormLabel}"
+										Text="締日1,2,3" />
+									<ComboBox Grid.Column="1"
+										Margin="0,4,4,4"
+										Padding="4,16,4,16"
+										materialDesign:HintAssist.Hint="締日1"
+										ItemsSource="{Binding ShimeBiItems}"
+										SelectedItem="{Binding CurrentEdit.EnShime1, Mode=TwoWay}"
+										Style="{StaticResource FormComboBox}">
+										<ComboBox.ItemTemplate>
+											<DataTemplate>
+												<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+													Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
+											</DataTemplate>
+										</ComboBox.ItemTemplate>
+									</ComboBox>
+									<ComboBox Grid.Column="2"
+										Margin="0,4,4,4"
+										Padding="4,16,4,16"
+										materialDesign:HintAssist.Hint="締日2"
+										ItemsSource="{Binding ShimeBiItems}"
+										SelectedItem="{Binding CurrentEdit.EnShime2, Mode=TwoWay}"
+										Style="{StaticResource FormComboBox}">
+										<ComboBox.ItemTemplate>
+											<DataTemplate>
+												<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+													Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
+											</DataTemplate>
+										</ComboBox.ItemTemplate>
+									</ComboBox>
+									<ComboBox Grid.Column="3"
+										Margin="0,4"
+										Padding="4,16,4,16"
+										materialDesign:HintAssist.Hint="締日3"
+										ItemsSource="{Binding ShimeBiItems}"
+										SelectedItem="{Binding CurrentEdit.EnShime3, Mode=TwoWay}"
+										Style="{StaticResource FormComboBox}">
+										<ComboBox.ItemTemplate>
+											<DataTemplate>
+												<TextBlock Foreground="{DynamicResource MaterialDesignBody}"
+													Text="{Binding Converter={StaticResource EnumShimeDisplayConverter}}" />
+											</DataTemplate>
+										</ComboBox.ItemTemplate>
+									</ComboBox>
+								</Grid>
 
 								<!--  入金月  -->
-								<TextBlock Grid.Row="4"
+								<TextBlock Grid.Row="2"
 									Style="{StaticResource FormLabel}"
 									Text="入金月" />
-								<ComboBox Grid.Row="4" Grid.Column="1"
+								<ComboBox Grid.Row="2" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="入金月" DisplayMemberPath="Text"
 									ItemsSource="{Binding PayMonthItems}"
@@ -600,10 +599,10 @@
 									Style="{StaticResource FormComboBox}" />
 
 								<!--  入金日  -->
-								<TextBlock Grid.Row="5"
+								<TextBlock Grid.Row="3"
 									Style="{StaticResource FormLabel}"
 									Text="入金日" />
-								<ComboBox Grid.Row="5" Grid.Column="1"
+								<ComboBox Grid.Row="3" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="入金日"
 									ItemsSource="{Binding ShimeBiItems}"
@@ -618,10 +617,10 @@
 								</ComboBox>
 
 								<!--  入金方法  -->
-								<TextBlock Grid.Row="6"
+								<TextBlock Grid.Row="4"
 									Style="{StaticResource FormLabel}"
 									Text="入金方法" />
-								<DockPanel Grid.Row="6" Grid.Column="1"
+								<DockPanel Grid.Row="4" Grid.Column="1"
 									Margin="0,4">
 									<TextBox Width="120" Height="36"
 										HorizontalContentAlignment="Left"
@@ -634,10 +633,10 @@
 								</DockPanel>
 
 								<!--  請求フラグ  -->
-								<TextBlock Grid.Row="7"
+								<TextBlock Grid.Row="5"
 									Style="{StaticResource FormLabel}"
 									Text="請求フラグ" />
-								<ComboBox Grid.Row="7" Grid.Column="1"
+								<ComboBox Grid.Row="5" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="請求フラグ"
 									SelectedIndex="{Binding CurrentEdit.IsPay, Mode=TwoWay}"
@@ -647,10 +646,10 @@
 								</ComboBox>
 
 								<!--  請求先  -->
-								<TextBlock Grid.Row="8"
+								<TextBlock Grid.Row="6"
 									Style="{StaticResource FormLabel}"
 									Text="請求先" />
-								<DockPanel Grid.Row="8" Grid.Column="1"
+								<DockPanel Grid.Row="6" Grid.Column="1"
 									Margin="0,4">
 									<TextBox Width="120" Height="36"
 										HorizontalContentAlignment="Left"
@@ -663,10 +662,10 @@
 								</DockPanel>
 
 								<!--  税計算単位  -->
-								<TextBlock Grid.Row="9"
+								<TextBlock Grid.Row="7"
 									Style="{StaticResource FormLabel}"
 									Text="税計算単位" />
-								<ComboBox Grid.Row="9" Grid.Column="1"
+								<ComboBox Grid.Row="7" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="税計算単位"
 									ItemsSource="{Binding TaxCalcUnitItems}"
@@ -681,10 +680,10 @@
 								</ComboBox>
 
 								<!--  消費税端数処理  -->
-								<TextBlock Grid.Row="10"
+								<TextBlock Grid.Row="8"
 									Style="{StaticResource FormLabel}"
 									Text="消費税端数処理" />
-								<ComboBox Grid.Row="10" Grid.Column="1"
+								<ComboBox Grid.Row="8" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="消費税端数処理"
 									ItemsSource="{Binding TaxRoundingItems}"
@@ -699,10 +698,10 @@
 								</ComboBox>
 
 								<!--  外税内税区分  -->
-								<TextBlock Grid.Row="11"
+								<TextBlock Grid.Row="9"
 									Style="{StaticResource FormLabel}"
 									Text="外税内税区分" />
-								<ComboBox Grid.Row="11" Grid.Column="1"
+								<ComboBox Grid.Row="9" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="外税内税区分"
 									ItemsSource="{Binding TaxPriceTypeItems}"
@@ -717,10 +716,10 @@
 								</ComboBox>
 
 								<!--  伝票印字タイプ  -->
-								<TextBlock Grid.Row="12"
+								<TextBlock Grid.Row="10"
 									Style="{StaticResource FormLabel}"
 									Text="伝票印字タイプ" />
-								<ComboBox Grid.Row="12" Grid.Column="1"
+								<ComboBox Grid.Row="10" Grid.Column="1"
 									Margin="0,4"
 									materialDesign:HintAssist.Hint="伝票印字タイプ"
 									ItemsSource="{Binding SlipFormTypeItems}"
